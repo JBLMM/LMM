@@ -1,0 +1,74 @@
+//#pragma once
+//
+//#include <boost/numeric/ublas/triangular.hpp>  // Triangular matrix
+//#include <boost/numeric/ublas/io.hpp>
+//
+//#include <ql/termstructures/volatility/abcd.hpp>
+//
+//#include <LMM/helper/LMMTenorStructure.h>
+//#include <LMM/LmmModel/Shifted_HGVolatilityFunction.h>
+//
+//class BetaShifted_HGVolatilityParam : public Shifted_HGVolatilityParam
+//{
+//public:
+//	//static Shifted_HGVolatilityParam::LowerTriangularMatrix createShiftLTM(const std::vector<double>& shiftConstVector);
+//
+//	BetaShifted_HGVolatilityParam( 
+//		LMMTenorStructure_PTR  pLMMTenorStructure, 
+//		const Shifted_HGVolatilityParam::ABCDParameter& h_abcdParameter,
+//		const LowerTriangularMatrix& g_matrix,
+//		const LowerTriangularMatrix& betas);
+//};
+//typedef boost::shared_ptr<BetaShifted_HGVolatilityParam> BetaShifted_HGVolatilityParam_PTR;
+//
+//
+//
+////! YY change the name to BetaShifted_HGVolatilityFunction
+//class BetaShifted_HGVolatilityFunction : public Shifted_HGVolatilityFunction
+//{
+//	typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::lower> LowerTriangularMatrix;
+//
+//public:
+//	 // horizon = N, total number of Libor: L_k, k = [0,N]
+//
+//	//! Constructor
+//	BetaShifted_HGVolatilityFunction( LMMTenorStructure_PTR _pLMMTenorStructure,
+//									  Correlation_PTR correlation,
+//									  BetaShifted_HGVolatilityParam_PTR pHGVolatilityParam);
+//									  //LowerTriangularMatrix betas);
+//
+//	virtual ~BetaShifted_HGVolatilityFunction(){}
+//
+//	//! \int_{T_i}^{T_j} varSigma_i(u)*varSigma_j(u)*rho_ij(u) du
+//	virtual double covIntegral( LMM::Index indexTime_i  ,
+//								LMM::Index indexTime_j  ,
+//								LMM::Index indexLibor_i ,
+//								LMM::Index indexLibor_j ) const;
+//
+//	double get_beta_timeIndexVersion     (LMM::Index liborIndex, LMM::Index timeIndex) const;
+//	double get_beta_timeContinuousVersion(LMM::Index liborIndex, double t) const;
+//
+//	//! for Analytical pricing formula: no formula for this modle!
+//	virtual double nativeShift(LMM::Index liborIndex) const {throw ("Error, not implemented");} // This is only for the Shifted_HGVolatilityFunction
+//
+//	//! for MC diffusion part simulation.
+//	virtual double equivalentShift(LMM::Index liborIndex, LMM::Index timeIndex, const std::vector<double>& liborsInitValue) const;
+//
+//
+//	//! ---- ---- localVol: varphi(t) 
+//	double  get_localVol_timeIndexVersion ( LMM::Index liborIndex,  
+//											LMM::Index timeIndex,   // time period [indexTime-1, indexTime]
+//											double libor,           // libor[liborIndex,indexTime]
+//											double libor_initial) const;   // libor[liborIndex,0]: initialValue
+//
+//	double  get_localVol_timeContinuousVersion (LMM::Index liborIndex,  
+//												double t,                     // at time t   
+//												double libor,                 // libor[liborIndex,indexTime]
+//												double libor_initial) const;   // libor[liborIndex,0]: initialValue
+//
+//
+//private:
+//	//LowerTriangularMatrix betas_; 
+//
+//};
+//typedef boost::shared_ptr<BetaShifted_HGVolatilityFunction> BetaShifted_HGVolatilityFunction_PTR;

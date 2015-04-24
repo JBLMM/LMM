@@ -1,0 +1,54 @@
+#pragma once
+
+#include <LMM/instrument/VanillaSwaption.h>
+#include <LMM/LmmModel/GMatrixMapping.h>
+#include <LMM/LmmModel/UpperTriangleVanillaSwaptionQuotes.h>
+#include <LMM/LmmModel/LmmPenalty.h>
+#include <LMM/pricer/LmmVanillaSwaptionApproxPricer_Rebonato.h>
+
+#include <LMM/LmmModel/Shifted_HGVolatilityFunction.h>
+
+
+/*! \class LmmCostFunction
+ *
+ *
+ *
+ */
+
+class LmmCostFunction
+{
+public:
+
+	//! constructor 
+	LmmCostFunction( LmmVanillaSwaptionApproxPricer_Rebonato_PTR lmmRobonato_ptr                // pricer  
+				   , LiborQuotes_ConstPTR liborQuotes_ptr
+		           , UpperTriangleVanillaSwaptionQuotes upperTriangleVanillaSwaptionQuotes // instrument to calibrate 
+				   , GMatrixMapping_PTR gMatrixMapping_ptr
+				   , Shifted_HGVolatilityParam_PTR pShifted_HGVolatilityParam);
+
+
+	void reset_Penalty(LmmPenalty_PTR penalty_ptr) ;
+
+	Shifted_HGVolatilityParam_PTR get_Shifted_HGVolatilityParam() ; 
+
+	Real value(const Array & x) const ; 
+	
+	//const Array& param_array
+	Disposable<Array> values(const Array& x) const ; 
+
+private :
+	//! pricing 
+	void update_SwaptionMdlValues() const ;
+
+
+	LiborQuotes_ConstPTR pLiborQuotes_;
+	LmmPenalty_PTR pLmmPenalty_;		
+	
+	mutable LmmVanillaSwaptionApproxPricer_Rebonato_PTR pLmmVanillaSwaptionApproxPricer_Rebonato_;
+	mutable UpperTriangleVanillaSwaptionQuotes upperTriangleVanillaSwaptionMktQuotes_;
+	mutable UpperAntiTriangularDoubleMatrix    upperTriangleVanillaSwaptionMdlValues_;
+	mutable GMatrixMapping_PTR  pGMatrixMapping_ ; 
+
+	mutable Shifted_HGVolatilityParam_PTR buffer_Shifted_HGVolatilityParam_;
+
+};

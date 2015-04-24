@@ -1,0 +1,119 @@
+#include <LMM/Test/Tests.h>
+
+#include <ctime>
+
+#include <LMM/helper/GenericPath.h>
+#include <LMM/calibration/ATMSwaptionMarketData.h>
+#include <LMM/calibration/SwaptionMarketDataContainer.h>
+#include <LMM/calibration/SwaptionMarketDataManager.h>
+#include <LMM/LmmModel/Lmm.h>
+#include <LMM/LmmModel/Dispersion.h>
+#include <LMM/LmmModel/ConstShifted_HGVolatilityFunction.h>
+
+
+void test_generatingATMSwaptionMarketData(size_t nbYear);
+//void test_SwaptionMarketDataContainer_ParsingData(const std::string & datafile);
+
+void test_SwaptionMarketDataContainer()
+{
+	size_t nbYear = 5;
+	
+	test_generatingATMSwaptionMarketData(nbYear);
+}
+
+
+void test_generatingATMSwaptionMarketData(size_t nbYear)
+{
+	Tenor tenorfixedleg = Tenor::_1YR;
+	Tenor tenorfloatleg = Tenor::_6M;
+
+	LMMTenorStructure_PTR pLmmTenorStructure( new LMMTenorStructure(tenorfloatleg, nbYear) );
+	size_t nbLIBOR = pLmmTenorStructure->get_nbLIBOR();
+
+
+	// =================   CREATION OF LMM_PTR   =============================
+	//init abcd default a=-0.06,  b=0.17, c=0.54, d=0.17
+	double a = 0;
+	double b = 0;
+	double c = 0;
+	double d = 0.02;
+
+	double g_constParam = 1.0;
+	double shift_constParam = 0.0;
+	ConstShifted_HGVolatilityParam_PTR volParams_ptr(new TestHGVolatilityParam(pLmmTenorStructure,a,b,c,d, g_constParam, shift_constParam) );
+	//HGVolatilityParam_PTR volParams_ptr(new DefaultHGVolatilityParam(a,b,c,d,pLmmTenorStructure) );
+
+	const unsigned int nbVolParams = volParams_ptr->get_nbCalibrateParam();
+	QuantLib::Array init_volparam(nbVolParams, 1.0, 0.); // vector 1. everywhere
+	
+	// =================  END  CREATION OF LMM_PTR   =============================
+	//! Correlation 
+	size_t nbFactor       = 3; // need to test nbFactor  = 3, and nbFactor = 
+	size_t correlFullRank = pLmmTenorStructure->get_horizon()+1;
+	size_t correlReducedRank = nbFactor;
+	CorrelationReductionType::CorrelationReductionType correlReductionType = CorrelationReductionType::PCA;
+	double correlAlpha = 0.0;
+	double correlBeta  = 0.1;
+	//Correlation_PTR correlation(new Const_Correlation(correlFullRank,correlReducedRank, correlReductionType,0.)); //not work
+	Correlation_PTR correlation(new XY_beta_Correlation(correlFullRank,correlReducedRank, correlReductionType,correlAlpha,correlBeta));
+	correlation->calculate(); // for print.
+
+	//Lmm
+	//double shiftValue = 0.0; // -0.01;
+	//std::vector<double> shifts(pLmmTenorStructure->get_horizon()+1, shiftValue);
+
+	double fwdRate = 0.04;
+	std::vector<double> liborsInitValue(pLmmTenorStructure->get_horizon()+1, fwdRate);
+
+	ConstShifted_HGVolatilityFunction_PTR hgVolatilityFunction (new ConstShifted_HGVolatilityFunction(pLmmTenorStructure, correlation, volParams_ptr)); 
+
+	//! Dispersion
+	Dispersion dispersion(hgVolatilityFunction);
+	
+	Lmm_PTR lmm_ptr(new Lmm(dispersion));
+
+	LmmVanillaSwaptionApproxPricer_Rebonato_PTR pLmmApproxVanillaSwaptionPricer(new LmmVanillaSwaptionApproxPricer_Rebonato(lmm_ptr));					 
+	// =================  END  CREATION OF LMM_PTR   =============================
+
+	
+	SwaptionMarketDataManager swaption_market_manager( pLmmTenorStructure ) ;
+	
+	clock_t start_data_creation = std::clock();	
+	SwaptionMarketDataContainer_PTR pSwaptionMarketDataContainer = swaption_market_manager.generateMarketData(tenorfixedleg, tenorfloatleg, pLmmApproxVanillaSwaptionPricer.get(),0.02);
+	clock_t end_data_creation = std::clock();
+	
+	double time_data_creation = double(end_data_creation - start_data_creation) / CLOCKS_PER_SEC;
+
+
+	size_t nbLibor     = pSwaptionMarketDataContainer->get_nbLIBOR()  ;
+	size_t nbSwaption  = pSwaptionMarketDataContainer->get_nbSWAPTION() ;
+	size_t sparse_step = pSwaptionMarketDataContainer->get_SwaptionSparseStep() ;
+
+	// created interest rate data 
+	const std::vector<double> & libor_start_dates = pSwaptionMarketDataContainer->get_LIBOR_STARTDATES() ;
+	const std::vector<double> & libor_init        = pSwaptionMarketDataContainer->get_LIBOR_INIT()       ;
+	const std::vector<double> & zc_maturities     = pSwaptionMarketDataContainer->get_ZC_MATURITIES()    ;
+	const std::vector<double> & zc                = pSwaptionMarketDataContainer->get_ZC_BOND()          ;	
+	const std::vector<double> & numeraire         = pSwaptionMarketDataContainer->get_NUMERAIRE()        ;
+
+	// created swaptions data 
+
+	const SwaptionMarketDataContainer::SwaptionVector &  swaptionvector =     pSwaptionMarketDataContainer->get_SWAPTION_VECTOR() ;
+
+	const std::vector<size_t>& maturities_indices = pSwaptionMarketDataContainer->get_SWPN_MATURITY_INDICES() ;
+
+	const SwaptionMarketDataContainer::MatrixOfMatrixIndices& indices_matrix = pSwaptionMarketDataContainer->get_HGVOL_MATRIX_INDICES() ;
+
+	const SwaptionMarketDataContainer::VectorOfMatrixIndices& full_indices_vector = pSwaptionMarketDataContainer->get_HGVOL_VECTOR_INDICES() ;
+
+	const SwaptionMarketDataContainer::SwaptionMatrix&  swaption_matrix = pSwaptionMarketDataContainer->get_SWPN_MATRIX();
+
+	const SwaptionMarketDataContainer::RealVector & full_vol = pSwaptionMarketDataContainer->get_VOLATILITY_VECTOR()   ;
+	
+	const SwaptionMarketDataContainer::RealMatrix & vol_matrix =  pSwaptionMarketDataContainer->get_MKT_VOL_MATRIX() ;
+
+	std::cout<<"test_generatingATMSwaptionMarketData()"<<std::endl
+		     <<"	Creation Data for " <<nbYear <<"YR,   Time consum for creation = "<<time_data_creation<<"s"<<std::endl;
+
+	pSwaptionMarketDataContainer->print("test_generatingATMSwaptionMarketData.csv");
+}

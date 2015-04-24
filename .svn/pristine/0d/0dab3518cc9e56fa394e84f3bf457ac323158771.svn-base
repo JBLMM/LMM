@@ -1,0 +1,312 @@
+#include <LMM/LmmModel/GMatrixMapping.h>
+
+
+size_t GMatrixMapping::get_DelegateSizeFromHorizon(size_t horizon, size_t ratioFixedFloat)
+{
+	assert(horizon%ratioFixedFloat==0);
+	return 1+horizon/ratioFixedFloat;// size = nbYear + 1
+}
+size_t GMatrixMapping::get_FullSizeFromNbYear(size_t nbYear, size_t ratioFixedFloat)
+{
+	return 1 + nbYear*ratioFixedFloat;
+}
+
+size_t GMatrixMapping::get_NbDelegateElement() const
+{
+	assert(gDelegate_.size1() == gDelegate_.size2() );
+	size_t N = gDelegate_.size1()-2;
+	return N*(N+1)/2;
+}
+
+QuantLib::Array GMatrixMapping::get_DelegateArray() const
+{
+	size_t nbElement = get_NbDelegateElement();
+	QuantLib::Array qlArray(nbElement);
+
+	size_t array_index_counter=0;
+	// first row and firsst column are ignored 
+	for(size_t iDelegate=1; iDelegate<gDelegate_.size1()-1; ++iDelegate)
+	{
+		for(size_t jDelegate=1; jDelegate<gDelegate_.size2()-iDelegate; ++jDelegate)
+		{
+			qlArray[array_index_counter] = gDelegate_(iDelegate,jDelegate) ;
+			++array_index_counter;
+		}
+	}
+	assert(array_index_counter == qlArray.size() );//check if qlArray is fully used
+
+	return qlArray;
+}
+
+void GMatrixMapping::reset_gDelegate( const QuantLib::Array & qlArray )
+{
+	size_t array_index_counter=0;
+	// first row and firsst column are ignored 
+	for(size_t iDelegate=1; iDelegate<gDelegate_.size1()-1; ++iDelegate)
+	{
+		for(size_t jDelegate=1; jDelegate<gDelegate_.size2()-iDelegate; ++jDelegate)
+		{
+			gDelegate_(iDelegate,jDelegate) = qlArray[array_index_counter];
+			++array_index_counter;
+		}
+	}
+	assert(array_index_counter == qlArray.size() );//check if qlArray is fully used
+
+	proccess_transform();
+}
+
+
+GMatrixMapping::GMatrixMapping(size_t full_g_size,
+							   const UpperAntiTriangularDoubleMatrix&  gDelegate, // used as calibration input
+							   const UpperAntiTriangularIndexPairMatrix& gDelegate_IndexMappping_gTransformed)
+							   : g_(full_g_size, full_g_size)
+							   , gTransformed_(full_g_size,full_g_size)
+							   , gDelegate_(gDelegate)
+							   , gDelegate_IndexMappping_gTransformed_(gDelegate_IndexMappping_gTransformed)
+{
+	assert(gDelegate_IndexMappping_gTransformed.size1() == gDelegate_.size1() );
+	assert(gDelegate_IndexMappping_gTransformed.size2() == gDelegate_.size2() );
+
+	//! init g to absurd value
+	for(size_t i=1; i<g_.size1(); ++i)
+	{
+		for(size_t j=1; j<=i; ++j)
+		{
+			g_(i,j) = 1.0e100;
+		}
+	}
+
+	//! init gTranformed to absurd value
+	for(size_t i=1; i<gTransformed_.size1(); ++i)
+	{
+		for(size_t j=1; j<gTransformed_.size2()-i; ++j)
+		{
+			gTransformed_(i,j) = 1.0e100;
+		}
+	}
+
+	//! do all the calculation  gDelegate_ (interpolates) --> gTransformed (update_g_from_gTransforme) -> g
+	proccess_transform();
+}	
+
+//! gDelegate_ (interpolates) --> gTransformed (update_g_from_gTransforme) -> g
+void GMatrixMapping::proccess_transform()
+{
+	fetch_gDelegateTogTransformed();
+	interpolate_gTransformed();
+	update_g_from_gTransformed();	
+}
+
+void GMatrixMapping::fetch_gDelegateTogTransformed()
+{
+	for (size_t jColDelegate=1; jColDelegate<gDelegate_IndexMappping_gTransformed_.size2(); ++jColDelegate) // row
+	{
+
+		for (size_t iRowDelegate=1; iRowDelegate<gDelegate_IndexMappping_gTransformed_.size1() - jColDelegate ; ++iRowDelegate) // row
+		{
+			size_t jCol = gDelegate_IndexMappping_gTransformed_(iRowDelegate  ,jColDelegate).second;
+			size_t iRow    = gDelegate_IndexMappping_gTransformed_(iRowDelegate  ,jColDelegate).first;
+			// fetching values from gDelegate_ to node of gTransformed_
+			gTransformed_(iRow,jCol) =  gDelegate_(iRowDelegate , jColDelegate);
+		}
+	}	
+}
+
+void GMatrixMapping::interpolate_gTransformed() 
+{
+	interpolate_Rows_gTransformed();	
+}
+
+void GMatrixMapping::update_g_from_gTransformed() 
+{
+	for(size_t jG=1;jG< g_.size2(); ++jG)
+	{
+		for(size_t iG=jG; iG<g_.size1(); ++iG)
+		{
+			size_t iGTransformed = jG ;
+			size_t jGTransformed = iG - jG + 1;
+			g_(iG,jG) = gTransformed_(iGTransformed,jGTransformed);
+		}
+	}
+}	
+
+
+void GMatrixMapping::interpolate_Rows_gTransformed() // interpolate selective columns
+{
+	for (size_t iRowDelegate=1; iRowDelegate<gDelegate_IndexMappping_gTransformed_.size1() - 1 ; ++iRowDelegate) // row
+	{
+		interpolate_DelegateRow_gTransformed(iRowDelegate);
+	}
+
+	for (size_t iRowDelegate=1; iRowDelegate<gDelegate_IndexMappping_gTransformed_.size2()-2; ++iRowDelegate) // row
+	{
+		interpolate_Row_gTransformed(iRowDelegate,iRowDelegate+1);
+	}
+}
+
+void GMatrixMapping::interpolate_DelegateRow_gTransformed(size_t iRowDelegate)
+{
+	const size_t startColDelegate = 1;
+	const size_t endColDelegate   = gDelegate_IndexMappping_gTransformed_.size2() - (iRowDelegate+1);
+	const size_t iRow = gDelegate_IndexMappping_gTransformed_(iRowDelegate,1).first;
+
+	numeric::Interpolation interpolation;
+
+	// Interpolate part
+	for(size_t jColDelegate=startColDelegate;jColDelegate<endColDelegate;++jColDelegate)
+	{
+		assert (iRow  == gDelegate_IndexMappping_gTransformed_(iRowDelegate,jColDelegate).first);
+		const size_t jColLeft    = gDelegate_IndexMappping_gTransformed_(iRowDelegate,jColDelegate).second;
+		const size_t jColRight = gDelegate_IndexMappping_gTransformed_(iRowDelegate,jColDelegate+1).second;
+
+		assert(jColLeft<jColRight);
+
+		for(size_t jCol=jColLeft+1;jCol<jColRight;++jCol)
+		{
+			const double interpolated_value = interpolation.columnIntepolation(
+				gTransformed_(iRow,jColLeft)
+				, gTransformed_(iRow,jColRight)
+				, jColLeft
+				, jColRight
+				, jCol );
+			gTransformed_(iRow,jCol)=interpolated_value;
+		}
+	}
+
+
+	// Extrapolate the column queue of gTransformed in the vertical direction, which is equivalent to diagonal queue direction of g
+	const size_t colOffset = gDelegate_IndexMappping_gTransformed_(iRowDelegate,endColDelegate).second;
+	const size_t rowOfsset = iRow;
+	const size_t rowBound = gTransformed_.size1() - colOffset ;
+
+	for(size_t iRowIter=rowOfsset+1;iRowIter<=rowBound;++iRowIter)
+	{
+		gTransformed_(iRowIter,colOffset)=gTransformed_(rowOfsset,colOffset);
+	}
+
+
+	if(iRowDelegate==1)//!extrapolate the topmargin of gTransformed, equivalently to left margin of g
+	{
+		extrapolate_topmargin_gTransformed();
+	}
+	else               //!interpolate the row queue of gTransformed
+	{
+		const size_t startColQueue = colOffset;
+		const size_t endColQueue   = gTransformed_.size2() - iRow;
+
+		for(size_t jColIter=startColQueue+1;jColIter<endColQueue;++jColIter)
+		{
+			const double interpolated_value = interpolation.columnIntepolation(
+				gTransformed_(iRow,startColQueue)
+				, gTransformed_(iRow,endColQueue)
+				, startColQueue
+				, endColQueue
+				, jColIter );
+			gTransformed_(iRow,jColIter)=interpolated_value;		
+
+			const size_t endRowQueue = gTransformed_.size1() - jColIter;
+
+			//! extrapolate in the vertical direction of gTransformed queue, equivalently to diagonal direction queue of g
+			for(size_t iRowIter=iRow+1;iRowIter<=endRowQueue;++iRowIter)
+			{
+				gTransformed_(iRowIter,jColIter)=gTransformed_(iRow,jColIter);
+			}
+		}
+	}
+}
+
+void GMatrixMapping::interpolate_Row_gTransformed(size_t iDelegate,size_t iiDelegate)
+{
+	const size_t iRowBoundTop    = gDelegate_IndexMappping_gTransformed_( iDelegate,1).first;
+	const size_t iRowBoundBottom = gDelegate_IndexMappping_gTransformed_(iiDelegate,1).first;
+
+	const size_t jDelegateBoundRight = gDelegate_IndexMappping_gTransformed_.size2() - (iDelegate+1) ;
+	const size_t jColBoundLeft  = 1; 
+	const size_t jColBoundRight = gDelegate_IndexMappping_gTransformed_(iDelegate,jDelegateBoundRight).second - 1 ;
+
+	numeric::Interpolation interpolation;
+
+	for(size_t iRow=iRowBoundTop+1;iRow<iRowBoundBottom;++iRow)
+	{
+		for(size_t jCol=jColBoundLeft;jCol<=jColBoundRight;++jCol)
+		{
+			const double interpolated_value = interpolation.columnIntepolation(
+				gTransformed_(iRowBoundTop,jCol)
+				, gTransformed_(iRowBoundBottom,jCol)
+				, iRowBoundTop
+				, iRowBoundBottom
+				, iRow );
+			gTransformed_(iRow,jCol)=interpolated_value;		
+		}
+	}
+}
+
+void GMatrixMapping::extrapolate_topmargin_gTransformed()
+{
+
+	const std::pair<size_t,size_t> & top_left_map = gDelegate_IndexMappping_gTransformed_(1,1);
+	const std::pair<size_t,size_t> & top_right_map = gDelegate_IndexMappping_gTransformed_(1,gDelegate_IndexMappping_gTransformed_.size2()-2);
+
+	assert(top_left_map.first == top_right_map.first);
+
+	size_t line_offset = top_left_map.first;
+	size_t start_col =  top_left_map.second;
+	size_t end_col   = top_right_map.second;
+
+	for(size_t colIter=start_col;colIter<=end_col;++colIter)
+	{
+		for(size_t rowIter = 1 ; rowIter<line_offset ; --rowIter)
+		{
+			size_t iRow = line_offset - rowIter;
+			size_t jCol = colIter + rowIter;
+			gTransformed_(iRow,jCol) = gTransformed_(line_offset,colIter) ;
+		}
+	}
+
+	extrapolate_TopLeftMargin_gTransformed(line_offset);
+	extrapolate_TopRightMargin_gTransformed(line_offset,end_col);
+}
+void GMatrixMapping::extrapolate_TopLeftMargin_gTransformed(size_t row_offset) 
+{
+	for(size_t rowIter=1;rowIter<row_offset;++rowIter)
+	{
+		size_t jColBound = row_offset - rowIter + 1;
+		for(size_t jCol=1;jCol<jColBound;++jCol)
+		{
+			size_t iRow = rowIter;
+			gTransformed_(iRow,jCol) = gTransformed_(row_offset,1);
+		}
+	}
+
+}
+void GMatrixMapping::extrapolate_TopRightMargin_gTransformed(size_t row_offset,size_t col_offset) 
+{
+	for(size_t jCol=col_offset+1;jCol<gTransformed_.size2();++jCol)
+	{
+		size_t iRowBound = gTransformed_.size2() - jCol;
+		for(size_t iRow=1;iRow<=iRowBound;++iRow)
+		{
+			gTransformed_(iRow,jCol) = gTransformed_(row_offset,col_offset);
+		}
+	}
+}
+
+void GMatrixMapping::print(const std::string& filename)
+{
+	std::string path_OutPut = LMM::get_output_path() + filename;
+
+	std::vector<PrintElement_PTR> elements_print;
+
+	PrintElement_PTR gDelegate_print = PrintElement_PTR(new MatrixPrintElement<UpperAntiTriangularDoubleMatrix>("gDelegate",  gDelegate_));
+	PrintElement_PTR gTransformed_print = PrintElement_PTR(new MatrixPrintElement<UpperAntiTriangularDoubleMatrix>("gTransformed",  gTransformed_));
+	PrintElement_PTR g_print = PrintElement_PTR(new MatrixPrintElement<LowerTriangularDoubleMatrix>("full g ",  g_));			
+	PrintElement_PTR index_map_print = PrintElement_PTR(new MatrixPrintElement<UpperAntiTriangularIndexPairMatrix>("index Map ",  gDelegate_IndexMappping_gTransformed_));
+
+	elements_print.push_back(gDelegate_print);
+	elements_print.push_back(gTransformed_print);
+	elements_print.push_back(g_print);
+	elements_print.push_back(index_map_print);
+
+	Printer printer(path_OutPut, elements_print);
+	printer.print(); 
+}

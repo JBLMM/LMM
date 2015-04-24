@@ -1,0 +1,23 @@
+//#include <cassert>
+//#include <cmath>
+//
+//#include <LMM/instrument/BermudanSwaption.h>
+//
+//BermudanSwaption::BermudanSwaption(const VanillaSwaption& vanillaSwaption, const std::vector<LMM::Index>& callableDatesIndex)
+//{
+//
+//}
+//
+//
+//BermudanSwaption::BermudanSwaption(const VanillaSwap& vanillaSwap, OptionType::OptionType vanillaSwaptionType)
+//: vanillaSwap_(vanillaSwap)
+//, vanillaSwaptionType_(vanillaSwaptionType)
+//{}
+//
+//double BermudanSwaption::payoff(const double& pvVloatingLeg, const double& pvFixedLeg) const // for MC
+//{
+//	if(vanillaSwaptionType_ == OptionType::CALL)
+//		return std::max(pvVloatingLeg - pvFixedLeg, 0.0);
+//	else
+//		return std::max(pvFixedLeg - pvVloatingLeg, 0.0);
+//}

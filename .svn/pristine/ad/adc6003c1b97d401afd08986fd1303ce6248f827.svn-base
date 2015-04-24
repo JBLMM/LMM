@@ -1,0 +1,37 @@
+TODO:
+1. Robonato formula, use L*(t) = E^Q^A (L(t)) other than L(0).
+2. Make the shift dependent on time: a_i(t) => then change shifted LMM with a_i -> Piterbarg formulatio: beta_i
+   so need to chang the black formula latter to take into account the shift.
+3. Test Robonato with shift != 0.
+4. Implement the Piterbarg formula. 
+5. Add unit-test 
+6. need to move fixedLegNPV to better place...
+7. MC swap pricing extremly slow ... (compared to FRA): seems the problem of integral of piecewise const fonction HGVolatility.
+8. swap rate ~ MC still strange: validate with FRA, but Euler / PC, terminal ~ spot, seems no difference, strange. 
+9. get_DeltaTFloatLeg not the same indexation as Libor matrix. To change it. 
+10. Robonato/Piterbarg approximation can be further optimized for calibration problem.
+11. get_date return a double other than a index, there is no check, it makes the code dangerous, need to delete it. 
+
+12a. Calibration
+		- debug for local calibration exact (without use of penalty), calib has to match exactly
+		- for Local calibration, find a way to normalize the penalty in order to not depend in nbYear (/nbElementDiag^2)
+		- attention to swaption weights, high weight has to attribute to the more liquid swaption
+		
+12. Remove default constructor and assignment operator of Swap and Swaption, recomeback to precedent version.
+
+14. move initLibor value to LMM model ? (for simplicify equivalentShift, maybe some pricing ? )
+15. Make the correlation homogeneous + piecewise constant... 
+
+16. nativeShift is only for the Shifted_HGVolatilityFunction, it should not exist in the base class VolatilityFunction: to remove it and do the cast...
+
+17. OptionType::OptionType vanillaSwaptionType_;  // YY TODO: this should be moved to swap class, now it's in the swaption class
+    for this reasong: McLmmBermudanSwaptionPricer don't treat the case Call/put, but always call !!!
+	---- McLmmBermudanSwaptionPricer::McLmmBermudanSwaptionPricer::initialize_EV()
+     
+Problem:
+1. Strange behavior of Robonator for longer maturity swaption formula.
+2.
+
+Question: 
+1. for equivalentShift, PC shceme, should use the same equivalentShift for both predictor  and corrector  ????
+2. Rebonator, Piterbard formula can only be used for ShiftedLMM but not betaLMM ?

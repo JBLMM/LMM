@@ -1,0 +1,28 @@
+TODO LIST:  hope to finish everything before the end of April :) 
+
+1. Correlation structure: 
+   Implement the XY sub-diagnol correlation construction, and test the result, compare with the XY_beta correlation function, 
+   test it with cliquet product. to see the impact!
+2. Rewrite the shit Matrix class: maybe use the boost class, but need to enable the debug visualizer.
+5. Change the name of the class: Vol + Correl -> TermStructur (Dispersion) ?  etc ...
+6. need to test double, how to convert date to double (yearly) ?
+7. Is it a good idea to do the triangular matrix as Adrien ? 
+8. vol function: g is kept constant, to change it latter ... 
+9. hgVolatilityFunction is Piecewise Constant version, when implement other version, need to implement the heritage structure. 
+10. Need to think aoubt where to put the lmmTenorStructure_ ??? Now it's in every class: for example:
+    "AbcdPWConstFunction" & "hgVolatilityFunction".
+11. LMMTenorStructure is in every class, don't know how to deal with it ???
+12. Need to implement the non discret version in Vol structure, for the Mc simulation: more fine than the grid tenor...
+
+
+
+To DO tomorrow:
+//! 1. McLmm.cpp do simulation
+//! 2. use McLmm price Swap/Swaption, don't need to be too general ... 
+//! 3. change boost::Matrix to QuantLib Matrix.
+
+TODO:
+1. implement HGVolatilityFunction: gFunction.
+2. Generalize VolatlityFunction class to calculate covariance in whatever time interval: don't take index(int), but time(double).
+3. swaption approximation
+4. add shift in simulation, how to treat negative rate in the simulation ?

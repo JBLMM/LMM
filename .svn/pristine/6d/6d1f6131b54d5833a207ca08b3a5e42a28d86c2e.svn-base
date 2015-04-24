@@ -1,0 +1,27 @@
+#include <LMM/LmmModel/LmmPenalty.h>
+
+
+void LmmPenalty_Homogeneity::update_penalty_buffer(const GMatrixMapping_PTR gMatrixMapping_ptr) const
+{
+	const UpperAntiTriangularDoubleMatrix& gDelegate = gMatrixMapping_ptr->get_gDelegate_Ref();
+	size_t N = gDelegate.size2() - 3; // nb of Columns in gDelegate that has penalties
+	size_t nbPenalties = N*(N+1)/2;
+
+	if(buffer_penaltyValues_.size() != nbPenalties) buffer_penaltyValues_.resize(nbPenalties);
+
+	size_t penalty_conter = 0;
+	for(size_t jCol=1;jCol<=N;++jCol)
+	{
+		size_t nbElementInCol   = gDelegate.size1() - (jCol+1);
+		size_t nbPenaltiesInCol = nbElementInCol - 1;
+		for(size_t iRow=1;iRow<nbElementInCol;++iRow)
+		{
+			size_t iiRow = iRow+1;
+
+			buffer_penaltyValues_[penalty_conter] = std::abs( gDelegate(iiRow,jCol) - gDelegate(iRow,jCol) );
+
+			++penalty_conter;
+		}	
+	}
+	assert(penalty_conter == nbPenalties);//check if penalties are fully computed
+}

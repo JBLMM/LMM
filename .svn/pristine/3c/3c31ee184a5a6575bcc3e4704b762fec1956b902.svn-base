@@ -1,0 +1,123 @@
+//#include <cassert>
+//
+//#include <LMM/helper/GenericPath.h>
+//#include <LMM/helper/Printer.h>
+//#include <LMM/LmmModel/BetaShifted_HGVolatilityFunction.h>
+//#include <cmath>
+//
+////----------------------------------------------------------------------------------------
+////
+////					ConstShifted_HGVolatilityParam
+////
+////----------------------------------------------------------------------------------------
+//
+//BetaShifted_HGVolatilityParam::BetaShifted_HGVolatilityParam( 
+//	LMMTenorStructure_PTR  pLMMTenorStructure, 
+//	const Shifted_HGVolatilityParam::ABCDParameter& h_abcdParameter,
+//	const LowerTriangularMatrix& g_matrix,
+//	const LowerTriangularMatrix& betas)
+//	:Shifted_HGVolatilityParam(pLMMTenorStructure,h_abcdParameter,g_matrix,betas)
+//{
+//    // TODO: need to reset shift!
+//}
+//
+//
+////----------------------------------------------------------------------------------------
+////
+////					BetaShifted_HGVolatilityFunction
+////
+////----------------------------------------------------------------------------------------
+//
+//
+//BetaShifted_HGVolatilityFunction::BetaShifted_HGVolatilityFunction(
+//	LMMTenorStructure_PTR pLMMTenorStructure,
+//	Correlation_PTR correlation,
+//	BetaShifted_HGVolatilityParam_PTR pHGVolatilityParam)       // horizon = N, total number of libor: L_k, k = [0,N]
+//	: Shifted_HGVolatilityFunction(pLMMTenorStructure, correlation, pHGVolatilityParam)
+//{}
+//
+////! \int_{T_i}^{T_j} varSigma_i(u)*varSigma_j(u)*rho_ij(u) du
+//double BetaShifted_HGVolatilityFunction::covIntegral(size_t indexTime_i,
+//											  size_t indexTime_j,
+//											  size_t indexLibor_i,
+//											  size_t indexLibor_j) const
+//{
+//	assert(indexLibor_i <= indexLibor_j);
+//
+//	size_t indexLiborMin   = indexLibor_i;
+//	size_t indexTime_begin = std::min(indexTime_i,indexLiborMin);
+//	size_t indexTime_end   = std::min(indexTime_j,indexLiborMin);
+//
+//	double covIntegralValue = 0.0;
+//
+//	//! Attention : only OK for piecewise const: g and h.
+//	for(size_t indexTime=indexTime_begin; indexTime<indexTime_end; ++indexTime)
+//	{
+//		double deltaT    = this->get_LMMTenorStructure()->get_deltaT(indexTime);
+//		double correl_ij = correlation_->correlApprox(indexLibor_i,indexLibor_j, indexTime+1); // correl for period [indexTime,indexTime+1]
+//		double beta_i    = betas_(indexLibor_i, indexTime+1);                                   // beta   for period [indexTime,indexTime+1]
+//		double beta_j    = betas_(indexLibor_j, indexTime+1);                                   // beta   for period [indexTime,indexTime+1]
+//		covIntegralValue += beta_i * beta_j * correl_ij * deltaT
+//			                * get_varSigma_timeIndexVersion(indexLibor_i,indexTime+1) * get_varSigma_timeIndexVersion(indexLibor_j,indexTime+1) ;
+//	}	
+//	return covIntegralValue;
+//}
+//
+//
+//double BetaShifted_HGVolatilityFunction::get_beta_timeIndexVersion(LMM::Index liborIndex, LMM::Index timeIndex) const
+//{
+//	assert(liborIndex !=0 && liborIndex >= timeIndex);
+//	return betas_(liborIndex,timeIndex);
+//}
+//
+//double BetaShifted_HGVolatilityFunction::get_beta_timeContinuousVersion(LMM::Index liborIndex, double t) const
+//{
+//	const std::vector<double>& tenor_dates = pLMMTenorStructure_->get_tenorDate();
+//
+//	assert(liborIndex < pLMMTenorStructure_->get_horizon() );
+//	assert(t <= tenor_dates[liborIndex]); // vol_i function die after time T_i 
+//
+//	//! YY TODO: not efficient, improve the algorithm latter.
+//	if(t == 0.0)
+//		return get_beta_timeIndexVersion(liborIndex,1);
+//
+//	size_t timeIndex=0;
+//	while (t> tenor_dates[timeIndex])
+//	{
+//		++timeIndex;
+//	}
+//
+//	double beta = get_beta_timeIndexVersion(liborIndex, timeIndex);  // beta time dependent
+//	return beta;
+//}
+//
+//// for MC diffusion part
+//double BetaShifted_HGVolatilityFunction::equivalentShift(LMM::Index liborIndex,
+//												  LMM::Index timeIndex, 
+//												  const std::vector<double>& liborsInitValue) const
+//{
+//	double beta = get_beta_timeIndexVersion(liborIndex,timeIndex);
+//	assert(abs(beta) >= 1.0e-8); // beta should not be zero! if not the equivalentShift will not validate.
+//
+//	return (1-beta)/beta*liborsInitValue[liborIndex];
+//}
+//
+////! ---- ---- localVol: varphi(t) 
+//double  BetaShifted_HGVolatilityFunction::get_localVol_timeIndexVersion ( LMM::Index liborIndex,  
+//																   LMM::Index timeIndex,         // time period [indexTime-1, indexTime]
+//																   double libor,                 // libor[liborIndex,indexTime]
+//																   double libor_initial) const   // libor[liborIndex,0]: initialValue
+//{
+//	double beta = get_beta_timeIndexVersion(liborIndex, timeIndex);
+//	return beta*libor + (1-beta)*libor_initial;  
+//}
+//
+//double  BetaShifted_HGVolatilityFunction::get_localVol_timeContinuousVersion (LMM::Index liborIndex,  
+//																	   double t,                     // at time t   
+//																	   double libor,                 // libor[liborIndex,t]
+//																	   double libor_initial) const   // libor[liborIndex,0]: initialValue
+//{
+//	double beta = get_beta_timeContinuousVersion(liborIndex, t);
+//	return beta*libor + (1-beta)*libor_initial;   
+//}
+//

@@ -1,0 +1,95 @@
+#pragma once
+
+#include <boost/numeric/ublas/triangular.hpp>  // Triangular matrix
+#include <boost/numeric/ublas/io.hpp>
+
+#include <ql/termstructures/volatility/abcd.hpp>
+
+#include <LMM/helper/LMMTenorStructure.h>
+#include <LMM/LmmModel/Shifted_HGVolatilityFunction.h>
+
+#include <vector>
+
+class ConstShifted_HGVolatilityParam : public Shifted_HGVolatilityParam
+{
+public:
+	static Shifted_HGVolatilityParam::LowerTriangularMatrix createShiftLTM(const std::vector<double>& shiftConstVector);
+
+	ConstShifted_HGVolatilityParam( 
+		LMMTenorStructure_PTR  pLMMTenorStructure, 
+		const Shifted_HGVolatilityParam::ABCDParameter& h_abcdParameter,
+		const double g_constParam,
+		const double shift_constParam);
+
+	ConstShifted_HGVolatilityParam( 
+		LMMTenorStructure_PTR  pLMMTenorStructure, 
+		const Shifted_HGVolatilityParam::ABCDParameter& h_abcdParameter,
+		const LowerTriangularMatrix& g_matrix,
+		const std::vector<double>& shiftConstVector);
+};
+typedef boost::shared_ptr<ConstShifted_HGVolatilityParam> ConstShifted_HGVolatilityParam_PTR;
+
+
+//! YY YODO: change the name to Constshifted_HGVolatilityFunction
+class ConstShifted_HGVolatilityFunction : public Shifted_HGVolatilityFunction
+{
+	// horizon = N, total number of Libor = N+1: L_k, k = [0,N]
+public:	
+	/*
+	HGVolatilityParam(  LMMTenorStructure_PTR        pLMMTenorStructure, 
+		ABCDParameter		         h_abcdParameter,
+		const LowerTriangularMatrix& g_matrix,
+		const LowerTriangularMatrix& shift_matrix)
+	*/
+
+	//! Constructor
+	ConstShifted_HGVolatilityFunction(
+		LMMTenorStructure_PTR pLMMTenorStructure,
+		Correlation_PTR	   correlation,
+		ConstShifted_HGVolatilityParam_PTR pHGVolatilityParam);
+								 //const std::vector<double>&   shiftConstVector);
+
+	virtual ~ConstShifted_HGVolatilityFunction(){}
+
+	//! \int_{T_i}^{T_j} varSigma_i(u)*varSigma_j(u)*rho_ij(u) du
+	virtual double covIntegral( LMM::Index indexTime_i,
+								LMM::Index indexTime_j,
+								LMM::Index indexLibor_i,
+								LMM::Index indexLibor_j) const;
+
+	//! ---- ---- localVol: varphi(t) 
+	double  get_localVol_timeIndexVersion ( LMM::Index liborIndex,  
+		                                    LMM::Index timeIndex,   // time period [indexTime-1, indexTime]
+											double libor,
+											double libor_initial) const          // libor[liborIndex,indexTime]
+	{
+		return libor + get_ShiftedHGVolatilityParam_PTR()->shift(liborIndex,timeIndex);   // because shift is time independent
+	}
+	double  get_localVol_timeContinuousVersion (LMM::Index liborIndex,  
+												double t,                     // at time t   
+												double libor,
+												double libor_initial) const                 // libor[liborIndex,indexTime]=
+	{
+		return libor + get_ShiftedHGVolatilityParam_PTR()->shift(liborIndex, 1);  // because shift is time independent
+	}
+
+	//! analytical pricing purpose
+	double nativeShift(LMM::Index liborIndex) const
+	{
+		return get_ShiftedHGVolatilityParam_PTR()->shift(liborIndex,1);   // attention: should not use timeIndex =0, which has absurd value ... 
+	}
+
+
+	// for MC diffusion part simulation
+	double equivalentShift(LMM::Index liborIndex, 
+		                   LMM::Index timeIndex, 
+						   const std::vector<double>& liborsInitValue) const
+	{
+		return get_ShiftedHGVolatilityParam_PTR()->shift(liborIndex, timeIndex);
+	}
+
+private:
+
+	//std::vector<double> shifts_;
+};
+typedef boost::shared_ptr<ConstShifted_HGVolatilityFunction> ConstShifted_HGVolatilityFunction_PTR;

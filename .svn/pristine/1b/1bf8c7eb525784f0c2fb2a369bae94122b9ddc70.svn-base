@@ -1,0 +1,76 @@
+#pragma once
+
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include <ql/math/optimization/endcriteria.hpp>
+#include <ql/math/optimization/constraint.hpp>
+#include <ql/math/optimization/problem.hpp>
+
+#include <LMM/instrument/VanillaSwaption.h>
+#include <LMM/LmmModel/GMatrixMapping.h>
+#include <LMM/LmmModel/UpperTriangleVanillaSwaptionQuotes.h>
+#include <LMM/pricer/LmmVanillaSwaptionApproxPricer_Rebonato.h>
+
+class LmmCostFunction
+{
+	LiborQuotes liborQuotes_;
+	LmmPenalty_PTR penalty_;
+
+	mutable LmmVanillaSwaptionApproxPricer_Rebonato_PTR lmmRobonato_;
+	mutable UpperTriangleVanillaSwaptionQuotes upperTriangleVanillaSwaptionMktQuotes_;
+	mutable UpperAntiTriangularDoubleMatrix    upperTriangleVanillaSwaptionMdlValues_;
+	mutable GMatrixMapping_PTR  gMatrixMapping_; 
+
+	//! constructor 
+	LmmCostFunction(LmmVanillaSwaptionApproxPricer_Rebonato_PTR lmmRobonato                // pricer  
+					,LiborQuotes liborQuotes
+		            ,UpperTriangleVanillaSwaptionQuotes upperTriangleVanillaSwaptionQuotes // instrument to calibrate 
+					,LmmPenalty_PTR penalty
+					,gMatrixMapping)
+		: lmmRobonato_(lmmRobonato)
+		, liborQuotes_(liborQuotes)
+		, upperTriangleVanillaSwaptionMktQuotes_(upperTriangleVanillaSwaptionMktQuotes_)
+		, upperTriangleVanillaSwaptionMdlValues_(upperTriangleVanillaSwaptionMktQuotes_.size1(), upperTriangleVanillaSwaptionMktQuotes_.size2() )
+		, penalty_(penalty)
+		, gMatrixMapping_(gMatrixMapping)
+	{}
+
+	Real value(const Array & x) const
+	{
+	    // L_2 de value
+	}
+	
+	//const Array& param_array
+	Disposable<Array> values(const Array& x) const
+	{
+		gMatrixMapping_.reset_gDelegatye(x); // gDelegate_ (interpolates) --> gTransformed (update_g_from_gTransforme) -> g
+		lmmRobonato_.update_g_matrix(gMap.get_g_Ref());
+		price();
+
+		//! diff upperTriangleVanillaSwaptionMktQuotes_ - upperTriangleVanillaSwaptionMdlValues_
+
+		if(penalty_->ifUsePenalty())
+		{
+		    const std::vector<double>& penaltyVecots = penalty_->get_penalty();
+
+		}
+	}
+
+	//! pricing 
+	void price() const 
+	{
+				//! upperTriangle:
+		for(size_t i = 1; i<upperTriangleVanillaSwaptionMktQuotes_.get_size1(); ++i) // row
+		{
+			for(size_t j = 1; j<upperTriangleVanillaSwaptionMktQuotes_.get_size2()-i; ++j) // col
+			{
+
+				const VanillaSwaption& vanillaSwaption = upperTriangleVanillaSwaptionMktQuotes_.get_swaption_Ref(i,j);
+
+				// TODO get liborsInitValue
+				double volBlack  =  lmmRobonato_->volBlack(vanillaSwaption, liborsInitValue);
+				upperTriangleVanillaSwaptionMdlValues_(i,j) = volBlack;
+			}
+		}
+	}
+};

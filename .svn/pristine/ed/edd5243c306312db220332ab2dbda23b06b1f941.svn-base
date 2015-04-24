@@ -1,0 +1,40 @@
+Caplet Mc Pricing
+
+N = 30 (15Y)
+tenor libor = 6M
+a = -0.06; b = 0.17; c = 0.54; d = 0.17
+g_i = 1 + rand/randmax
+
+Terminal - PC
+
+index : 0 -- McPrice : 0 -- CI width : 0
+index : 1 -- McPrice : 0.000701348 -- CI width : 1.65437e-005
+index : 2 -- McPrice : 0.000938278 -- CI width : 2.36448e-005
+index : 3 -- McPrice : 0.00202532 -- CI width : 6.18057e-005
+index : 4 -- McPrice : 0.00225866 -- CI width : 7.23738e-005
+index : 5 -- McPrice : 0.00245494 -- CI width : 8.23529e-005
+index : 6 -- McPrice : 0.0026197 -- CI width : 9.22138e-005
+index : 7 -- McPrice : 0.00406341 -- CI width : 0.000190331
+index : 8 -- McPrice : 0.00433759 -- CI width : 0.000224769
+index : 9 -- McPrice : 0.00437806 -- CI width : 0.000202873
+index : 10 -- McPrice : 0.0032419 -- CI width : 0.00014097
+index : 11 -- McPrice : 0.00508449 -- CI width : 0.000285289
+index : 12 -- McPrice : 0.00521376 -- CI width : 0.000315484
+index : 13 -- McPrice : 0.00480463 -- CI width : 0.000312642
+index : 14 -- McPrice : 0.0044614 -- CI width : 0.000316668
+index : 15 -- McPrice : 0.00346223 -- CI width : 0.000157713
+index : 16 -- McPrice : 0.00396387 -- CI width : 0.000196105
+index : 17 -- McPrice : 0.00477912 -- CI width : 0.000285086
+index : 18 -- McPrice : 0.0042509 -- CI width : 0.00025365
+index : 19 -- McPrice : 0.00437362 -- CI width : 0.000213323
+index : 20 -- McPrice : 0.00758392 -- CI width : 0.0019937
+index : 21 -- McPrice : 0.00539014 -- CI width : 0.000430337
+index : 22 -- McPrice : 0.00451973 -- CI width : 0.000289982
+index : 23 -- McPrice : 0.00404639 -- CI width : 0.000229183
+index : 24 -- McPrice : 0.00424239 -- CI width : 0.000453654
+index : 25 -- McPrice : 0.00598193 -- CI width : 0.000673393
+index : 26 -- McPrice : 0.00601149 -- CI width : 0.0003938
+index : 27 -- McPrice : 0.00642324 -- CI width : 0.000546447
+index : 28 -- McPrice : 0.00662817 -- CI width : 0.000440261
+index : 29 -- McPrice : 0.00692685 -- CI width : 0.000363617
+index : 30 -- McPrice : 0.00516903 -- CI width : 0.000194043

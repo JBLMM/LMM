@@ -1,0 +1,160 @@
+//#pragma once
+//
+//#include <boost/function.hpp>
+//#include <boost/bind.hpp>
+//#include <ql/math/optimization/endcriteria.hpp>
+//#include <ql/math/optimization/constraint.hpp>
+//#include <ql/math/optimization/problem.hpp>
+//
+////#include "TestCostFunction.h"
+//#include <LMM/calibration/CalibrationVolCostFunction.h>
+//#include <LMM/instrument/VanillaSwaption.h>
+//
+////! lmm calibration to full triangle Swaption Matrix
+//#include <LMM/LmmModel/UpperTriangleVanillaSwaptionQuotes.h>
+//
+//typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::lower> LowerTriangularDoubleMatrix; // LTDM
+//typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::upper> UpperTriangularDoubleMatrix; // UTDM
+//typedef boost::numeric::ublas::triangular_matrix<std::pair<LMM::Index,LMM::Index>, boost::numeric::ublas::upper> UpperTriangleIndexPairMatrix; // UTIPM
+//
+//class G_Map  // gDelegate_ (interpolates) --> gTransformed -> g
+//{
+//	LowerTriangularDoubleMatrix  g_;            // libor's vol g, 1st row & col ignored
+//	UpperTriangularDoubleMatrix  gTransformed_; // libor's vol g: transformed , 1st row & col ignored
+//
+//	UpperTriangularDoubleMatrix  gDelegate_;                     // swaption's size, 1st row & col ignored
+//	UpperTriangleIndexPairMatrix gDelegate_IndexIngTransformed_; // swaption's size, 1st row & col ignored
+//
+//	std::vector<size_t>          colToInterpolateIndex_;         // the columns to interpolate firstly
+//
+//public:
+//	G_Map(size_t size,
+//		  const UpperTriangularDoubleMatrix&  gDelegate,
+//	      const UpperTriangleIndexPairMatrix& gDelegate_IndexIngTransformed)
+//		  :g_(size, size), 
+//		   gTransformed_(size,size),
+//		   gDelegate_(gDelegate),
+//		   gDelegate_IndexIngTransformed_(gDelegate_IndexIngTransformed)
+//	{
+//		//! init g to absurd value
+//		for(size_t i=1; i<g_.size1(); ++i)
+//		{
+//			for(size_t j=1; j<=i; ++j)
+//			{
+//				g_(i,j) = 1.0e100;
+//			}
+//		}
+//
+//		//! init gTranformed to absurd value
+//		for(size_t i=1; i<gTransformed_.size1(); ++i)
+//		{
+//			for(size_t j=1; j<gTransformed_.size2()-i; ++j)
+//			{
+//				gTransformed_(i,j) = 1.0e100;
+//			}
+//		}
+//
+//		initialize_colToInterpolateIndex();
+//	}	
+//
+//
+//	void initialize_colToInterpolateIndex()
+//	{
+//		colToInterpolateIndex_.clear();
+//		for(size_t j=1; j<gDelegate_IndexIngTransformed_.size2(); ++j)
+//		{
+//			size_t colIndex = gDelegate_IndexIngTransformed_(1,j).second;
+//			colToInterpolateIndex_.push_back(colIndex);
+//		}		
+//	}
+//
+//	void interpolate_gDelegateToGet_gTransformed() // interpolate gDelegate --> gTransformed
+//	{
+//		 interpolate_cols();
+//		 interpolate_rows();
+//	}
+//
+//	void interpolate_cols() // interpolate selective columns
+//	{
+//		for (size_t i=1; i<colToInterpolateIndex_.size(); ++i) // row
+//		{
+//			size_t nbRows = ... 
+//		}
+//	}
+//
+//	void interpolate_rows() // interpolate each rows
+//	{
+//
+//	}
+//
+//	//! transformation:
+//	void update_g_from_gTransformed() // gTransformed (upper) -> g (lower)   // ignore 1st row & col 
+//	{
+//		for(size_t i=1; i<g_.size1(); ++i)
+//		{
+//			for(size_t j=1; j<=i; ++j)
+//			{
+//				g_(i,j) = gTransformed_(j,i-j+1);
+//			}
+//		}
+//	}
+//
+//	void update_gTransformed_from_g() // g -> gTransformeds  // ignore 1st row & col 
+//	{
+//		for(size_t i=1; i<gTransformed_.size1(); ++i)
+//		{
+//			for(size_t j=1; j<gTransformed_.size2()-i; ++j)
+//			{
+//				gTransformed_(i,j) = gTransformed_(i+j-1,i);
+//			}
+//		}
+//	}
+//
+//	//! getter: 
+//	const LowerTriangularDoubleMatrix& get_g_Ref() {return g_;}
+//	const UpperTriangularDoubleMatrix& get_gTransformed_Ref() {return gTransformed_;}
+//
+//	LowerTriangularDoubleMatrix& get_g_RefNonConst() {return g_;}                       // this is for calibrator
+//	UpperTriangularDoubleMatrix& get_gTransformed_RefNonConst() {return gTransformed_;} // for calibrator
+//};
+//
+//
+//class LmmCalibration 
+//{	
+//
+//	Lmm_PTR lmm_;
+//    UpperTriangleVanillaSwaptionQuotes upperTriangleVanillaSwaptionQuotes_;  // swaption's size
+//
+//	G_Map   g_map_;
+//	//LowerTriangularDoubleMatrix        shifted_HGVolatilityFunction_g_;            // g's size
+//	//UpperTriangularDoubleMatrix        shifted_HGVolatilityFunction_g_transformed; // g's size: t-tau version
+//
+//public:	
+//	LmmCalibration(Lmm_PTR lmm, 
+//		           const UpperTriangleVanillaSwaptionQuotes& upperTriangleVanillaSwaptionQuotes,  // swaptions to calibrate (upper triangle)
+//				   const UpperTriangularDoubleMatrix& g_delete_UTDM)                              // g_delegate (same size as swaptions)
+//				   :lmm_(lmm),
+//				    upperTriangleVanillaSwaptionQuotes_(upperTriangleVanillaSwaptionQuotes),
+//					//shifted_HGVolatilityFunction_g_(lmm->get_dispersionRef().get_LMMTenorStructure_PTR()->get_nbLIBOR(), 
+//					//                                lmm->get_dispersionRef().get_LMMTenorStructure_PTR()->get_nbLIBOR() )  
+//					g_map_(lmm->get_dispersionRef().get_LMMTenorStructure_PTR()->get_nbLIBOR())
+//	{
+//		assert(lmm->get_dispersionRef().get_LMMTenorStructure_PTR() == upperTriangleVanillaSwaptionQuotes_.get_lmmTenorStructure_PTR());
+//	}
+//
+//
+//	void interpolate_g(const UpperTriangularDoubleMatrix& g_deleteValues) // upperTriangle: this is considered as the 1-1 of swaption
+//	{
+//		UpperTriangleIndexPairMatrix g_delegateIndexMapping = upperTriangleVanillaSwaptionQuotes_.g_delegateIndexMapping();
+//		assert(g_deleteValues.size1() == g_delegateIndexMapping.size1() && g_deleteValues.size2() == g_delegateIndexMapping.size2());
+//
+//	}
+//
+//
+//	void interpolate_lmm_g(const UpperTriangularDoubleMatrix& g_deleteValues) // this is considered as the 1-1 of swaption
+//	{
+//
+//	}
+//		
+//};
+//

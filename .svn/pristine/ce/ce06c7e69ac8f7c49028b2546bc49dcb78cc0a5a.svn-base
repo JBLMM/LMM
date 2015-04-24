@@ -1,0 +1,123 @@
+#pragma once 
+#include <LMM/Test/Tests.h>
+
+#include <iostream>
+
+#include <LMM/helper/Name.h>
+#include <LMM/helper/GenericPath.h>
+#include <LMM/helper/Printer.h>
+#include <LMM/helper/Noise.h>
+#include <LMM/helper/LMMTenorStructure.h>
+
+#include <LMM/LmmModel/ConstShifted_HGVolatilityFunction.h>
+#include <LMM/LmmModel/McTerminalLmm.h>
+
+#include <LMM/pricer/LmmVanillaSwaptionApproxPricer_Rebonato.h>
+
+#include <LMM/LmmModel/LmmPenalty.h>
+#include <LMM/LmmModel/GMatrixMapping.h>
+#include <LMM/LmmModel/UpperTriangleVanillaSwaptionQuotes.h>
+
+#include <LMM/LmmModel/LmmCostFunction.h>
+/*! \class Test_CalibrationConfig
+ *
+ *	class use for configurating a calibration test
+ *
+ *
+ */
+class Test_CalibrationConfig
+{
+public:
+	Test_CalibrationConfig()
+		: tenorfixedleg(Tenor::_1YR)
+		, tenorfloatleg(Tenor::_6M)
+		, nbYear( 10 )
+		, is_local_test(false)
+		, console_stop(false)// set to true if one wish to pause calibration process during iterations
+	{
+		a=0.22;b=0.4;c=0.6;d=0.15;
+		//nb_regularization_loop=2; //set to 1 if don't wish the penalty
+
+		constant_rate = 0.02;
+
+		perturbe_noise = 0.5; // relative perturbation noise 
+		g_diag_noise   = 0.1; // set to zero if one don't wish the noises on g matrix's diagonales
+		penalty_coeff = 1. ;//1./(double)(nbYear*nbYear) ;//100.;//
+		x_epsilon = 1e-10;
+		f_epsilon = 1e-8;
+		maxIter = 10000;
+		maxIterPenalty = 10;
+
+		unique_seed = 0;
+
+		re_init();		
+	}	
+
+	// lmm config
+	Tenor tenorfixedleg; 
+	Tenor tenorfloatleg;
+	size_t nbYear;
+	double a,b,c,d;
+	size_t fixedfloatRatio;
+	double constant_rate;
+
+	// calibration test noises config
+	unsigned int unique_seed;
+	double perturbe_noise, g_diag_noise ; // relative noises
+	double penalty_coeff;
+	double x_epsilon, f_epsilon;
+	size_t maxIter, maxIterPenalty;
+
+	// calibration test config
+	std::string basefilename,basefilename_global_calibration,basefilename_local_calibration;
+	bool console_stop;
+
+	mutable bool is_local_test; // test can modify this
+
+	void re_init()
+	{
+		re_init_LMM_Components();
+		re_init_filenames();
+	}
+	void re_init_randomly()
+	{
+		unique_seed = NoiseHelper::get_Seed(); 
+		re_init();
+	}
+	
+	QuantLib::Array get_Perturbed_gDelegateArray(const QuantLib::Array& init_array )const;
+
+	void update_gDelegateChange() const ;
+
+	void write_to_stream(std::ostream& os) const ;
+	void print(const std::string& filename)const ;
+
+	//! LMM Components , once initialize, never change
+	LmmPenalty_PTR pLmmPenalty;
+	LMMTenorStructure_PTR pLMMTenorStructure ;
+	LiborQuotes_ConstPTR pLiborQuotes;
+	UpperTriangleVanillaSwaptionQuotes_ConstPTR pUpperTriangleVanillaSwaptionQuotes;
+
+	//! volatility param and other related component plays as buffer
+	mutable ConstShifted_HGVolatilityParam_PTR pConstShifted_HGVolatilityParam;
+	mutable LmmVanillaSwaptionApproxPricer_Rebonato_PTR pLmmVanillaSwaptionApproxPricer_Rebonato;
+	mutable GMatrixMapping_PTR pGMatrixMapping;	
+	
+	mutable LmmCostFunction_PTR pLmmCostFunction;
+
+	
+private:
+	void re_init_LMM_Components();
+	void re_init_filenames();
+
+	LMMTenorStructure_PTR create_LMMTenorStructure() const;
+	ConstShifted_HGVolatilityParam_PTR create_ConstShifted_HGVolatilityParam() const;
+	LmmVanillaSwaptionApproxPricer_Rebonato_PTR create_LmmVanillaSwaptionApproxPricer_Rebonato() const;
+	UpperTriangleVanillaSwaptionQuotes_ConstPTR create_UpperTriangleVanillaSwaptionQuotes() const ;
+	GMatrixMapping_PTR create_GMatrixMapping() ; // create and initialize vol param, re_initialize all market data created
+	LmmCostFunction_PTR create_LmmCostFunction() const ;
+
+	void initialize_gDelegate_with_noise(GMatrixMapping_PTR pGMatrixMapping ) ;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const Test_CalibrationConfig& calib_config){calib_config.write_to_stream(os); return os;}

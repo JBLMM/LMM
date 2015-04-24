@@ -1,0 +1,107 @@
+#include <cassert>
+
+#include <LMM/helper/GenericPath.h>
+#include <LMM/helper/Printer.h>
+#include <LMM/LmmModel/ConstShifted_HGVolatilityFunction.h>
+#include <cmath>
+
+//----------------------------------------------------------------------------------------
+//
+//					ConstShifted_HGVolatilityParam
+//
+//----------------------------------------------------------------------------------------
+Shifted_HGVolatilityParam::LowerTriangularMatrix ConstShifted_HGVolatilityParam::createShiftLTM(const std::vector<double>& shiftConstVector)
+{
+	//unused first colum, first row is automatically null since it is lower triangular matrix
+	Shifted_HGVolatilityParam::LowerTriangularMatrix m(shiftConstVector.size(), shiftConstVector.size());
+
+	for(size_t k=0; k<m.size1();++k)
+	{
+		m(k,0)= 1.0e100;	
+	}
+
+	for(size_t i=1;i<m.size1();++i)
+	{
+		for(size_t j=1;j<=i;++j)
+		{
+			m(i,j) = shiftConstVector[i];
+		}	
+	} 
+	return m;
+}
+
+ConstShifted_HGVolatilityParam::ConstShifted_HGVolatilityParam( 
+	LMMTenorStructure_PTR  pLMMTenorStructure, 
+	const Shifted_HGVolatilityParam::ABCDParameter& h_abcdParameter,
+	const double g_constParam,
+	const double shift_constParam)
+	:Shifted_HGVolatilityParam(pLMMTenorStructure,h_abcdParameter,g_constParam,shift_constParam){}
+
+ConstShifted_HGVolatilityParam::ConstShifted_HGVolatilityParam(
+	LMMTenorStructure_PTR        pLMMTenorStructure, 
+	const Shifted_HGVolatilityParam::ABCDParameter& h_abcdParameter,
+	const LowerTriangularMatrix& g_matrix,
+	const std::vector<double>&   shiftConstVector)
+		:Shifted_HGVolatilityParam(pLMMTenorStructure,h_abcdParameter,g_matrix,createShiftLTM(shiftConstVector))
+{}
+
+
+
+//----------------------------------------------------------------------------------------
+//
+//					Shifted_HGVolatilityFunction
+//
+//----------------------------------------------------------------------------------------
+ConstShifted_HGVolatilityFunction::ConstShifted_HGVolatilityFunction(
+	LMMTenorStructure_PTR pLMMTenorStructure,
+	Correlation_PTR	   correlation,
+	ConstShifted_HGVolatilityParam_PTR pHGVolatilityParam)
+	: Shifted_HGVolatilityFunction(pLMMTenorStructure, correlation, pHGVolatilityParam)
+{
+	//assert(shiftConstVector.size() == pLMMTenorStructure_->get_nbLIBOR());
+}
+
+
+//
+//double HGVolatilityFunction::operator()(size_t indexLibor, size_t indexTime) const// operator(i,j) --return vol--> hij, i>=j
+//{
+//	//if(ifVolisUpToDate_ = false)  // YY: This is needed for calibration! 
+//	//	throw("Error Vol need to update before the calculation.");
+//
+//	if(indexLibor<indexTime)
+//		throw("Error, index relation error!");
+//
+//	if(indexLibor<1 || indexLibor>hPWConstFunc_.size1())  // size1 = horizon
+//		throw("Error, invalid indexLibor!");
+//
+//	if(indexTime <1)  // size1 = horizon
+//		throw("Error, invalid indexTime!");
+//
+//	return hPWConstFunc_(indexLibor, indexTime)*gPWConstFunc_(indexLibor, indexTime);
+//}
+
+//! \int_{T_i}^{T_j} varSigma_i(u)*varSigma_j(u)*rho_ij(u) du
+double ConstShifted_HGVolatilityFunction::covIntegral(size_t indexTime_i,
+												 size_t indexTime_j,
+												 size_t indexLibor_i,
+												 size_t indexLibor_j) const
+{
+	assert(indexLibor_i <= indexLibor_j);
+
+	size_t indexLiborMin   = indexLibor_i;
+	size_t indexTime_begin = std::min(indexTime_i,indexLiborMin);
+	size_t indexTime_end   = std::min(indexTime_j,indexLiborMin);
+
+	double covIntegralValue = 0.0;
+
+	//! Attention : only OK for piecewise const: g and h.
+	for(size_t indexTime=indexTime_begin; indexTime<indexTime_end; ++indexTime)
+	{
+		double deltaT = this->get_LMMTenorStructure()->get_deltaT(indexTime);
+		double correl_ij = correlation_->correlApprox(indexLibor_i,indexLibor_j, indexTime+1); // correl for period [indexTime,indexTime+1]
+		covIntegralValue += correl_ij * deltaT 
+						    * get_varSigma_timeIndexVersion(indexLibor_i,indexTime+1) * get_varSigma_timeIndexVersion(indexLibor_j,indexTime+1) ;
+	}	
+	return covIntegralValue;
+}
+

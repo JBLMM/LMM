@@ -1,0 +1,355 @@
+#include <cassert>
+#include <vector>
+
+#include <LMM/numeric/NumericalMethods.h>
+#include <LMM/pricer/LmmVanillaSwaptionApproxPricer_Rebonato.h>
+#include <boost/pointer_cast.hpp>
+#include <LMM/LmmModel/Shifted_HGVolatilityFunction.h>
+
+LmmVanillaSwaptionApproxPricer_Rebonato::LmmVanillaSwaptionApproxPricer_Rebonato(const Lmm_PTR& lmmModel)
+	: LmmVanillaSwapPricer(lmmModel->get_LMMTenorStructure() )
+	, lmm_(lmmModel)
+	, buffer_ZCAtExpensionInit(lmm_->get_horizon()+2)  // because terminal probla: Q^{N+1}
+	, buffer_omegaAtExpensionInit(lmm_->get_nbLIBOR()) // size depends on swaption
+	, buffer_anuityAtExpensionInit()
+	, buffer_liborAtExpensionInit(lmm_->get_nbLIBOR())
+	, constShifts_(lmm_->get_nbLIBOR(), -1.0e100)
+{
+	assert(lmm_->get_LMMTenorStructure()->get_tenorDate()[0] == 0.0);
+
+	//shifted_HGVolatilityFunction_ = boost::dynamic_pointer_cast<Shifted_HGVolatilityFunction_PTR>(lmm_->get_dispersionRef().get_VolatilityFunction_PTR());
+	//assert(shifted_HGVolatilityFunction_ != 0); // if ==0, cast is not succesful.
+	assert(lmm_->get_dispersionRef().get_VolatilityFunction_PTR()->isConstShift()); // This approximation works only for constant shift	
+	initializeConstShift();
+}
+
+
+void LmmVanillaSwaptionApproxPricer_Rebonato::initializeConstShift()   // for each libor: shift as a function of time should be const for Rebonato Approxi.
+{	
+	for(size_t i=0; i<constShifts_.size(); ++i)
+	{
+		constShifts_[i] = lmm_->get_dispersionRef().get_VolatilityFunction_PTR()->get_shift_timeIndexVersion(i,i);
+	}
+}
+
+
+void LmmVanillaSwaptionApproxPricer_Rebonato::update_VolatilityParam(VolatilityParam_PTR vol_param_ptr)
+{
+	lmm_->update_VolatilityParam(vol_param_ptr);
+}
+
+void LmmVanillaSwaptionApproxPricer_Rebonato::preCalculateLiborAtExpensionInit(const std::vector<double> & liborsInitValue, const VanillaSwaption& vanillaswaption) const
+{
+	assert(buffer_liborAtExpensionInit.size() == liborsInitValue.size());
+	for(size_t i=0; i<liborsInitValue.size(); ++i)
+		buffer_liborAtExpensionInit[i] = liborsInitValue[i];
+}
+
+void LmmVanillaSwaptionApproxPricer_Rebonato::preCalculateZCAtExpensionInit() const
+{
+	const std::vector<double>& deltaT = lmm_->get_LMMTenorStructure()->get_deltaT(); // it's the same as swap floating tenor, but need to check
+
+	buffer_ZCAtExpensionInit[0] = 1.0;
+	for(size_t i=1; i<buffer_ZCAtExpensionInit.size(); ++i)
+	{
+		size_t indexLibor = i-1;
+		// P(0,T_{i-1}) / P(0,T_i)   = 1 + (T_{i}-T_{i-1}) L(0,T_{i-1},T_i)
+		buffer_ZCAtExpensionInit[i] = buffer_ZCAtExpensionInit[i-1]/(1+deltaT[indexLibor]*buffer_liborAtExpensionInit[indexLibor]);
+	}
+}
+
+void LmmVanillaSwaptionApproxPricer_Rebonato::preCalculateAnuityAtExpensionInit(const VanillaSwaption& vanillaswaption) const
+{
+	const VanillaSwap& vanillaSwap = vanillaswaption.getUnderlyingSwap();
+	buffer_anuityAtExpensionInit = annuity0(vanillaSwap, buffer_liborAtExpensionInit);
+}
+
+void LmmVanillaSwaptionApproxPricer_Rebonato::preCalculateOmegaAtExpensionInit(const VanillaSwaption& vanillaswaption) const
+{
+	const VanillaSwap& vanillaSwap = vanillaswaption.getUnderlyingSwap();
+	const std::vector<LMM::Index>& floatingLegPaymentIndexSchedule = vanillaSwap.get_floatingLegPaymentIndexSchedule();
+	
+	for(size_t i=0; i<buffer_omegaAtExpensionInit.size(); ++i) // YY TODO: delete it latter, but for the moment, it's a precaution!
+	{
+		buffer_omegaAtExpensionInit[i] = -1.0e10;
+	}
+
+	for(size_t itr=0; itr<floatingLegPaymentIndexSchedule.size(); ++itr)
+	{
+		//! At time T_{i+1}, pay: delta_t[i]*L_i(T_i) 
+		size_t floatingLegPaymentIndex = floatingLegPaymentIndexSchedule[itr]; // = indexLibor + 1
+		size_t indexLibor_i = floatingLegPaymentIndex - 1;
+
+		double deltaT_i            = vanillaSwap.get_DeltaTFloatLeg(itr);  
+		buffer_omegaAtExpensionInit[indexLibor_i] = deltaT_i*buffer_ZCAtExpensionInit[floatingLegPaymentIndex] / buffer_anuityAtExpensionInit; 
+	}
+}
+
+void LmmVanillaSwaptionApproxPricer_Rebonato::preCalculateALL (const std::vector<double> & liborsInitValue, const VanillaSwaption& vanillaswaption) const
+{	
+	assert( lmm_->get_LMMTenorStructure()->get_tenorType() == vanillaswaption.get_lmmTenorStructureTenorType()); // this pricer can price this swaption
+
+	preCalculateLiborAtExpensionInit  (liborsInitValue, vanillaswaption);
+	preCalculateZCAtExpensionInit     ();
+	preCalculateAnuityAtExpensionInit (vanillaswaption);
+	preCalculateOmegaAtExpensionInit  (vanillaswaption);	
+}
+
+double LmmVanillaSwaptionApproxPricer_Rebonato::volBlack(const VanillaSwaption& vanillaswaption, const std::vector<double>& liborsInitValue) const
+{
+	//YY: not necessary, but still keep it for clarity
+	assert( lmm_->get_LMMTenorStructure()->get_tenorType() == vanillaswaption.get_lmmTenorStructureTenorType()); // this pricer can price this swaption
+
+	this->preCalculateALL(liborsInitValue, vanillaswaption);
+
+	const VanillaSwap& vanillaSwap = vanillaswaption.getUnderlyingSwap();
+	assert(lmm_->get_horizon() >= vanillaSwap.get_indexEnd()); //! if not cannot price it.
+
+	//! Rebonato Formula: YY TODO: can be simplified: use the symmetric ! 
+	LMM::Index swaptionIndexMaturity = vanillaswaption.get_indexMaturity();
+	double maturityTime  = lmm_->get_LMMTenorStructure()->get_tenorDate(swaptionIndexMaturity);
+	const std::vector<LMM::Index>& floatingLegPaymentIndexSchedule = vanillaSwap.get_floatingLegPaymentIndexSchedule();
+
+	double volSquare = 0.0;
+	for(size_t i=0; i<floatingLegPaymentIndexSchedule.size(); ++i)
+	{
+		size_t floatingLegPaymentIndex_i = floatingLegPaymentIndexSchedule[i];     // = i+1
+		size_t indexLibor_i = floatingLegPaymentIndex_i - 1;
+		for(size_t j=0; j<floatingLegPaymentIndexSchedule.size(); ++j)
+		{
+			size_t floatingLegPaymentIndex_j = floatingLegPaymentIndexSchedule[j]; // = j+1
+			size_t indexLibor_j = floatingLegPaymentIndex_j - 1;
+
+			double cumulated_covariance      = lmm_->get_cumulatedcovarianceTensor(swaptionIndexMaturity, indexLibor_i, indexLibor_j); //L_i, L_j 's integral of vol in [T_0,T_k], T_k =swaptionIndexMaturity
+			double phi_i = buffer_liborAtExpensionInit[indexLibor_i] + constShifts_[indexLibor_i]; 
+			double phi_j = buffer_liborAtExpensionInit[indexLibor_j] + constShifts_[indexLibor_j];
+
+			volSquare += buffer_omegaAtExpensionInit[indexLibor_i]*buffer_omegaAtExpensionInit[indexLibor_j]*phi_i*phi_j*cumulated_covariance; 
+		}
+	}
+
+	double swapRateT0    = swapRate_Analytical(vanillaSwap, liborsInitValue); // swapRate at time 0
+	double swapRateShift = swapRateApproxShift(vanillaswaption);
+	double shiftedSwapRateT0 = swapRateT0 + swapRateShift;
+
+	double shiftedVolBlack = std::sqrt(volSquare/maturityTime) / shiftedSwapRateT0;
+
+	if(swapRateShift == 0)
+		return shiftedVolBlack;
+	else // convert to volBlack 
+	{
+		double maturityTime  = lmm_->get_LMMTenorStructure()->get_tenorDate(swaptionIndexMaturity);
+		double strike        = vanillaSwap.get_strike();
+
+		//! YY: TODO: shiftedVol -> price -> blackVol: seems slow ... 
+		double price = NumericalMethods::Black_Price(swapRateT0+swapRateShift, strike+swapRateShift , shiftedVolBlack, maturityTime) ;
+		double blackVol   = NumericalMethods::Black_impliedVolatility(price, swapRateT0, strike, maturityTime);
+		return blackVol;
+	}
+}
+
+double LmmVanillaSwaptionApproxPricer_Rebonato::price(const VanillaSwaption & vanillaswaption, const std::vector<double> & liborsInitValue )const 
+{
+	//// not necessary, but still keep it for clarity
+	assert( lmm_->get_LMMTenorStructure()->get_tenorType() == vanillaswaption.get_lmmTenorStructureTenorType()); // this pricer can price this swaption
+	this->preCalculateALL(liborsInitValue, vanillaswaption);
+
+	const VanillaSwap & vanillaSwap = vanillaswaption.getUnderlyingSwap();
+	double swapRateT0        = swapRate_Analytical(vanillaSwap, liborsInitValue); 
+	double strike            = vanillaSwap.get_strike();
+
+	double annuity0          = this->annuity0(vanillaSwap, liborsInitValue);
+	double blackVolApprox    = this->volBlack(vanillaswaption, liborsInitValue);
+
+	LMM::Index swaptionIndexMaturity = vanillaswaption.get_indexMaturity();
+	double maturityTime = lmm_->get_LMMTenorStructure()->get_tenorDate(swaptionIndexMaturity);
+
+	double approxPrice = annuity0*NumericalMethods::Black_Price(swapRateT0, strike , blackVolApprox, maturityTime) ;
+	return approxPrice;
+}
+
+double LmmVanillaSwaptionApproxPricer_Rebonato::swapRateApproxShift(const VanillaSwaption& vanillaswaption) const
+{
+	const VanillaSwap& vanillaSwap = vanillaswaption.getUnderlyingSwap();
+	const std::vector<LMM::Index>& floatingLegPaymentIndexSchedule = vanillaSwap.get_floatingLegPaymentIndexSchedule();
+
+	double swapShiftValue = 0.0;
+	for(size_t i=0; i<floatingLegPaymentIndexSchedule.size(); ++i)
+	{
+		size_t floatingLegPaymentIndex_i = floatingLegPaymentIndexSchedule[i]; // = i+1
+		size_t indexLibor_i = floatingLegPaymentIndex_i - 1;
+		swapShiftValue += buffer_omegaAtExpensionInit[indexLibor_i]* constShifts_[indexLibor_i];
+	}
+	return swapShiftValue;
+};
+
+void LmmVanillaSwaptionApproxPricer_Rebonato::accumulateShiftedSwapRateAndStrike(
+	double& out_shifted_swapRate_T0,
+	double& out_shifted_strike,
+	const std::vector<double> & omega0         ,
+	//const std::vector<double> & libor_shifts   ,
+	const std::vector<size_t> & floatingIndices)const
+{
+	//-- Compute shifted swap rate and shifted strike 
+	double swap_shift = 0.0;
+
+	for (auto i : floatingIndices) // YY ????????????????????????????????????????????????? not sure of this code ... ???????????????????
+		swap_shift +=  omega0[i-1]*constShifts_[i-1]; //-- Check the index
+
+	out_shifted_swapRate_T0 += swap_shift;
+	out_shifted_strike += swap_shift;	
+}
+
+////YY: TODO: Wrong formula,  to check why 
+//double LmmVanillaSwaptionApproxPricer_Rebonato::computeRebonatoVolatility(
+//	const VanillaSwaption     & swaption    ,
+//	const std::vector<double> & libor       ,
+//	const std::vector<double> & libor_shift ,
+//	const std::vector<double> & omega       ,
+//	const double & shifted_swapRate_T0) const
+//{
+//	throw("Error: this function is buggy, should not be used, but should not replace it simply by the function volBalck(), because the shift is not actived."); 
+//
+//	size_t swaptionIndexMaturity = swaption.get_indexMaturity();
+//	const VanillaSwap & swap = swaption.getUnderlyingSwap() ;
+//	const std::vector<size_t> & floatingIndices = swap.get_floatingLegPaymentIndexSchedule()     ;
+//	const std::vector<double> & tenorDates      = lmm_->get_LMMTenorStructure()->get_tenorDate() ;
+//
+//	double vol_squared = 0.;
+//	// Adrien 2013  p.31 p.32
+//	for(auto floatIndex_i : floatingIndices) // = i+1
+//	{
+//		size_t indexLibor_i = floatIndex_i - 1;
+//		//size_t indexT_i = indexLibor_i;
+//
+//		for(auto floatIndex_j : floatingIndices )// = j+1
+//		{
+//			size_t indexLibor_j = floatIndex_j - 1;
+//			//size_t indexT_j     = indexLibor_j;
+//			// tensor_(k,i,j): L_i, L_j 's integral of vol in [T_{k-1},T_k]
+//
+//			const double& covInteg_T_ij = lmm_->get_cumulatedcovarianceTensor(swaptionIndexMaturity, indexLibor_i, indexLibor_j);
+//
+//			double omega_ij = omega[indexLibor_i]*omega[indexLibor_j];
+//			double libor_ij = (libor[indexLibor_i]+libor_shift[indexLibor_i])*(libor[indexLibor_j]+libor_shift[indexLibor_j]);
+//			vol_squared += omega_ij * libor_ij * covInteg_T_ij; 
+//		}
+//	}
+//
+//	vol_squared /= (shifted_swapRate_T0*shifted_swapRate_T0);	
+//
+//	return vol_squared;
+//}
+//
+
+//LmmApproxSwaptionPricer::SwaptionApproximation(const SwaptionApproximation& approximation)
+//{
+//	throw("Error: copy cosntructor no implememted");
+//	//swapStartDateIndex_ = approximation.swapStartDateIndex_;
+//	//swapEndDateIndex_ = approximation.swapEndDateIndex_;
+//	//vol_ = approximation.vol_;
+//	//tenorDates_ = approximation.tenorDates_;
+//}
+//
+
+//
+//
+//double LmmApproxSwaptionPricer::computeRebonatoVolatility(size_t swapStartDateIndex, 		                                        
+//	                                            double shifted_swapRate_T0,
+//	                                            double annuity_T0, 
+//												const std::vector<size_t>& floatingIndices,
+//												const std::vector<double>& bonds_T0,
+//												const std::vector<double>& libors_T0,
+//												const std::vector<double>& libor_shifts)
+//{
+//	double T_maturity = tenorDates_[swapStartDateIndex];
+//	//-- Compute vol under swap measure
+//	double vol_squared = 0.;
+//
+//	for each (size_t i in floatingIndices) 
+//	{
+//		double Ti = tenorDates_[i-1];
+//		for each (size_t j in floatingIndices)
+//		{
+//			double Tj = tenorDates_[j-1];
+//			double volTmp = vol_->covIntegral(i-1,j-1,Ti,Tj,0,T_maturity);
+//			vol_squared += omega0(i-1,annuity_T0,bonds_T0) * omega0(j-1,annuity_T0,bonds_T0) * (libors_T0[i-1]+libor_shifts[i-1]) * (libors_T0[j-1] +libor_shifts[j-1])* volTmp;
+//		}
+//	}
+//
+//	vol_squared /= (shifted_swapRate_T0*shifted_swapRate_T0);
+//
+//	return vol_squared;
+//}
+//
+//
+//
+////-- Squared volatility from Rebonato's approx is an out parameter
+//double LmmApproxSwaptionPricer::RebonatoApprox(size_t swapStartDateIndex,
+//	                                 double strike,
+//									 const std::vector<size_t>& floatingIndices,
+//	                                 double& out_vol_squared,
+//	                                 double swapRate_T0, 
+//									 double annuity_T0, 
+//									 const std::vector<double>& bonds_T0,
+//									 const std::vector<double>& libors_T0,
+//									 const std::vector<double>& libor_shifts)
+//{ 
+//	
+//	//double strike = (vanillaSwaption.getUnderlyingSwap()).get_strike();
+//	
+//	//-- In case swap starts at time 0
+//	if (swapStartDateIndex == 0) 
+//	{
+//		return annuity_T0*std::max(swapRate_T0-strike,0.);
+//	}
+//	else 
+//	{
+//		//-- Compute shifted swap rate and shifted strike 
+//		double swap_shift = 0.0;
+//		for each (size_t i in floatingIndices)
+//			swap_shift +=  omega0(i-1,annuity_T0,bonds_T0)*libor_shifts[i-1]; //-- Check the index
+//		
+//		double shifted_swapRate_T0 = swapRate_T0 + swap_shift;
+//		double shifted_strike = strike + swap_shift;
+//
+//		//-- Compute vol under swap measure
+//		double T_maturity = tenorDates_[swapStartDateIndex];
+//		out_vol_squared = 0.;
+//		for each (size_t i in floatingIndices) 
+//		{
+//			double Ti = tenorDates_[i-1];
+//			for each (size_t j in floatingIndices)
+//			{
+//				double Tj = tenorDates_[j-1];
+//				double volTmp = vol_->covIntegral(i-1,j-1,Ti,Tj,0,T_maturity);
+//				out_vol_squared += omega0(i-1,annuity_T0,bonds_T0) * omega0(j-1,annuity_T0,bonds_T0) * (libors_T0[i-1]+libor_shifts[i-1]) * (libors_T0[j-1] +libor_shifts[j-1])* volTmp;
+//			}
+//		}
+//
+//		out_vol_squared /= (shifted_swapRate_T0*shifted_swapRate_T0);
+//		
+//		//-- Apply Black formula
+//		NumericalMethods blackCapletPricer;
+//		double price = blackCapletPricer.BlackFormula(shifted_swapRate_T0,shifted_strike,out_vol_squared,annuity_T0);
+//
+//		return price;
+//	}
+//}
+//
+//
+
+//
+//double LmmApproxSwaptionPricer::AndersenApprox() {return 0.;}
+//
+//
+//const std::vector<double>& LmmApproxSwaptionPricer::getTenorDates() {return tenorDates_;}
+
+//double LmmApproxVanillaSwaptionPricer::Rebonato_SwaptionPrice( 
+//	const double& swapRate_T0, 
+//	const double& strike, 
+//	const double& vol_squared, 
+//	const double& annuity) const 
+//{
+//	return NumericalMethods::Black_Price(swapRate_T0,strike,vol_squared,annuity);
+//}

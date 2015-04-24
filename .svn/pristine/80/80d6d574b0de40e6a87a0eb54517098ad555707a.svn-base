@@ -1,0 +1,373 @@
+#include <cassert>
+
+#include <LMM/helper/GenericPath.h>
+#include <LMM/helper/Printer.h>
+#include <LMM/numeric/Interpolation.h>
+#include <LMM/calibration/TestHGVolatilityParam.h>
+#include <cmath>
+
+
+//==================  GABCD VOLATILITY PARAMETER ========================
+//=======================================================================
+TestHGVolatilityParam::TestHGVolatilityParam(LMMTenorStructure_PTR _pLMMTenorStructure, 
+											 double a, double b, double c, double d, 
+											 double g_constParam, double shift_constParam)
+	: ConstShifted_HGVolatilityParam(_pLMMTenorStructure,
+	                                 Shifted_HGVolatilityParam::ABCDParameter(a,b,c,d),
+									 g_constParam,
+									 shift_constParam){}
+
+QuantLib::Array TestHGVolatilityParam::get_ArrayFrom_G(const VectorOfMatrixIndices& indices_vector) const 
+{
+	// If the indices vector is empty, return fully param
+	// If not, return param corresponding to indices
+
+	size_t nbElement;
+	bool   isFull=false;
+	if( !indices_vector.empty() ){
+		nbElement = indices_vector.size();		
+	}
+	else{
+		isFull = true;
+		nbElement = (g_matrix_.size1()-1)*g_matrix_.size1()/2;
+	}
+
+	QuantLib::Array vol_g( nbElement );	
+
+	if(!isFull)
+	{
+		for(size_t i=0;i<indices_vector.size();++i)
+		{
+			vol_g[i]=g_matrix_(indices_vector[i].first,indices_vector[i].second);
+		}
+	}
+	else
+	{
+		size_t xIndex=0;
+		for(size_t i=1;i<g_matrix_.size1();++i)
+		{
+			for(size_t j=1;j<=i;++j)
+			{
+				vol_g[xIndex]=g_matrix_(i,j);
+				++xIndex;
+			}
+		}
+	}
+	return vol_g;
+}
+
+
+
+void TestHGVolatilityParam::reset_H_FromArray(const QuantLib::Array& x, const VectorOfMatrixIndices& indices_vector, bool needInterpolated)
+{
+	assert(x.size() == indices_vector.size() );
+
+	size_t nbVolToModify = x.size();
+	for(size_t i=0;i<nbVolToModify;++i)
+	{
+		const std::pair< size_t , size_t >& libor_time_indices = indices_vector[i];
+		size_t row_index = indices_vector[i].first;
+		size_t col_index = indices_vector[i].second;
+		assert(row_index >= col_index );  // vol matrix is a lower triangular matrix
+		assert(row_index > 0);            // vol matrix do not use the first row
+		assert(col_index > 0);            // vol matrix do not use the first column
+		h_matrix_(row_index,col_index) = x[i];
+	}
+} 
+
+void TestHGVolatilityParam::reset_G_FromArray(const QuantLib::Array& x, const VectorOfMatrixIndices& indices, bool needInterpolated)
+{
+	size_t nbVolToModify = x.size();
+	size_t full_nb_elements = (g_matrix_.size1()-1)*g_matrix_.size1()/2;
+
+	bool is_sparse_seting = (indices.size() == nbVolToModify);
+	bool is_full_setting  = (nbVolToModify ==  full_nb_elements && indices.empty() );
+
+	assert(is_sparse_seting || is_full_setting);
+
+	if(is_sparse_seting)
+	{
+		for(size_t i=0;i<nbVolToModify;++i)
+		{
+			const std::pair< size_t , size_t >& libor_time_indices = indices[i];
+			size_t row_index = indices[i].first;
+			size_t col_index = indices[i].second;
+			assert(row_index >= col_index );  // vol matrix is a lower triangular matrix
+			assert(row_index > 0);            // vol matrix do not use the first row
+			assert(col_index > 0);            // vol matrix do not use the first column
+			g_matrix_(row_index,col_index) = x[i];
+		}
+
+		bool isColumnSetting=true;
+		size_t col_index = indices[0].second;
+		for(size_t i=1;i<nbVolToModify;++i)
+		{
+			if( indices[i].second != col_index ) isColumnSetting=false;
+		}
+
+		if(needInterpolated)
+		{
+			size_t sparse_step = (g_matrix_.size1()-1) - indices.back().first;
+			
+			//if(isColumnSetting)
+			//	g_interpolate_column(indices);
+			//else
+				g_interpolate(sparse_step);
+		}
+	}
+	else if(is_full_setting)
+	{
+		size_t x_index = 0;
+		for(size_t i=1;i<g_matrix_.size1();++i){
+			for(size_t j=1;j<=i;++j)
+			{
+				g_matrix_(i,j)=x[x_index];
+				++x_index;
+			}
+		}
+	}
+}
+
+void TestHGVolatilityParam::g_interpolate(size_t sparse_step)
+{
+	/*  This method is not very saved, in the sens that suppose the indices are regular grid in the triangular matrix
+	*   TODO : check if this is a full regular grid
+	*/
+	//assert(indices.front().first == indices.front().second);
+	//assert(indices.back().first == indices.back().second)  ;
+	//assert(indices.front().first == g_matrix_.size1() - indices.back().first -1 )  ;
+
+	//size_t sparse_step = indices.front().first;
+	size_t nbSparseDiagonal = ( (g_matrix_.size1()-1) / sparse_step ) - 1 ;
+
+	numeric::Interpolation interpolation;
+
+	//! interpolate the interior of the sparse part, column by column
+	//  interpolate sparse column 
+	for(size_t jColNode = sparse_step; jColNode < g_matrix_.size2() ; jColNode +=sparse_step)
+	{
+		for(size_t iiRowNode = jColNode + sparse_step ; iiRowNode < g_matrix_.size1() ; iiRowNode +=sparse_step)
+		{
+			size_t iRowNode = iiRowNode - sparse_step;
+			if(iiRowNode + 1 != g_matrix_.size1() ) // check if this is not the last sparse column
+			{
+				for(size_t iRow = iRowNode+1; iRow<iiRowNode; ++ iRow)
+				{
+					g_matrix_( iRow , jColNode) = interpolation.columnIntepolation( g_matrix_(iRowNode,jColNode)
+						, g_matrix_(iiRowNode,jColNode)
+						, iRowNode
+						, iiRowNode
+						, iRow );
+				}
+			}		
+		}	
+	}
+
+
+	// interpolate columns between sparse column
+	size_t horizontal_bottom = g_matrix_.size1() - 1 - sparse_step;
+	for(size_t jjColNode = sparse_step+sparse_step; jjColNode < g_matrix_.size2()-1 ; jjColNode +=sparse_step)
+	{
+		size_t jColNode = jjColNode - sparse_step ;
+		for(size_t k_local_step = 1;k_local_step<sparse_step ; ++k_local_step )
+		{
+			size_t jCol = jColNode+k_local_step;
+			size_t column_top = jColNode+k_local_step;
+			size_t column_bottom =  ( g_matrix_.size2() - 1 ) - 2*sparse_step + k_local_step;
+			//interpolate diagonally when the diagonale part still exist
+			for(size_t iRow =column_top ; iRow <= column_bottom;++iRow )
+			{
+				size_t iRow_left_column = iRow - k_local_step ;
+				size_t iRow_right_column = iRow + (sparse_step - k_local_step) ;
+				g_matrix_( iRow , jCol) = interpolation.columnIntepolation( g_matrix_(iRow_left_column,jColNode)
+					, g_matrix_(iRow_right_column,jjColNode)
+					, jColNode
+					, jjColNode
+					, jCol );
+			}
+
+			// interpolate horizontally when the diagonal part does not exist
+
+			for(size_t iRow =column_bottom+1 ; iRow <= horizontal_bottom;++iRow )
+			{
+				g_matrix_( iRow , jCol) = interpolation.columnIntepolation( g_matrix_(iRow,jColNode)
+					, g_matrix_(iRow,jjColNode)
+					, jColNode
+					, jjColNode
+					, jCol );
+			}
+		}
+	}
+
+	// extrapolate the left margin and left-bottom corner
+	g_extrapolate_left_margin(sparse_step,sparse_step);
+
+	// extrapolate the low margin for every column
+	for(size_t iCol = sparse_step ;iCol<=g_matrix_.size2()-1-sparse_step;++iCol)
+	{
+		g_diagonal_extrapolate_low_margin(iCol,horizontal_bottom) ;
+	}	
+}
+
+void TestHGVolatilityParam::g_interpolate_column(const VectorOfMatrixIndices& indices_column)
+{
+	/* Note some properties of the g matrix
+	* - This is a lower triangular matrix, first column and first row are not used
+	*
+	*  - Every column has the same lower margin, this is important to determine the margin
+	*
+	* - This is the first used column if this column has the "longest lenght", or equivalenty
+	*   the column index = first row index of the column is the same that the margin 
+	*/
+	size_t nbPosition = indices_column.size();
+	size_t col_index = indices_column[0].second;
+	size_t last_row_index  = indices_column.back().first;
+	size_t last_row_index_g_matrix = g_matrix_.size1()-1;
+	size_t low_row_margin_colum = last_row_index_g_matrix - last_row_index;
+	size_t sparse_step = low_row_margin_colum ; //sparse step can be defined by the low margin row of the colum 
+
+
+	//g_vanish_right_of_column(col_index);
+
+	// check if this is the last "sparse" column
+	bool isLastSparseColumn=false; 
+	if( indices_column.size() == 1 ) isLastSparseColumn=true; // The last column has only one element
+
+	// check if this is the first "sparse" column
+	bool isFistSparseColumn=false;
+
+	size_t first_row_index = indices_column.front().first;
+	assert(first_row_index = col_index);
+
+	if( col_index == sparse_step ) isFistSparseColumn=true ; // The first colum has the identical row margin
+
+	// When the g matrix is small, that have only one "sparse" element, then extrapolate everything 
+	if(isLastSparseColumn && isFistSparseColumn) 
+	{
+		const double the_unique_value = g_matrix_(indices_column[0].first,indices_column[0].second);
+		for(size_t i=1;i<g_matrix_.size1();++i)
+			for(size_t j=1;j<=i;++j)
+				g_matrix_(i,j) = the_unique_value ;
+	}
+	else
+	{
+		numeric::Interpolation interpolation;
+
+		//Interpolate of the present colum (its interior)
+		for(size_t i=0;i<nbPosition-1;++i)//iterate through the indices_column
+		{
+			size_t low_row = indices_column[i].first;
+			size_t high_row = indices_column[i+1].first;
+			assert(low_row < high_row);
+
+			const double & low_value  = g_matrix_( low_row  , col_index);
+			const double & high_value = g_matrix_( high_row , col_index);
+
+			for(size_t iRow = low_row+1 ; iRow<high_row;++iRow)
+			{
+				g_matrix_( iRow , col_index) = interpolation.columnIntepolation(low_value,high_value,low_row,high_row,iRow);
+			}			
+		}
+
+		// extrapolate left margin and left-bottom corner when it is the first colum
+		if(isFistSparseColumn)
+		{
+			// extrapolate all precedent columns (left margin)
+			// extrapolate constant in the diagonale direction
+
+			g_extrapolate_left_margin(col_index,sparse_step);
+
+		}
+		else // interpolate when it isn't the first colum
+		{
+			size_t anterior_col_index = col_index - sparse_step ;
+
+			// interpolate for the anterior columns and the "diagonale segment"
+			for(size_t jCol = anterior_col_index+1; jCol<col_index;++jCol)
+			{
+				// interpolate for the "diagonale segment"
+				g_matrix_(jCol,jCol)= interpolation.columnIntepolation(g_matrix_(anterior_col_index,anterior_col_index),g_matrix_(col_index,col_index),anterior_col_index,col_index,jCol);
+
+				// interpolate for the anterior columns
+				for(size_t iRow = first_row_index; iRow<=last_row_index;++iRow)
+				{
+					g_matrix_(iRow,jCol)= interpolation.columnIntepolation(g_matrix_(iRow,anterior_col_index),g_matrix_(iRow,col_index),anterior_col_index,col_index,jCol);
+				}	
+			}
+
+			// if sparses step >=3, the top corner triangle need to be interpolated
+			if(sparse_step>2)
+			{
+				g_interpolate_sub_diagnal_block(anterior_col_index, col_index);
+			}
+		}
+
+		// extrapolate the low margin for every column
+		for(size_t iCol=col_index-sparse_step+1;iCol<=col_index;++iCol)
+		{
+			g_diagonal_extrapolate_low_margin(iCol,last_row_index) ;
+		}
+	}
+}
+
+void TestHGVolatilityParam::g_diagonal_extrapolate_low_margin(size_t col_index, size_t row_offset)
+{
+	for(size_t iRow = row_offset+1; iRow < g_matrix_.size1() ; ++iRow)
+	{
+		size_t margin_step = iRow - row_offset;
+		size_t jCol = col_index + margin_step ;
+		g_matrix_(iRow,jCol)=g_matrix_(iRow-1,jCol-1) ;		
+	}
+}
+
+void TestHGVolatilityParam::g_extrapolate_left_margin(size_t col_index, size_t sparse_step)
+{
+	size_t first_row_index = sparse_step;
+	size_t last_row_index = g_matrix_.size1()-1-sparse_step;
+
+	// constant extrapolate horizontally the left margin part
+	for(size_t jCol=col_index-1;jCol>0;--jCol)
+	{
+		for(size_t iRow=first_row_index;iRow<=last_row_index;++iRow )
+		{
+				g_matrix_(iRow,jCol) = g_matrix_(iRow,col_index);
+		}
+	}
+
+	// constant extrappolate the left-top corner
+	for(size_t iTopMargin=sparse_step-1;iTopMargin>0;--iTopMargin)
+	{
+		for(size_t jTopMargin=iTopMargin;jTopMargin>0;--jTopMargin)
+		{
+			g_matrix_(iTopMargin,jTopMargin) = g_matrix_(sparse_step,sparse_step);
+		}
+	}
+
+	// constant extrappolate the left-bottom corner
+	for(size_t iBottomMargin=0;iBottomMargin<sparse_step;++iBottomMargin)
+	{
+		size_t iRowMargin = last_row_index + iBottomMargin + 1;
+		for(size_t jColMargin=1;jColMargin<=iBottomMargin+2;++jColMargin)
+		{
+			g_matrix_(iRowMargin,jColMargin) = g_matrix_(last_row_index,col_index) ;
+		}
+	}
+}
+
+
+void TestHGVolatilityParam::g_interpolate_sub_diagnal_block(size_t low_k, size_t high_k)
+{
+	assert(low_k+2 < high_k);//call this function only the diagonal block has strict interior 
+	throw("TestHGVolatilityParam::g_interpolate_sub_diagnal_block(size_t low_k, size_t high_k)   method not yet implemented");
+}
+
+void TestHGVolatilityParam::g_vanish_right_of_column(size_t column_index)
+{
+	for(size_t jCol=column_index+1;jCol<g_matrix_.size2();++jCol)
+	{
+		for(size_t iRow=jCol;iRow<g_matrix_.size1();++iRow)
+		{
+			g_matrix_(iRow,jCol) = 0;
+		}		
+	}
+}

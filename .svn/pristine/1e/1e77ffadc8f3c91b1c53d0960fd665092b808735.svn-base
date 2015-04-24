@@ -1,0 +1,75 @@
+#include <LMM/pricer/McLmmBermudanSwaptionPricer.h>
+#include <boost/pointer_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <LMM/pricer/McLmmVanillaSwapPricer.h>
+
+void McLmmBermudanSwaptionPricer::preparePricerForInstrument(CallableOption_PTR callableOption_ptr)
+{
+	McLmmCallableOptionPricer::preparePricerForInstrument(callableOption_ptr); // call base class's version
+
+	bermudanSwaption_ptr_ = boost::dynamic_pointer_cast<BermudanSwaption>(callableOption_ptr);
+	assert(bermudanSwaption_ptr_!=0);
+
+	initialize_EV();
+	initialize_Basis();
+}
+
+void McLmmBermudanSwaptionPricer::initialize_EV()
+{
+	evsAtCallableDates_.clear();
+
+	const std::vector<LMM::Index>& callableDatesIndex = bermudanSwaption_ptr_->get_callableDatesIndex_Ref();
+	for(size_t i=0; i<callableDatesIndex.size(); ++i)
+	{
+		std::vector<EV_PTR> evs_ptr;
+		evs_ptr.reserve(3);
+
+		LMM::Index callableIndex = callableDatesIndex[i];
+
+		//! swapRate
+		const VanillaSwap& vSwap = bermudanSwaption_ptr_->get_livingSwapAtCallableDates_Ref()[i];
+		McLmmVanillaSwapPricer_PTR mcLmmVSwap_Pricer_ptr =  McLmmVanillaSwapPricer_PTR(new McLmmVanillaSwapPricer(mcLmm_));
+		EV_VanillaSwapRate_PTR ev_swap_ptr = EV_VanillaSwapRate_PTR(new EV_VanillaSwapRate(vSwap, mcLmmVSwap_Pricer_ptr));
+		evs_ptr.push_back(ev_swap_ptr);
+
+		//! liborRate
+		EV_LiborRate_PTR ev_frontLibor_ptr = EV_LiborRate_PTR(new EV_LiborRate(callableIndex));
+		evs_ptr.push_back(ev_frontLibor_ptr);
+
+		//! swap payoff: only for call not put !!!!! BUG !!!!!
+	    //YY TODO: OptionType::OptionType vanillaSwaptionType_;  
+		//YY TODO: this should be moved to swap class, for this reason cannot treat the case: CALL/put, but only call 
+		double strike = bermudanSwaption_ptr_->get_vanillaSwap_Ref().get_strike();
+		EV_payoffCall_PTR ev_payoffCall_ptr = EV_payoffCall_PTR(new EV_payoffCall(ev_swap_ptr,strike)); //YY ?? better to creat its own ev_Swap_PTR ???
+		evs_ptr.push_back(ev_payoffCall_ptr);
+
+		evsAtCallableDates_.push_back(evs_ptr);
+	}
+}
+void McLmmBermudanSwaptionPricer::initialize_Basis()
+{
+	basisAtCallableDates_.clear();
+
+	const std::vector<LMM::Index>& callableDatesIndex = bermudanSwaption_ptr_->get_callableDatesIndex_Ref();
+	for(size_t i=0; i<callableDatesIndex.size(); ++i)
+	{
+		PolynormialRegressionBasis_PTR polynomialBasis_ptr = PolynormialRegressionBasis_PTR(new PolynormialRegressionBasis(basisMonomialMaxOrder_, basisCorssnomialMaxOrder_));
+		basisAtCallableDates_.push_back(polynomialBasis_ptr);
+	}
+}
+
+
+void McLmmBermudanSwaptionPricer::bwdRegression()
+{
+	throw("TO implement" );
+}
+
+double McLmmBermudanSwaptionPricer::continuousValue(LMM::Index callableTimeIndex)
+{
+	throw("TO implement" );
+}
+
+double McLmmBermudanSwaptionPricer::intrinsicValue(LMM::Index callableTimeIndex)
+{
+	throw("TO implement" );
+}

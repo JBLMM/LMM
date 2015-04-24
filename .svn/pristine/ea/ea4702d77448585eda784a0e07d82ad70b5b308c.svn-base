@@ -1,0 +1,162 @@
+#include <vector>
+
+#include <LMM/helper/GenericPath.h>
+#include <LMM/helper/Printer.h>
+
+#include <LMM/LmmModel/GMatrixMapping.h>
+#include <LMM/LmmModel/ConstShifted_HGVolatilityFunction.h>
+#include <LMM/pricer/LmmVanillaSwaptionApproxPricer_Rebonato.h>
+#include <LMM/calibration/TestHGVolatilityParam.h>
+
+void Initiate_UpperAntiTriangularDoubleMatrix(UpperAntiTriangularDoubleMatrix& matrix, double increment);
+void Initiate_LowerTriangularDoubleMatrix(UpperAntiTriangularDoubleMatrix& matrix, double increment);
+void PrintOutMatrix(const UpperAntiTriangularDoubleMatrix& matrix);
+UpperTriangleVanillaSwaptionQuotes_ConstPTR create_UpperTriangleVanillaSwaptionQuotes(LMMTenorStructure_PTR, const Tenor& fixedtenor, const Tenor& floattenor);
+
+void test_GMatrixMapping()
+{
+	std::cout<<"hello test_GMatrixMapping() "<<std::endl;
+
+
+	size_t nbYear = 5;
+	Tenor tenorfixedleg = Tenor::_1YR;
+	Tenor tenorfloatleg = Tenor::_6M;
+
+	LMMTenorStructure_PTR pLmmTenorStructure( new LMMTenorStructure(tenorfloatleg, nbYear) );
+
+	size_t fixedfloatRatio = tenorfixedleg.ratioTo(tenorfloatleg);
+	size_t horizon = pLmmTenorStructure->get_horizon() ;
+
+	size_t        g_matrix_size = GMatrixMapping::get_FullSizeFromNbYear(nbYear,fixedfloatRatio );
+	size_t delegate_matrix_size = GMatrixMapping::get_DelegateSizeFromHorizon(horizon,fixedfloatRatio );
+
+	UpperAntiTriangularDoubleMatrix empty_delegate_matrix(delegate_matrix_size,delegate_matrix_size);
+	UpperAntiTriangularDoubleMatrix empty_g_matrix(g_matrix_size,g_matrix_size);
+
+	Initiate_UpperAntiTriangularDoubleMatrix(empty_delegate_matrix,-1000);
+	Initiate_LowerTriangularDoubleMatrix(empty_g_matrix,0.001);
+
+	std::cout<<"=====  G Transformed MATRIX  ======="<<std::endl;
+	PrintOutMatrix(empty_g_matrix);
+	std::cout<<"=====  DELEGATE MATRIX  ======="<<std::endl;
+	PrintOutMatrix(empty_delegate_matrix);
+
+	UpperTriangleVanillaSwaptionQuotes_ConstPTR atm_swaption_implied_vol_ptr = create_UpperTriangleVanillaSwaptionQuotes(pLmmTenorStructure, tenorfixedleg, tenorfloatleg);
+
+	GMatrixMapping gMatrixMapping(
+		  g_matrix_size
+		, empty_delegate_matrix
+		, atm_swaption_implied_vol_ptr->get_indexMapping_gDelegate_gTransformed() );
+
+	gMatrixMapping.print("test_GMatrixMapping.csv");
+
+	QuantLib::Array x = gMatrixMapping.get_DelegateArray();
+
+	std::cout<<std::endl<<std::endl<<x<<std::endl;
+}
+
+
+void Initiate_UpperAntiTriangularDoubleMatrix(UpperAntiTriangularDoubleMatrix& matrix, double increment)
+{
+	size_t nbRow = matrix.size1();
+	size_t nbCol = matrix.size2();
+	assert(nbRow == nbCol);
+	for(size_t k=0;k<nbRow;++k) // empty first row and first column
+	{
+		matrix(0,k) = -1000000000;
+		matrix(k,0) = -1000000000;
+	}
+
+	double value_counter = increment;
+
+	for(size_t i=1;i<nbRow;++i)
+	{
+		for(size_t j=1;j<nbRow-i;++j)
+		{
+			matrix(i,j)=value_counter;
+			value_counter+=increment;
+		}
+	}
+}
+
+void Initiate_LowerTriangularDoubleMatrix(UpperAntiTriangularDoubleMatrix& matrix, double increment)
+{
+	size_t nbRow = matrix.size1();
+	size_t nbCol = matrix.size2();
+	assert(nbRow == nbCol);
+	for(size_t k=0;k<nbRow;++k) // empty first column
+	{
+		matrix(k,0) = -1000000000;
+	}
+
+	double value_counter = increment;
+
+	for(size_t i=1;i<nbRow;++i)
+	{
+		for(size_t j=1;j<=i;++j)
+		{
+			matrix(i,j)=value_counter;
+			value_counter+=increment;
+		}
+	}
+}
+
+
+UpperTriangleVanillaSwaptionQuotes_ConstPTR create_UpperTriangleVanillaSwaptionQuotes(LMMTenorStructure_PTR pLMMTenorStructure, const Tenor& tenorfixedleg, const Tenor& tenorfloatleg)
+{
+	/// Creation of Rebonato Approx ==================================
+	
+	size_t nbFactor       = 3; // need to test nbFactor  = 3, and nbFactor = 
+	size_t correlFullRank = pLMMTenorStructure->get_horizon()+1;
+	size_t correlReducedRank = nbFactor;
+	CorrelationReductionType::CorrelationReductionType correlReductionType = CorrelationReductionType::PCA;
+	double correlAlpha = 0.0;
+	double correlBeta  = 0.1;
+	Correlation_PTR correlation(new XY_beta_Correlation(correlFullRank,correlReducedRank, correlReductionType,correlAlpha,correlBeta));
+	correlation->calculate(); // for print.
+
+	double a=0.22,b=0.4,c=0.6,d=0.15;
+	double g_constParam = 1.;
+	double shift_constParam = 0.0;
+
+	ConstShifted_HGVolatilityParam_PTR pConstShifted_HGVolatilityParam(new TestHGVolatilityParam(pLMMTenorStructure, a,b,c,d,g_constParam, shift_constParam));
+
+
+	Shifted_HGVolatilityFunction_PTR pVolatilityFunction (new ConstShifted_HGVolatilityFunction(pLMMTenorStructure, correlation, pConstShifted_HGVolatilityParam)); 
+
+	//! Dispersion
+	Dispersion dispersion(pVolatilityFunction);
+
+	Lmm_PTR lmm_ptr(new Lmm(dispersion) );
+
+	LmmVanillaSwaptionApproxPricer_Rebonato_PTR pLmmApproxVanillaSwaptionPricer(new LmmVanillaSwaptionApproxPricer_Rebonato(lmm_ptr));	
+	/// End of creation of Rebonato Approx ==================================
+
+
+	LiborQuotes_ConstPTR libor_quote_ptr = LiborQuotes::create_LiborInit(pLMMTenorStructure, 0.02);
+	
+	UpperTriangleVanillaSwaptionQuotes_ConstPTR atm_swaption_implied_vol_ptr = UpperTriangleVanillaSwaptionQuotes::create_ATMSwaptionImpliedVol(
+		libor_quote_ptr,
+		tenorfixedleg,
+		tenorfloatleg,
+		pLmmApproxVanillaSwaptionPricer
+		);
+
+
+
+	return atm_swaption_implied_vol_ptr;
+}
+
+void PrintOutMatrix(const UpperAntiTriangularDoubleMatrix& matrix)
+{
+	for(size_t i=0;i<matrix.size1();++i)
+	{
+		for(size_t j=0;j<matrix.size2();++j)
+		{
+			std::cout<<matrix(i,j)<<"	";
+		}
+		std::cout<<std::endl;
+	}
+
+	std::cout<<std::endl<<std::endl;
+}

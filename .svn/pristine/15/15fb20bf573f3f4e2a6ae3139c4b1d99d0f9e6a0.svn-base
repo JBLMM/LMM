@@ -1,0 +1,303 @@
+#include <cassert>
+
+#include <LMM/helper/GenericPath.h>
+#include <LMM/helper/Printer.h>
+#include <LMM/LmmModel/ConstShifted_HGVolatilityFunction.h>
+#include <cmath>
+#include <boost/pointer_cast.hpp>
+
+
+///////////////////////    HG VOLATILITY PARAM     ////////////////////////
+
+size_t Shifted_HGVolatilityParam::get_horizon() const { return pLMMTenorStructure_->get_horizon(); }
+
+unsigned int Shifted_HGVolatilityParam::get_nbCalibrateParam() const 
+{
+	// return the same number of swaption in the swaption matrix
+	size_t N = pLMMTenorStructure_->get_horizon(); //N = horizon = nbLBR-1
+	return (N+1)*N / 2  ; 
+} 
+
+void Shifted_HGVolatilityParam::reset_FromArray(const QuantLib::Array& x)
+{
+	throw("HGVolatilityParam::reset_FromArray NOT TO BE CALLED, use reset_G_FromArray with indices specifications instead, this method allow also reset fully g matrix");
+	// fully fill values from x vector to g matrix
+	QL_REQUIRE( x. size ()== this->get_nbCalibrateParam() , "HGABCD Calibratable Volatility Parameters is ( [nbLBR-1]x[nbLBR]/2 )-dim");
+
+	size_t index_x = 0;
+	size_t nbLBR = pLMMTenorStructure_->get_nbLIBOR();
+	for(size_t iLibor=1 ; iLibor< nbLBR ; ++iLibor)
+	{
+		for(size_t jTime=1 ; jTime<=iLibor ; ++jTime)
+		{
+			g_matrix_(iLibor,jTime) = x[index_x];
+			++index_x;
+		}		
+	}
+}
+
+void Shifted_HGVolatilityParam::write_to_stream(std::ostream & out) const
+{
+	out<<"g ;"<<std::endl;
+	for(size_t i=0;i<g_matrix_.size1();++i)
+	{
+		for(size_t j=0;j<g_matrix_.size2();++j)
+		{
+			out<< g_matrix_(i,j) <<" ; ";
+		}	out<<std::endl;
+	}
+
+	out<<"h ;"<<std::endl;
+	for(size_t i=0;i<h_matrix_.size1();++i)
+	{
+		for(size_t j=0;j<h_matrix_.size2();++j)
+		{
+			out<< h_matrix_(i,j) <<" ; ";
+		}	out<<std::endl;
+	}
+}
+
+//void HGVolatilityParam::init_h_matrix(double a,double b,double c,double d)
+//{
+//	//unused first colum, first row is automatically null since it is lower triangular matrix
+//	for(size_t k=0;k<h_matrix_.size1();++k)
+//	{
+//		h_matrix_(k,0)= 1.0e100;		
+//	}
+//
+//	for(size_t indexLibor=1;indexLibor<h_matrix_.size1();++indexLibor)
+//	{
+//		const double&  T_i = pLMMTenorStructure_->get_tenorDate(indexLibor);
+//
+//		for(size_t indexTime=1;indexTime<=indexLibor;++indexTime)
+//		{
+//			const double& T_j   = pLMMTenorStructure_->get_tenorDate(indexTime);
+//
+//			double tau = T_i - T_j;
+//
+//			////// [a+b.tau]e^{-c.tau} + d // http://quantlib.sourcearchive.com/documentation/1.1-2build1/classQuantLib_1_1AbcdFunction.html
+//			
+//			// test use of self computing avoiding exception a+d<0 in abcd QuantLib
+//			//double a_plus_btau = _a + _b*tau  ;
+//			//double c_tau       = -_c*tau      ;
+//			//double exponentcd  = exp(c_tau)   ;
+//			//double h_value = a_plus_btau*exponentcd + _d ;
+//			
+//			//double h_value = (a_+b_*tau)*exp(-c_*tau) + d_; 
+//						
+//			QuantLib::AbcdFunction  abcdFunction_(a,b,c,d); 
+//			double h_value = abcdFunction_(tau); 
+//			
+//			h_matrix_(indexLibor,indexTime) = h_value ;
+//		}	
+//	}
+//}
+
+void Shifted_HGVolatilityParam::init_h_matrix(ABCDParameter h_abcdParameter)
+{
+	double a = h_abcdParameter.a_;
+	double b = h_abcdParameter.b_;
+	double c = h_abcdParameter.c_;
+	double d = h_abcdParameter.d_;
+
+	//unused first colum, first row is automatically null since it is lower triangular matrix
+	for(size_t k=0;k<h_matrix_.size1();++k)
+	{
+		h_matrix_(k,0)= 1.0e100;	
+	}
+
+	for(size_t indexLibor=1;indexLibor<h_matrix_.size1();++indexLibor)
+	{
+		const double&  T_i = pLMMTenorStructure_->get_tenorDate(indexLibor);
+
+		for(size_t indexTime=1;indexTime<=indexLibor;++indexTime)
+		{
+			const double& T_j   = pLMMTenorStructure_->get_tenorDate(indexTime);
+
+			double tau = T_i - T_j;
+
+			////// [a+b.tau]e^{-c.tau} + d // http://quantlib.sourcearchive.com/documentation/1.1-2build1/classQuantLib_1_1AbcdFunction.html
+
+			// test use of self computing avoiding exception a+d<0 in abcd QuantLib
+			//double a_plus_btau = _a + _b*tau  ;
+			//double c_tau       = -_c*tau      ;
+			//double exponentcd  = exp(c_tau)   ;
+			//double h_value = a_plus_btau*exponentcd + _d ;
+
+			//double h_value = (a_+b_*tau)*exp(-c_*tau) + d_; 
+
+			QuantLib::AbcdFunction  abcdFunction_(a,b,c,d); 
+			double h_value = abcdFunction_(tau); 
+
+			h_matrix_(indexLibor,indexTime) = h_value ;
+		}	
+	}
+}
+
+void Shifted_HGVolatilityParam::init_g_matrix(double g_constParameter)
+{
+	//unused first colum, first row is automatically null since it is lower triangular matrix
+	for(size_t k=0;k<h_matrix_.size1();++k)
+	{
+		g_matrix_(k,0)= 1.0e100;	
+	}
+
+	for(size_t i=1;i<g_matrix_.size1();++i)
+	{
+		for(size_t j=1;j<=i;++j)
+		{
+			g_matrix_(i,j) =  g_constParameter;
+		}	
+	}
+}
+
+void Shifted_HGVolatilityParam::init_shift_matrix(double shift_constParameter)
+{
+	//unused first colum, first row is automatically null since it is lower triangular matrix
+	for(size_t k=0;k<h_matrix_.size1();++k)
+	{
+		shift_matrix_(k,0)= 1.0e100;	
+	}
+
+	for(size_t i=1;i<shift_matrix_.size1();++i)
+	{
+		for(size_t j=1;j<=i;++j)
+		{
+			shift_matrix_(i,j) = shift_constParameter;
+		}	
+	}
+}
+	
+
+///////////////////////    END OF HG VOLATILITY PARAM     //////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+Shifted_HGVolatilityFunction::Shifted_HGVolatilityFunction(
+	LMMTenorStructure_PTR pLMMTenorStructure,
+	Correlation_PTR       pCorrelation,
+	Shifted_HGVolatilityParam_PTR pShifted_HGVolatilityParam)       // horizon = N, total number of libor: L_k, k = [0,N]
+	: VolatilityFunction(pLMMTenorStructure, pCorrelation)
+	, pShifted_HGVolatilityParam_(pShifted_HGVolatilityParam)
+{
+	
+}
+
+//double HGVolatilityFunction::covIntegral(size_t indexTime_i,
+//										 size_t indexTime_j,
+//										 size_t indexLibor_i,
+//										 size_t indexLibor_j) const
+//{
+//	assert(indexLibor_i <= indexLibor_j);
+//
+//	size_t indexLiborMin   = indexLibor_i;
+//	size_t indexTime_begin = std::min(indexTime_i,indexLiborMin);
+//	size_t indexTime_end   = std::min(indexTime_j,indexLiborMin);
+//
+//	double covIntegralValue = 0.0;
+//
+//	//! Attention : only OK for piecewise const: g and h.
+//	for(size_t indexTime=indexTime_begin; indexTime<indexTime_end; ++indexTime)
+//	{
+//		double deltaT = this->get_LMMTenorStructure()->get_deltaT(indexTime);
+//		double correl = correlation_->correlApprox(indexLibor_i,indexLibor_j, indexTime+1); // correl for period [indexTime,indexTime+1]
+//		covIntegralValue += correl * this->operator()(indexLibor_i,indexTime+1) * this->operator()(indexLibor_j,indexTime+1) * deltaT;
+//	}	
+//	return covIntegralValue;
+//}
+
+
+
+double Shifted_HGVolatilityFunction::get_varSigma_timeIndexVersion(LMM::Index indexLibor, LMM::Index indexTime) const// operator(i,j) --return vol--> hij*g_ij, i>=j
+{
+	//if(ifVolisUpToDate_ = false)  // YY: This is needed for calibration! 
+	//	throw("Error Vol need to update before the calculation.");
+
+	if(indexLibor<indexTime)
+		throw("Error, index relation error!");
+
+	if(indexLibor<1 || indexLibor>pLMMTenorStructure_->get_horizon() )  // size1 = horizon
+		throw("Error, invalid indexLibor!");
+
+	if(indexTime <1)  // size1 = horizon
+		throw("Error, invalid indexTime!");
+
+	return pShifted_HGVolatilityParam_->h(indexLibor, indexTime)*pShifted_HGVolatilityParam_->g(indexLibor, indexTime);
+}
+
+double Shifted_HGVolatilityFunction::get_varSigma_timeContinuousVersion(LMM::Index liborIndex, double t) const
+{
+	const std::vector<double>& tenor_dates = pLMMTenorStructure_->get_tenorDate();
+
+	assert(liborIndex < pLMMTenorStructure_->get_nbLIBOR() );
+	assert(t <= tenor_dates[liborIndex] ); // vol_i function die after time T_i 
+	
+	//! YY TODO:        not efficient, improve the algorithm latter.
+	//  YY TOCorriger:  another problme is the rounding error problem, which may decalyer the index by 1 !!!    
+
+	//! ChiThan: search the nearest time index after t
+	if(t == 0.0)
+		return get_varSigma_timeIndexVersion(liborIndex,1);
+
+	size_t timeIndex=0;
+	while (t> tenor_dates[timeIndex])
+	{
+		++timeIndex;
+	}
+	
+	//return gPWConstFunc_(liborIndex,timeIndex)*hPWConstFunc_(liborIndex,timeIndex);
+	return get_varSigma_timeIndexVersion(liborIndex,timeIndex) ;
+}
+
+void Shifted_HGVolatilityFunction::update_VolatilityParam(VolatilityParam_PTR vol_param_ptr)
+{
+        //! YY TODO: try-catch for a simple cast test, too complicated, to simplify it latter.
+        try
+        {
+            pShifted_HGVolatilityParam_ = boost::dynamic_pointer_cast<ConstShifted_HGVolatilityParam>(vol_param_ptr);
+        }
+        catch(std::bad_cast& exp)
+        {
+                std::cout<<LMM::ERROR_MSG<< " HGVolatilityFunction::reset_VolatilityParam : a HGVolatilityParam_PTR is expected"<<std::endl;
+        }
+}
+
+void Shifted_HGVolatilityFunction::print(const std::string& filename) const  // OK: test passed.
+{
+	//std::string fileName = "HGVolatilityFunction.csv";
+	std::string path = LMM::get_output_path() + filename;
+
+	std::vector<PrintElement_PTR> elements_print;
+
+	//! h,g,hgMatrix
+	typedef boost::numeric::ublas::matrix<double> matrix;
+	size_t horizon_ = this->get_LMMTenorStructure()->get_horizon();
+	matrix hMatrix(horizon_+1, horizon_+1);
+	matrix gMatrix(horizon_+1, horizon_+1);
+	matrix hgMatrix(horizon_+1, horizon_+1);
+
+	for(size_t indexLibor = 1; indexLibor<=horizon_; ++indexLibor)
+	{
+		for(size_t indexT = 1; indexT<=indexLibor; ++indexT)
+		{
+			hMatrix(indexLibor,indexT)  = pShifted_HGVolatilityParam_->h(indexLibor,indexT);
+			gMatrix(indexLibor,indexT)  = pShifted_HGVolatilityParam_->g(indexLibor,indexT);
+			hgMatrix(indexLibor,indexT) = get_varSigma_timeIndexVersion(indexLibor,indexT);
+		}
+	}
+
+	//seems a problem of shared ptr polymorphisms ... 
+	//PrintElement_PTR tenorType_print    = PrintElement_PTR(new ScalarPrintElement<std::string>("tenorType", tenorType_));
+	//PrintElement_PTR horizon_print      = PrintElement_PTR(new ScalarPrintElement<LMM::Index>("horizon", horizon_));
+	PrintElement_PTR hMatrix_print   = PrintElement_PTR(new MatrixPrintElement<matrix>("hMatrix",  hMatrix));
+	PrintElement_PTR gMatrix_print   = PrintElement_PTR(new MatrixPrintElement<matrix>("gMatrix",  gMatrix));
+	PrintElement_PTR hgMatrix_print  = PrintElement_PTR(new MatrixPrintElement<matrix>("hgMatrix", hgMatrix));
+
+
+	//elements_print.push_back(tenorType_print);
+	elements_print.push_back(hMatrix_print);
+	elements_print.push_back(gMatrix_print);
+	elements_print.push_back(hgMatrix_print);
+
+	Printer printer(path, elements_print);
+	printer.print();
+}

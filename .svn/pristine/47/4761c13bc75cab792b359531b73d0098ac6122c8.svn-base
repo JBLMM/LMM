@@ -1,0 +1,93 @@
+//#pragma once
+//
+//#include <boost/numeric/ublas/triangular.hpp>  // Triangular matrix
+//#include <boost/numeric/ublas/io.hpp>
+//
+//#include <LMM/instrument/VanillaSwaption.h>
+//
+//typedef boost::numeric::ublas::triangular_matrix<std::pair<LMM::Index,LMM::Index>, boost::numeric::ublas::upper> UpperTriangleIndexPairMatrix; // UTIPM
+//typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::upper> UpperTriangleDoubleMatrix; // UTDM
+//typedef boost::numeric::ublas::triangular_matrix<std::pair<VanillaSwaption, double>, boost::numeric::ublas::upper> UpperTriangleVanillaSwaptionQuotesType;
+//
+//class UpperTriangleVanillaSwaptionQuotes
+//{
+//	LMMTenorStructure_PTR lmmTenorStructure_;
+//	size_t lastYear_;         // upperTriangleSwaption(i year, j year), i,j \in [1, lastYear_]
+//	Tenor  fixedTenor_;
+//	Tenor  floatingTenor_; 
+//	size_t indexRatio_;       // fixedTenor/floatingTenor
+//	UpperTriangleVanillaSwaptionQuotesType upperTriangleVanillaSwaptionQuotes_; // 1st row and column not used! as g!
+//	UpperTriangleIndexPairMatrix gDelegate_IndexIngTransformed_;
+//
+//public:	
+//	UpperTriangleVanillaSwaptionQuotes(
+//		LMMTenorStructure_PTR lmmTenorStructure,
+//		int   lastYear, 	
+//		const Tenor& fixedTenor,
+//		const Tenor& floatingTenor,
+//		const UpperTriangleDoubleMatrix& strikes, // 1st row and column not used like g!
+//		const UpperTriangleDoubleMatrix& quotes)  // 1st row and column not used like g!
+//		:
+//	    lmmTenorStructure_(lmmTenorStructure)
+//	    ,lastYear_(lastYear)
+//		,fixedTenor_(fixedTenor)
+//		,floatingTenor_(floatingTenor)
+//		,indexRatio_(fixedTenor.NbOfMonth()/floatingTenor.NbOfMonth())
+//		,upperTriangleVanillaSwaptionQuotes_(lastYear+1, lastYear+1)
+//		,gDelegate_IndexIngTransformed_(lastYear+1, lastYear+1)
+//	{
+//		assert(lmmTenorStructure_->get_horizon() == lastYear*indexRatio_); 
+//		assert(lastYear>1);
+//		assert(strikes.size1() == strikes.size2() && strikes.size1() == lastYear_+1); 
+//		assert(quotes.size1()  == quotes.size2()  && quotes.size1()  == lastYear_+1);
+//		assert(fixedTenor.NbOfMonth() == 12 && fixedTenor.NbOfMonth()%floatingTenor.NbOfMonth() ==0);
+//		assert(lmmTenorStructure->get_tenorType() == floatingTenor);
+//
+//		//! upperTriangle:
+//		for(size_t i = 1; i<quotes.size1(); ++i) // row
+//		{
+//			for(size_t j = 1; j<quotes.size2()-i; ++j) // col
+//			{
+//				double strike = strikes(i,j);
+//				size_t indexStart = i*indexRatio_;
+//				size_t indexEnd   = j*indexRatio_;
+//				VanillaSwap  vanillaSwap(strike, indexStart, indexEnd, floatingTenor_, fixedTenor_, lmmTenorStructure);
+//				VanillaSwaption vanillaSwaption(vanillaSwap, OptionType::OptionType::CALL);
+//
+//				double quote = quotes(i,j);
+//
+//				std::pair<VanillaSwaption, double> p(vanillaSwaption, quote);
+//				upperTriangleVanillaSwaptionQuotes_(i,j) = p;
+//			}
+//		}
+//
+//		initialize_gDelegate_IndexIngTransformed();
+//	}
+//
+//	void initialize_gDelegate_IndexIngTransformed() // 1st row and column not used! as g!  // UTM: upperTriangleMatrix
+//	{
+//		//! 1st column initialized to absurd value
+//		for(size_t i=0; i<gDelegate_IndexIngTransformed_.size1(); ++i)
+//			gDelegate_IndexIngTransformed_(0,i) = std::pair<LMM::Index,LMM::Index>(-1000, -1000);
+//
+//		//! upperTriangle:
+//		for(size_t i = 1; i<gDelegate_IndexIngTransformed_.size1(); ++i) // row
+//		{
+//			for(size_t j = 1; j<gDelegate_IndexIngTransformed_.size2()-i; ++j) // col
+//			{
+//				//gDelegate_IndexIngTransformed_(i,j) = std::pair<LMM::Index,LMM::Index>(indexRatio_*(i+j)-1, indexRatio_*i); // ok for any indexRatio_ value
+//				gDelegate_IndexIngTransformed_(i,j) = std::pair<LMM::Index,LMM::Index>(indexRatio_*i, indexRatio_*j); // ok for any indexRatio_ value
+//			}
+//		}
+//	}
+//
+//
+//	//! getter
+//	LMMTenorStructure_PTR get_lmmTenorStructure_PTR() const {return lmmTenorStructure_;}
+//	size_t get_lastYear() const {return lastYear_;}
+//	Tenor  get_fixedTenor() const{return fixedTenor_;}
+//	Tenor  get_floatingTenor() const{ return floatingTenor_;}
+//	size_t get_indexRatio() const {return indexRatio_;}
+//	UpperTriangleVanillaSwaptionQuotesType  get_upperTriangleVanillaSwaptionQuotes() {return upperTriangleVanillaSwaptionQuotes_;}
+//	UpperTriangleIndexPairMatrix get_gDelegate_IndexIngTransformed() const {return gDelegate_IndexIngTransformed_;}
+//};

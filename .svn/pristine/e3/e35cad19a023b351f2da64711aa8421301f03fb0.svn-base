@@ -1,0 +1,67 @@
+#pragma once
+
+#include <boost/numeric/ublas/triangular.hpp>  // Triangular matrix
+#include <boost/numeric/ublas/io.hpp>
+
+#include <ql/termstructures/volatility/abcd.hpp>
+
+#include <LMM/helper/LMMTenorStructure.h>
+#include <LMM/LmmModel/HGVolatilityFunction.h>
+
+#include <vector>
+
+
+
+class Shifted_HGVolatilityFunction : public HGVolatilityFunction
+{
+public:
+	 // horizon = N, total number of Libor = N+1: L_k, k = [0,N]
+
+	//! Constructor
+	Shifted_HGVolatilityFunction(HGVolatilityParam_PTR pHGVolatilityParam, 
+		                         LMMTenorStructure_PTR pLMMTenorStructure,
+								 Correlation_PTR correlation,
+								 std::vector<double> shifts);
+
+	virtual ~Shifted_HGVolatilityFunction(){}
+
+	//! \int_{T_i}^{T_j} varSigma_i(u)*varSigma_j(u)*rho_ij(u) du
+	virtual double covIntegral( LMM::Index indexTime_i,
+								LMM::Index indexTime_j,
+								LMM::Index indexLibor_i,
+								LMM::Index indexLibor_j) const;
+
+	//! ---- ---- localVol: varphi(t) 
+	double  get_localVol_timeIndexVersion ( LMM::Index liborIndex,  
+		                                    LMM::Index timeIndex,   // time period [indexTime-1, indexTime]
+											double libor,           // libor[liborIndex,indexTime]
+											double libor_initial) const   // libor[liborIndex,0]: initialValue
+	{
+		return libor + nativeShift(liborIndex);   // because shift is time independent
+	}
+	double  get_localVol_timeContinuousVersion (LMM::Index liborIndex,  
+												double t,                     // at time t   
+												double libor,                 // libor[liborIndex,indexTime]
+												double libor_initial) const   // libor[liborIndex,0]: initialValue
+	{
+		return libor + nativeShift(liborIndex);  // because shift is time independent
+	}
+
+	//! analytical pricing purpose
+	double nativeShift(LMM::Index liborIndex) const
+	{
+		return shifts_[liborIndex];
+	}
+	// for MC diffusion part simulation
+	double equivalentShift(LMM::Index liborIndex, 
+		                   LMM::Index timeIndex, 
+						   const std::vector<double>& liborsInitValue) const
+	{
+		return shifts_[liborIndex];
+	}
+
+private:
+
+	std::vector<double> shifts_;
+};
+typedef boost::shared_ptr<Shifted_HGVolatilityFunction> Shifted_HGVolatilityFunction_PTR;

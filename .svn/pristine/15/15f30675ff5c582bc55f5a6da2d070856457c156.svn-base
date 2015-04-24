@@ -1,0 +1,28 @@
+#include <LMM/Test/Tests.h>
+#include <LMM/helper/Noise.h>
+
+#include <iostream>
+
+
+void test_Noise()
+{
+	for(size_t iTest=0;iTest<10;++iTest)
+	{
+		std::cout<<std::endl<<std::endl;
+
+		size_t nbSample = 10 ; 
+		std::vector<double> uniform_mul_noise = Multiplicative::UniformNoise(nbSample,0.04);
+
+		std::vector<double> bernouilli_mul_noise = Multiplicative::BernouilliNoise(nbSample,0.04);
+
+		std::vector<double> uniform_add_noise = Additive::UniformNoise(nbSample,0.05);
+
+		for(size_t i=0;i<nbSample;++i)
+		{
+			std::cout<<"uniform_mul_noise["<<i<<"] "<<uniform_mul_noise[i]
+			<<"    bernouilli_mul_noise["<<i<<"] "<<bernouilli_mul_noise[i]
+			<<"    uniform_add_noise["<<i<<"] "<<uniform_add_noise[i]<<std::endl;
+		}		
+	}
+}
+

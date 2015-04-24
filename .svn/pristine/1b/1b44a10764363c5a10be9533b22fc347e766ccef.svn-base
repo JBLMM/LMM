@@ -1,0 +1,23 @@
+#pragma once
+
+void test_BlackGreek();
+void test_VanillaSwapCreation();
+void test_McTerminalLmm();
+
+//! for validating MC simulation. 
+void test_VanillaFRAPricer();
+void test_VanillaCapletPricer();
+void test_VanillaSwapPricer();
+
+//! for validating Roboato formula
+void test_VanillaSwaptionPricer();
+void test_VanialSwaptionPricer_MCvsApprox(); // what's the difference between this and the last one ???
+
+void test_Functional();
+
+void test_HGVolatility();
+
+void test_Interpolation();
+void test_Noise();
+void test_ATMSwaptionStructuredData();
+void test_CalibrationWithATMSwaptionVol();

@@ -1,0 +1,24 @@
+#include <LMM/Test/Tests.h>
+#include <stdio.h>
+
+int main()
+{
+	//test_Noise();
+	//test_Interpolation();
+	//test_HGVolatility(); 
+	//test_Functional();
+
+	//test_BlackGreek();
+	//test_McTerminalLmm();
+
+	//test_VanillaFRAPricer();  // TODO: test the drift !=0  case. 
+	//test_VanillaCapletPricer(); // bug!	 
+	//test_VanillaSwapPricer();
+	//test_VanillaSwaptionPricer(); // bug!
+	//test_VanialSwaptionPricer_MCvsApprox(); //
+
+	//test_ATMSwaptionStructuredData();
+	test_CalibrationWithATMSwaptionVol();		
+	 
+	 getchar();
+}

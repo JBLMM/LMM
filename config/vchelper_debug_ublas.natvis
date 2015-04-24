@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='utf-8'?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+<Type Name="boost::numeric::ublas::unbounded_array&lt;*,*&gt;">
+    <DisplayString>{{ size={size_} }}</DisplayString>
+    <Expand>
+        <Item Name="[size]">size_</Item>
+        <ArrayItems>
+            <Size>size_</Size>
+            <ValuePointer>data_</ValuePointer>
+        </ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="boost::numeric::ublas::vector&lt;*&gt;">
+    <DisplayString>{data_}</DisplayString>
+    <Expand>
+        <ExpandedItem>data_</ExpandedItem>
+    </Expand>
+</Type>
+
+<Type Name="boost::numeric::ublas::matrix&lt;*&gt;">
+    <DisplayString>{{ size={size1_}x{size2_} }}</DisplayString>
+    <Expand>
+	<ArrayItems> 
+		<Direction>Forward</Direction> 
+		<Rank>2</Rank> 
+		<Size>$i*size2_+(1-$i)*size1_</Size> 
+		<ValuePointer>data_.data_</ValuePointer> 
+	</ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="QuantLib::Matrix">
+    <DisplayString>{{ size={rows_}x{columns_} }}</DisplayString>
+    <Expand>
+        <ExpandedItem>data_</ExpandedItem>
+		<ArrayItems> 
+			<Size>rows_*columns_</Size> 
+			<ValuePointer>data_.px</ValuePointer> 
+		</ArrayItems> 
+    </Expand>
+</Type>
+
+<Type Name="QuantLib::Array">
+    <DisplayString>{{ size={n_} }}</DisplayString>
+    <Expand>
+        <ArrayItems>
+            <Size>n_</Size>
+            <ValuePointer>data_.px</ValuePointer>
+        </ArrayItems>
+    </Expand>
+</Type>
+
+</AutoVisualizer>

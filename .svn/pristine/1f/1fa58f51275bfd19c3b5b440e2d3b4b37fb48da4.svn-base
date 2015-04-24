@@ -1,0 +1,224 @@
+#pragma once
+
+#include <boost/numeric/ublas/triangular.hpp>  // Triangular matrix
+#include <boost/numeric/ublas/io.hpp>
+
+#include <ql/termstructures/volatility/abcd.hpp>
+
+#include <LMM/helper/LMMTenorStructure.h>
+#include <LMM/LmmModel/VolatilityFunction.h>
+
+#include <LMM/LmmModel/Correlation.h>
+
+
+/*! \class HGVolatilityParam
+ *
+ *  This is a class that hold volatility parameters  for HGVolatilityFunction
+ *  This class hold all volatility parameters, and the also define the h,g functions as 'parameters'
+ *  If one need to create an other HGVolatility, then just defining an other HGVolatilityParam by
+ *  inheriting from this class
+ *
+ *  and define the 4 pure virtual methods
+ *   - h
+ *   - g
+ *   - reset_FromArray // VolatilityParam pure virtual
+ *   - write_to_stream // VolatilityParam pure virtual
+ */
+
+//! YY change the name to Shifted_HGVolatilityFunction
+class Shifted_HGVolatilityParam : public VolatilityParam
+{
+	
+public:
+	struct ABCDParameter
+	{
+		double a_;
+		double b_;
+		double c_;
+		double d_;
+		ABCDParameter(double a, double b, double c, double d):a_(a),b_(b),c_(c),d_(d){};
+	};
+
+
+	typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::lower> LowerTriangularMatrix;
+	typedef std::vector< std::pair<size_t, size_t> > VectorOfMatrixIndices;
+	/*! vector of pair indices Libor and Time
+	 *  Do not forget this order of pair when storing indices
+	 *  Do not forget they are Libor, Time indices and not matrix indices
+	 *  HGVolatilityParam has to convert these indices into matrix indices 
+	 *  Then modify the appropriated values
+	 */
+
+	////! YY TODO:  delete this constructor! 
+	//Shifted_HGVolatilityParam( LMMTenorStructure_PTR pLMMTenorStructure 
+	//	             , double a=-0.06
+	//				 , double b=0.17
+	//				 , double c=0.54
+	//				 , double d=0.17)
+	//: VolatilityParam()
+	//, pLMMTenorStructure_(pLMMTenorStructure)
+	//, h_matrix_(pLMMTenorStructure_->get_nbLIBOR() , pLMMTenorStructure_->get_nbLIBOR())
+	//, g_matrix_(pLMMTenorStructure_->get_nbLIBOR() , pLMMTenorStructure_->get_nbLIBOR())
+	//, shift_matrix_(pLMMTenorStructure_->get_nbLIBOR() , pLMMTenorStructure_->get_nbLIBOR())
+	//{
+	//	init_h_matrix(ABCDParameter(a,b,c,d));	
+	//	init_g_matrix(1.0);		
+	//	init_shift_matrix(0.0);	
+	//}
+
+	//! YY TODO: to delete latter
+	Shifted_HGVolatilityParam( LMMTenorStructure_PTR pLMMTenorStructure, 
+							   ABCDParameter		 h_abcdParameter,
+							   double				 g_constParameter,
+							   double				 shift_constParameter)
+				: VolatilityParam()
+				, pLMMTenorStructure_(pLMMTenorStructure)
+				, h_matrix_(pLMMTenorStructure_->get_nbLIBOR() , pLMMTenorStructure_->get_nbLIBOR())
+				, g_matrix_(pLMMTenorStructure_->get_nbLIBOR() , pLMMTenorStructure_->get_nbLIBOR())
+				, shift_matrix_(pLMMTenorStructure_->get_nbLIBOR() , pLMMTenorStructure_->get_nbLIBOR())
+			{
+				init_h_matrix(h_abcdParameter);	
+				init_g_matrix(g_constParameter);
+				init_shift_matrix(shift_constParameter);	
+			}
+
+	
+	//! YY TODO: real constructor
+	Shifted_HGVolatilityParam(  LMMTenorStructure_PTR        pLMMTenorStructure, 
+								ABCDParameter		         h_abcdParameter,
+								const LowerTriangularMatrix& g_matrix,
+								const LowerTriangularMatrix& shift_matrix)
+		: VolatilityParam()
+		, pLMMTenorStructure_(pLMMTenorStructure)
+		, h_matrix_(pLMMTenorStructure_->get_nbLIBOR() , pLMMTenorStructure_->get_nbLIBOR())
+		, g_matrix_(g_matrix)
+		, shift_matrix_(shift_matrix)
+	{
+		init_h_matrix(h_abcdParameter);	        
+		assert(h_matrix_.size1()     == pLMMTenorStructure_->get_nbLIBOR() && h_matrix_.size2() == pLMMTenorStructure_->get_nbLIBOR());
+		assert(g_matrix_.size1()     == pLMMTenorStructure_->get_nbLIBOR() && g_matrix_.size2() == pLMMTenorStructure_->get_nbLIBOR());
+		assert(shift_matrix_.size1() == pLMMTenorStructure_->get_nbLIBOR() && shift_matrix_.size2() == pLMMTenorStructure_->get_nbLIBOR());
+
+		//YY TODO: to force the first line & row = 1.0e100 ! 
+	}
+
+	virtual ~Shifted_HGVolatilityParam(){}
+
+	double h(size_t indexLibor, size_t indexTime) const 
+	{
+		assert(indexLibor>0 && indexTime>0 && indexLibor>=indexTime);
+		return h_matrix_(indexLibor,indexTime);
+	}
+	
+	double g(size_t indexLibor, size_t indexTime) const 
+	{
+		assert(indexLibor>0 && indexTime>0 && indexLibor>=indexTime);
+		return g_matrix_(indexLibor,indexTime);	
+	}
+
+	double shift(size_t indexLibor, size_t indexTime) const 
+	{
+		assert(indexLibor>0 && indexTime>0 && indexLibor>=indexTime);
+		return shift_matrix_(indexLibor,indexTime);	
+	}
+
+	size_t get_horizon() const ;
+
+	virtual unsigned int get_nbCalibrateParam() const ;
+
+	virtual void reset_FromArray(const QuantLib::Array& x) ;
+
+	//! Giving a vector of pair Libor_Time's indices , return all values in G function into an array
+	virtual  QuantLib::Array get_ArrayFrom_G(const VectorOfMatrixIndices& indices_vector) const
+	{
+		throw("virtual void HGVolatilityParam::get_ArrayFrom_G is not yet implemented");
+		QuantLib::Array x ; return x; 
+	} 
+
+	//! reset H giving a real values vectors and a vector of pair Libor_Time's indices 
+	virtual void reset_H_FromArray(const QuantLib::Array& x, const VectorOfMatrixIndices& indices_vector, bool needInterpolated=false)
+	{
+		throw("virtual void HGVolatilityParam::reset_H_FromArray is not yet implemented");
+	} 
+
+	//! reset G giving a real values vectors and a vector of pair Libor_Time's indices 
+	virtual void reset_G_FromArray(const QuantLib::Array& x, const VectorOfMatrixIndices& indices_vector, bool needInterpolated=false)
+	{
+		throw("virtual void HGVolatilityParam::reset_G_FromArray is not yet implemented");
+	}
+
+	virtual void write_to_stream(std::ostream & os) const  ;
+
+protected :
+	
+	LMMTenorStructure_PTR pLMMTenorStructure_ ;
+	
+	LowerTriangularMatrix g_matrix_;
+	LowerTriangularMatrix h_matrix_;
+	LowerTriangularMatrix shift_matrix_;
+
+private :
+	//! YY To delet	
+	void init_h_matrix(ABCDParameter h_abcdParameter);
+	void init_g_matrix(double g_constParameter);
+	void init_shift_matrix(double shift_constParameter);
+};
+typedef boost::shared_ptr<Shifted_HGVolatilityParam> Shifted_HGVolatilityParam_PTR;
+//==================================================================================================
+
+/*! \class HGVolatilityFucntion
+ *
+ *
+ *
+ */
+
+class Shifted_HGVolatilityFunction : public VolatilityFunction
+{
+	typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::lower> LowerTriangularMatrix;
+
+public:
+	 // horizon = N, total number of Libor: L_k, k = [0,N]
+
+	//! Constructor
+	Shifted_HGVolatilityFunction(LMMTenorStructure_PTR pLMMTenorStructure,
+								 Correlation_PTR       pCorrelation,
+								 Shifted_HGVolatilityParam_PTR pShifted_HGVolatilityParam);
+
+	virtual ~Shifted_HGVolatilityFunction(){}
+
+    //! \int_{T_i}^{T_j} sigma_i(u)*sigma_j(u)*rho_ij(u) du
+	virtual double covIntegral( LMM::Index indexTime_i  ,
+								LMM::Index indexTime_j  ,
+								LMM::Index indexLibor_i ,
+								LMM::Index indexLibor_j ) const = 0;
+
+	//! ---- ---- varSigma = h*g
+	//! varSigma: h*g of L_liborIndex for time period [indexTime-1,indexTime]
+	virtual double get_varSigma_timeIndexVersion      (LMM::Index indexLibor, LMM::Index indexTime) const; // operator(ij) --return vol--> hij*g_ij, i>=j
+	virtual double get_varSigma_timeContinuousVersion (LMM::Index liborIndex, double t) const; 
+
+	//! ---- ---- localVol: varphi(t)   // for MC simulation
+	virtual double get_localVol_timeIndexVersion (LMM::Index liborIndex,  
+												  LMM::Index timeIndex,             // time period [indexTime-1, indexTime]
+												  double libor,                     // libor[liborIndex,indexTime]
+												  double libor_initial) const =0;   // libor[liborIndex,0]: initialValue
+
+	virtual double get_localVol_timeContinuousVersion ( LMM::Index liborIndex,  
+														double t,               // at time t   
+														double libor,           // libor[liborIndex,indexTime]
+														double libor_initial) const =0;   // libor[liborIndex,0]: initialValue
+
+	//! use for calibration
+	virtual void update_VolatilityParam(VolatilityParam_PTR vol_param_ptr);
+
+	Shifted_HGVolatilityParam_PTR get_ShiftedHGVolatilityParam_PTR() const {return pShifted_HGVolatilityParam_;}
+
+protected:
+
+	Shifted_HGVolatilityParam_PTR pShifted_HGVolatilityParam_;
+
+public:
+	//! print to file
+	virtual void print(const std::string& filename) const;
+};
+typedef boost::shared_ptr<Shifted_HGVolatilityFunction> Shifted_HGVolatilityFunction_PTR;

@@ -1,0 +1,2 @@
+1. Can virtual function be private ? (in Class "Correlation", calculate function)
+2. MC schemem: why predictor & corrector use the same BM ??? can I use different BM ???

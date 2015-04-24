@@ -1,0 +1,52 @@
+#include <LMM/Test/Tests.h>
+#include <LMM/Test/Test_CalibrationConfig.h>
+
+#include <iostream>
+#include <cassert>
+#include <string.h>
+#include <cmath>
+#include <fstream>
+
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
+#include <ctime>
+#include <cmath>
+
+// ---- include for QuantLib calibration -------
+#include <ql/math/optimization/endcriteria.hpp>
+#include <ql/math/optimization/constraint.hpp>
+#include <ql/math/optimization/problem.hpp>
+#include <ql/math/optimization/simplex.hpp>
+#include <ql/math/optimization/bfgs.hpp> 
+#include <ql/math/optimization/conjugategradient.hpp>
+#include <ql/math/optimization/levenbergmarquardt.hpp>
+// ---- include for QuantLib calibration -------
+
+#include <LMM/helper/GenericPath.h>
+#include <LMM/helper/TenorType.h>
+#include <LMM/helper/LMMTenorStructure.h>
+#include <LMM/numeric/NumericalMethods.h>
+#include <LMM/RNGenerator/McGenerator.h>
+#include <LMM/helper/Noise.h>
+
+#include <LMM/calibration/ATMSwaptionMarketData.h>
+#include <LMM/calibration/SwaptionMarketDataContainer.h>
+#include <LMM/calibration/SwaptionMarketDataManager.h>
+
+#include <LMM/LmmModel/Lmm.h>
+#include <LMM/LmmModel/Correlation.h>
+#include <LMM/LmmModel/ConstShifted_HGVolatilityFunction.h>
+#include <LMM/pricer/LmmVanillaSwaptionApproxPricer_Rebonato.h>
+
+#include <LMM/calibration/CalibrationVolCostFunction.h>
+
+
+
+void test_LmmCalibration()
+{
+	std::cout<<"test_LmmCalibration() called"<<std::endl;
+
+	Test_CalibrationConfig config;
+	config.print(config.basefilename);
+}
+

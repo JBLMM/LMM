@@ -1,0 +1,551 @@
+#include <LMM/calibration/ATMSwaptionStructuredData.h>
+
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <cstdlib>
+#include <cmath>
+#include <cassert>
+#include <algorithm>
+
+#include <LMM/helper/GenericPath.h>
+#include <LMM/helper/BuildVariable.h>
+#include <LMM/helper/Noise.h>
+#include <LMM/numeric/Interpolation.h>
+
+#include <LMM/pricer/LmmVanillaSwapPricer.h> // pre computing annuities and omega0
+
+ATMSwaptionStructuredData::ATMSwaptionStructuredData(const LMMTenorStructure_PTR& pLMMTenorStructure)
+	: pLMMTenorStructure_(pLMMTenorStructure)
+{
+}
+
+const LMMTenorStructure_PTR ATMSwaptionStructuredData::get_LMMTenorStructure() const { return pLMMTenorStructure_      ; }
+size_t                      ATMSwaptionStructuredData::get_nbSWAPTION()        const { return SWAPTION_VECTOR_.size()  ; }
+size_t                      ATMSwaptionStructuredData::get_nbLIBOR()           const { return LIBOR_STARTDATES_.size() ; }
+
+double & ATMSwaptionStructuredData::swaprate    ( size_t i ) { return SWAPRATE_VECTOR_[i]          ; }
+double & ATMSwaptionStructuredData::strike      ( size_t i ) { return SWAPTION_VECTOR_[i].get_strikeRef() ; }
+//double & ATMSwaptionStructuredData::libor_shift ( size_t k ) { return LIBOR_SHIFT_[k]              ; }
+
+const std::vector<double>&               ATMSwaptionStructuredData::get_LIBOR_INIT()        const { return LIBOR_INIT_        ; }
+//const std::vector<double>&               ATMSwaptionStructuredData::get_LIBOR_SHIFT()       const { return LIBOR_SHIFT_       ; }
+const std::vector<double>&               ATMSwaptionStructuredData::get_ZC_BOND()           const { return ZC_BOND_           ; }
+const std::vector<double>&               ATMSwaptionStructuredData::get_ZC_MATURITIES()     const { return ZC_MATURITIES_     ; }
+const std::vector<double>&               ATMSwaptionStructuredData::get_LIBOR_STARTDATES()  const { return LIBOR_STARTDATES_  ; }
+const ATMSwaptionStructuredData::RealVector&     ATMSwaptionStructuredData::get_NUMERAIRE()         const { return NUMERAIRE_  ;        }
+
+const ATMSwaptionStructuredData::RealVector&     ATMSwaptionStructuredData::get_SWAPRATE_VECTOR()   const { return SWAPRATE_VECTOR_   ; }
+const ATMSwaptionStructuredData::RealVector&     ATMSwaptionStructuredData::get_VOLATILITY_VECTOR() const { return VOLATILITY_VECTOR_ ; }
+const ATMSwaptionStructuredData::SwaptionVector& ATMSwaptionStructuredData::get_SWAPTION_VECTOR()   const { return SWAPTION_VECTOR_   ; }
+const std::vector<size_t>&                       ATMSwaptionStructuredData::get_SWPN_MATURITY_INDICES() const { return SWPN_MATURITY_INDICES_ ; }
+const ATMSwaptionStructuredData::MatrixOfMatrixIndices& ATMSwaptionStructuredData::get_HGVOL_MATRIX_INDICES()   const { return HGVOL_MATRIX_INDICES_ ; }
+const ATMSwaptionStructuredData::VectorOfMatrixIndices& ATMSwaptionStructuredData::get_HGVOL_VECTOR_INDICES()   const { return HGVOL_VECTOR_INDICES_ ; }
+const ATMSwaptionStructuredData::SwaptionMatrix& ATMSwaptionStructuredData::get_SWPN_MATRIX()           const { return SWPN_MATRIX_; }
+const ATMSwaptionStructuredData::RealMatrix    &        ATMSwaptionStructuredData::get_MKT_VOL_MATRIX()        const { return MKT_VOL_MATRIX_; }
+
+void ATMSwaptionStructuredData::generateMarketData( const Tenor& fixedtenor, 
+												   const Tenor& floattenor, 
+												   LmmVanillaSwaptionApproxPricer_Rebonato* approx_ptr,
+												   const double constant_rate, const double noise) 
+{
+	this->generateLIBOR_ZC_Data(constant_rate,noise);
+	this->pre_cmp_Numeraire()    ;
+	this->generateSwaptionData( fixedtenor, floattenor, approx_ptr);
+}
+
+
+
+void ATMSwaptionStructuredData::parseFromMarketData(const ATMSwaptionMarketData& marketdata, const Tenor& fixedtenor, const Tenor& floattenor) 
+{
+	this->clear_all_data();
+
+	throw("ATMSwaptionStructuredData::parseFromMarketData()  not already implementing for parsing from real data file");
+
+	const LMMTenorStructure_PTR pLMMTenorStructure = this->get_LMMTenorStructure();
+
+	// The last valid swap date has to be one step before the end of the timeline
+	// because the last valid libor index is N : L_i = L(T_i,T_{i+1})
+	const double& deltaT_floatingTenor = floattenor.YearFraction();  
+	const double valid_swap_end_date   = pLMMTenorStructure->get_EndDate() - deltaT_floatingTenor ; // timeline[N]
+
+	// the last LMM date in the model has to be lower than the last dates of market data
+	// If not, just resize the LMMTenorStructure ctntodo
+	assert(valid_swap_end_date <= marketdata.get_LIBOR_ENDDATES().back()   ) ;
+	assert(valid_swap_end_date <= marketdata.get_ZC_MATURITIES().back()    ) ;
+
+
+	this->parse_LIBORs_ZCs(marketdata,floattenor) ;
+	this->pre_cmp_Numeraire() ;
+
+	//copy of Swaptions data
+
+	const Tenor & lmmTenor = pLMMTenorStructure->get_tenorType() ;
+
+	const unsigned int  nbCol_swaption = marketdata.get_SWPM_TERMS().size();
+	const unsigned int nbLine_swaption = marketdata.get_SWPM_MATURITIES().size();
+
+	// loop around ATM Swaption loaded data : strike, vol
+	for(size_t i_swpm=0;i_swpm<nbLine_swaption;++i_swpm)
+	{
+		std::vector<VanillaSwaption> swaption_line;
+		for(size_t j_swpm=0;j_swpm<nbCol_swaption;++j_swpm)
+		{
+
+			const double & swpm_strike     = marketdata.get_SWAPRATE_MATRIX()[i_swpm][j_swpm];
+			const double & swpm_start_date = marketdata.get_SWPM_MATURITIES()[i_swpm] ;
+			const double & swpm_end_date   = marketdata.get_SWPM_MATURITIES()[i_swpm] + marketdata.get_SWPM_TERMS()[j_swpm] ;
+
+			if(swpm_start_date < swpm_end_date &&  swpm_end_date <= valid_swap_end_date )
+			{
+				//check if these dates exist in LMMTenorStructure
+				if(pLMMTenorStructure->is_TenorDate(swpm_start_date) && pLMMTenorStructure->is_TenorDate(swpm_end_date) )
+				{
+					LMM::Index swpm_startIndex = pLMMTenorStructure->get_Index(swpm_start_date);
+					LMM::Index swpm_endIndex   = pLMMTenorStructure->get_Index(swpm_end_date);
+
+					assert(swpm_startIndex < swpm_endIndex);
+
+					VanillaSwap swap(swpm_strike, swpm_startIndex, swpm_endIndex,  floattenor, fixedtenor, pLMMTenorStructure);
+					VanillaSwaption swaption(swap,OptionType::CALL);
+
+					this->SWAPRATE_VECTOR_.push_back  ( marketdata.get_SWAPRATE_MATRIX()[i_swpm][j_swpm]   ) ;
+					this->VOLATILITY_VECTOR_.push_back( marketdata.get_VOLATILITY_MATRIX()[i_swpm][j_swpm] ) ;		
+					this->SWAPTION_VECTOR_.push_back( swaption ) ;
+
+					//! if created swaption has new maturity, push this maturity into swaption maturites vector
+					if (std::find(SWPN_MATURITY_INDICES_.begin(), SWPN_MATURITY_INDICES_.end(), swaption.get_indexMaturity()) == SWPN_MATURITY_INDICES_.end() )
+					{
+						SWPN_MATURITY_INDICES_.push_back( swaption.get_indexMaturity() );
+					}
+				}
+				else
+				{
+
+					std::cout<<LMM::NOTIF_MSG<<"ATMSwaptionStructuredData::parseFromMarketData() swaption skipped : start."<<swpm_start_date<<" end."<<swpm_end_date<<std::endl;
+				}
+			}
+		}
+	}
+	std::sort( SWPN_MATURITY_INDICES_.begin(), SWPN_MATURITY_INDICES_.end() );
+
+}
+
+
+void ATMSwaptionStructuredData::parse_LIBORs_ZCs(const ATMSwaptionMarketData& marketdata, const Tenor& floattenor)
+{
+	clear_all_LIBOR_ZC();
+
+	const LMMTenorStructure_PTR pLMMTenorStructure = this->get_LMMTenorStructure();
+
+	//the last date here is crucial, one have to choose the last date for StructuredData
+	// everything out of this date will be poped out
+	const double& max_lmm_date = pLMMTenorStructure->get_EndDate();
+
+	// retreiv LIBOR data, if libor data is not enough, the last elements will be repeated
+	const double & libor_time_step = floattenor.YearFraction();
+
+	// will be used for interpolation instead of timeline in LMMTenorStructure
+	// in case where LMMTenorStructure timeline contains dates more fine than libor timeline
+	std::vector<double> libor_interpolation_date; 
+	{
+		double libor_date = libor_time_step ;     // date zero do not need to be interpolated
+		while(libor_date <= max_lmm_date)
+		{
+			libor_interpolation_date.push_back(libor_date);   libor_date+= libor_time_step;
+		}		
+	}
+
+
+	// copy libor data from market data to a buffer 
+	std::vector<double> _buffer_libor_enddate ;
+	_buffer_libor_enddate.insert( _buffer_libor_enddate.end(), marketdata.get_LIBOR_ENDDATES().begin(), marketdata.get_LIBOR_ENDDATES().end() );
+	std::vector<double> _buffer_libor          ;
+	_buffer_libor.insert( _buffer_libor.end(), marketdata.get_LIBOR().begin(), marketdata.get_LIBOR().end() );
+
+	// copy ZC data from market data to a buffer
+	std::vector<double> _buffer_zc_maturity ; std::vector<double> _buffer_zc ;
+	_buffer_zc_maturity.insert( _buffer_zc_maturity.end(), marketdata.get_ZC_MATURITIES().begin(), marketdata.get_ZC_MATURITIES().end() );
+	_buffer_zc.insert( _buffer_zc.end(), marketdata.get_ZC_BOND().begin(), marketdata.get_ZC_BOND().end() );
+
+
+	//Interpolation
+	numeric::Interpolation interpolator;
+	size_t nbInterpoleDate = libor_interpolation_date.size() ;
+	for(auto &interpolation_date : libor_interpolation_date )
+	{
+		interpolator.linearInterpolation(_buffer_zc   ,_buffer_zc_maturity   , interpolation_date );
+		interpolator.linearInterpolation(_buffer_libor,_buffer_libor_enddate, interpolation_date );		
+	}
+
+	assert(   _buffer_zc.size()  ==     _buffer_zc_maturity.size() );
+	assert(_buffer_libor.size()  ==  _buffer_libor_enddate.size() );
+
+	// push interpolated libor buffer into data of this class if matching the libor timeline
+	for(unsigned int i=0;i < _buffer_libor_enddate.size() ; ++i)
+	{
+		std::vector<double>::const_iterator it = find(libor_interpolation_date.begin(), libor_interpolation_date.end(), _buffer_libor_enddate[i]);
+		if( it != libor_interpolation_date.end()  ) // libor date found
+		{
+			this->LIBOR_STARTDATES_.push_back(_buffer_libor_enddate[i] - libor_time_step);
+			this->LIBOR_INIT_.push_back(_buffer_libor[i])      ;
+		}
+	}
+
+	// push interpolated zc buffer into data of this class if matching the libor timeline
+	this->ZC_MATURITIES_.push_back(0.)       ; this->ZC_BOND_.push_back(1.)       ; //Zero Coupons has value at time zero ZC[0] = 1 --> first maturity has to be zero
+	for(unsigned int i=0;i < _buffer_zc_maturity.size() ; ++i)
+	{
+		std::vector<double>::const_iterator it = find(libor_interpolation_date.begin(), libor_interpolation_date.end(), _buffer_zc_maturity[i]);
+		if( it != libor_interpolation_date.end()  ) // libor date found
+		{
+			this->ZC_MATURITIES_.push_back(_buffer_zc_maturity[i]);
+			this->ZC_BOND_.push_back(_buffer_zc[i])      ;
+		}
+	}
+
+	//LIBOR_SHIFT_.resize(LIBOR_INIT_.size(), 0.); // default values of libor shift are all zero
+
+	// check nbLIBOR + 1 = nbZC
+	if(this->LIBOR_STARTDATES_.size()+1 != ZC_MATURITIES_.size() )
+	{
+		throw("error");
+		std::cout<<LMM::ERROR_MSG << "ATMSwaptionStructuredData::parse_LIBORs_ZCs() nbLIBOR and nbZC are not coherent" <<std::endl;  
+	}
+}
+
+
+void ATMSwaptionStructuredData::pre_cmp_Numeraire()
+{
+	NUMERAIRE_.clear() ;
+
+	for(size_t i=0; i<ZC_BOND_.size(); ++i)
+	{
+		NUMERAIRE_.push_back( 1/ZC_BOND_[i] ) ;
+	}
+}
+
+
+void ATMSwaptionStructuredData::clear_all_data()
+{
+	clear_all_LIBOR_ZC()	  ;
+
+	clear_all_SWAPTION_DATA() ;
+}
+
+void ATMSwaptionStructuredData::clear_all_LIBOR_ZC()
+{
+	LIBOR_INIT_.clear()       ;
+	ZC_BOND_.clear()          ;
+	ZC_MATURITIES_.clear()    ;
+	LIBOR_STARTDATES_.clear() ;
+
+	NUMERAIRE_.clear() ;
+}
+void ATMSwaptionStructuredData::clear_all_SWAPTION_DATA()
+{
+	SWAPRATE_VECTOR_.clear()       ;
+	VOLATILITY_VECTOR_.clear()     ;		
+	SWAPTION_VECTOR_.clear()       ;
+	HGVOL_VECTOR_INDICES_.clear()  ;
+	SWPN_MATURITY_INDICES_.clear() ;
+
+	for(size_t iRow=0;iRow<HGVOL_MATRIX_INDICES_.size();++iRow)
+	{
+		HGVOL_MATRIX_INDICES_[iRow].clear();
+	}
+	HGVOL_MATRIX_INDICES_.clear();
+
+	for(size_t iRow=0;iRow<SWPN_MATRIX_.size();++iRow)
+	{
+		SWPN_MATRIX_[iRow].clear();
+	}
+	SWPN_MATRIX_.clear();
+
+	for(size_t iRow=0;iRow<MKT_VOL_MATRIX_.size();++iRow)
+	{
+		MKT_VOL_MATRIX_[iRow].clear();
+	}
+	MKT_VOL_MATRIX_.clear();
+}
+
+void ATMSwaptionStructuredData::generateLIBOR_ZC_Data(const double constant_rate, const double noise)
+{
+	this->clear_all_data();
+
+	ZC_MATURITIES_ = pLMMTenorStructure_->get_tenorDate() ;
+	size_t nbZC =  ZC_MATURITIES_.size() ;
+	std::vector<double> add_noise = Additive::UniformNoise(nbZC,noise,0);
+	ZC_BOND_.resize( nbZC );
+	for(size_t i=0;i<nbZC;++i)
+	{
+		const double& T_i = ZC_MATURITIES_[i];
+		ZC_BOND_[i]= std::exp( - (constant_rate * T_i) ) + add_noise[i];
+	}
+
+	LIBOR_STARTDATES_ = ZC_MATURITIES_; LIBOR_STARTDATES_.pop_back();
+	size_t nbLIBOR = LIBOR_STARTDATES_.size();
+	assert(nbLIBOR ==  pLMMTenorStructure_->get_nbLIBOR() );
+	LIBOR_INIT_.resize(nbLIBOR);
+	for(size_t i=0;i<nbLIBOR;++i)
+	{
+		double delta_T_i = pLMMTenorStructure_->get_deltaT(i) ;
+
+		LIBOR_INIT_[i] = (1./delta_T_i) * ( ZC_BOND_[i]/ZC_BOND_[i+1] - 1 );
+	}
+}
+
+void ATMSwaptionStructuredData::generateSwaptionData(const Tenor& fixedtenor, const Tenor& floattenor, LmmVanillaSwaptionApproxPricer_Rebonato* approx_ptr)
+{
+	this->clear_all_SWAPTION_DATA();
+
+	assert(floattenor == pLMMTenorStructure_->get_tenorType() );
+
+	//size_t specific_swaption_maturity_index = specific_swaption_maturity * ( 12/floattenor.NbOfMonth() ) ;
+
+	size_t fixed_float_ratio = fixedtenor.ratioTo(floattenor); // =2 when fixed/float tenors are 1YR/6M 
+
+	size_t highestLIBORIndex = pLMMTenorStructure_->get_horizon(); // N
+	assert( highestLIBORIndex % fixed_float_ratio ==0 );
+	//assert(specific_swaption_maturity_index <= highestLIBORIndex - fixed_float_ratio );
+
+	for(size_t iStartSwaption=fixed_float_ratio;iStartSwaption<highestLIBORIndex;iStartSwaption+=fixed_float_ratio)
+	{
+		for(size_t jEndSwaption=iStartSwaption+fixed_float_ratio ; jEndSwaption <= highestLIBORIndex ; jEndSwaption +=fixed_float_ratio )
+		{
+			//! create swap iff
+			//  - specific_swaption_maturity_index == 0, create full swap matrix
+			//  - specific_swaption_maturity_index != 0 but iStartSwaption == specific_swaption_maturity_index, create swap with this specific maturity
+			//if(specific_swaption_maturity_index==0 || iStartSwaption == specific_swaption_maturity_index )
+			//{
+			VanillaSwap swap(-10000,iStartSwaption,jEndSwaption,floattenor,fixedtenor,pLMMTenorStructure_);
+
+			double swaprate_T0 = approx_ptr->swapRate_Analytical(swap,LIBOR_INIT_);
+
+			swap.set_strike(swaprate_T0);
+
+			VanillaSwaption swaption(swap, OptionType::CALL);
+
+			double approx_vol = approx_ptr->volBlack(swaption,LIBOR_INIT_);
+
+			SWAPRATE_VECTOR_.push_back(swaprate_T0);
+			VOLATILITY_VECTOR_.push_back(approx_vol);
+			SWAPTION_VECTOR_.push_back(swaption);
+
+			//! if created swaption has new maturity, push this maturity into swaption maturites vector
+			if (std::find(SWPN_MATURITY_INDICES_.begin(), SWPN_MATURITY_INDICES_.end(), swaption.get_indexMaturity()) == SWPN_MATURITY_INDICES_.end() )
+			{
+				SWPN_MATURITY_INDICES_.push_back( swaption.get_indexMaturity() );
+			}
+			//}
+		}	
+	}
+	std::sort( SWPN_MATURITY_INDICES_.begin(), SWPN_MATURITY_INDICES_.end() );
+
+
+	//!  create all pair indices in the hg vol matrix that match with swaption
+	for(size_t i_swaption=0;i_swaption<SWAPTION_VECTOR_.size();++i_swaption)
+	{
+		const VanillaSwap& swap = SWAPTION_VECTOR_[i_swaption].getUnderlyingSwap();
+		size_t maturity_swaption_index = swap.get_indexStart() ;
+		size_t end_swaption_index      = swap.get_indexEnd()   ;
+		for(size_t liborIndex =fixed_float_ratio ; liborIndex < end_swaption_index ; liborIndex+=fixed_float_ratio)// not take in account the last libor dependant
+		{
+			size_t max_time_index = std::min(maturity_swaption_index,liborIndex);
+			for(size_t timeIndex =fixed_float_ratio ; timeIndex <=  max_time_index ; timeIndex+=fixed_float_ratio)// not take in account greater than maturity time
+			{
+				std::pair<size_t,size_t> indices_pair(liborIndex,timeIndex);
+
+				//! push if this index pair is not already added
+				if( std::find(HGVOL_VECTOR_INDICES_.begin(), HGVOL_VECTOR_INDICES_.end(), indices_pair ) ==HGVOL_VECTOR_INDICES_.end()  )
+				{
+					HGVOL_VECTOR_INDICES_.push_back(indices_pair);
+				}
+			}	
+		}
+	}
+	std::sort( HGVOL_VECTOR_INDICES_.begin(), HGVOL_VECTOR_INDICES_.end() );
+
+
+	//! creation maturities indices that match with Swaptions in the container
+	//! creation pair of indices in vol g matrix, each line correspond to a maturity
+	for(size_t iRow=0;iRow<SWPN_MATURITY_INDICES_.size();++iRow)
+	{
+		VectorOfMatrixIndices row_vector_indices;
+		SwaptionVector        row_vector_swaption;
+		RealVector            row_vector_mkt_vol;
+
+		size_t maturity_swaption_index = SWPN_MATURITY_INDICES_[iRow];
+
+		// search for swaption having lower the maturity 
+		for(size_t iSwaption = 0;iSwaption<SWAPTION_VECTOR_.size();++iSwaption)
+		{
+			const VanillaSwaption & swaption = SWAPTION_VECTOR_[iSwaption];
+			const VanillaSwap& swap = swaption.getUnderlyingSwap();
+
+			if(swap.get_indexStart() == maturity_swaption_index )// check if swap  have lower the maturity 
+			{
+				row_vector_swaption.push_back(swaption);
+				row_vector_mkt_vol.push_back(VOLATILITY_VECTOR_[iSwaption]);
+
+				size_t end_swaption_index = swap.get_indexEnd();
+
+				assert( (end_swaption_index-maturity_swaption_index)%fixed_float_ratio == 0 );
+				for(size_t liborIndex =fixed_float_ratio ; liborIndex < end_swaption_index ; liborIndex+=fixed_float_ratio)// not take in account the last libor dependant
+				{
+					size_t max_time_index = std::min(maturity_swaption_index,liborIndex);
+					for(size_t timeIndex =fixed_float_ratio ; timeIndex <=  max_time_index ; timeIndex+=fixed_float_ratio)// not take in account greater than maturity time
+					{
+						std::pair<size_t,size_t> indices_pair(liborIndex,timeIndex);
+
+						//! push if this index pair is not already added
+						bool indices_already_added = false ;
+						// search if indices pair already exist in the current row
+						if( std::find(row_vector_indices.begin(), row_vector_indices.end(), indices_pair ) !=row_vector_indices.end()  )
+						{
+							indices_already_added = true;
+						}
+
+						// search if indices pair already exist in the precedent rows
+						for(size_t i_line=0;i_line<HGVOL_MATRIX_INDICES_.size();++i_line)
+						{
+							const VectorOfMatrixIndices & line_indices = HGVOL_MATRIX_INDICES_[i_line];
+							if(std::find(line_indices.begin(), line_indices.end(), indices_pair ) !=line_indices.end() )
+							{
+								indices_already_added = true;
+							}
+						}
+
+						//! push if this index pair IS NOT already added
+						if(!indices_already_added) row_vector_indices.push_back(indices_pair);
+					}	
+				}
+			}
+		}
+
+		assert( !row_vector_indices.empty() );// for a stored maturity, a swaption and dependant volatilities has to be found --> not empty
+
+		HGVOL_MATRIX_INDICES_.push_back(row_vector_indices);
+		SWPN_MATRIX_.push_back(row_vector_swaption);
+		MKT_VOL_MATRIX_.push_back(row_vector_mkt_vol);
+	}
+
+	size_t nbSwaption = SWAPTION_VECTOR_.size();
+	size_t dimSwaptionMatrix = highestLIBORIndex / fixed_float_ratio;
+
+	//if this is not a parse for specific maturity, nb of swaption in the full matrix has to be as below
+	assert( (dimSwaptionMatrix-1)*dimSwaptionMatrix/2 == nbSwaption );
+}
+
+
+
+bool ATMSwaptionStructuredData::check_data_consistance() const 
+{
+	bool data_is_consistant = true;
+
+	// check if data vector a coherent in terms of size
+	//if (LIBOR_INIT_.size() !=  LIBOR_SHIFT_.size()      ) data_is_consistant = false;
+	if (LIBOR_INIT_.size() !=  LIBOR_STARTDATES_.size() ) data_is_consistant = false;
+	if (ZC_BOND_.size()    !=  ZC_MATURITIES_.size()    ) data_is_consistant = false;
+	if (ZC_BOND_.size()    !=  NUMERAIRE_.size()        ) data_is_consistant = false;
+
+	if(    SWAPRATE_VECTOR_.size()   != VOLATILITY_VECTOR_.size() 
+		|| SWAPRATE_VECTOR_.size()   != SWAPTION_VECTOR_.size() 
+		|| VOLATILITY_VECTOR_.size() != SWAPTION_VECTOR_.size()  
+		) data_is_consistant=false;
+
+
+	// check that all libor and ZC maturities after parsed are coherent with in LMMTenorStructure dates
+	// exist in LMMTenorStructure dates 
+
+	for(const auto & libordate : LIBOR_STARTDATES_)
+	{ 
+		if( !pLMMTenorStructure_->is_TenorDate(libordate) )
+		{
+			data_is_consistant=false;
+			std::cout<<LMM::ERROR_MSG << "ATMSwaptionStructuredData::check_data_consistance() Libor date "<<libordate<< "not found in LMMTenorStructure" <<std::endl;  
+		}
+	}
+
+	for(const auto & zcdate : ZC_MATURITIES_)
+	{ 
+		if( !pLMMTenorStructure_->is_TenorDate(zcdate) )
+		{
+			data_is_consistant=false;
+			std::cout<<LMM::ERROR_MSG << "ATMSwaptionStructuredData::check_data_consistance() ZC date "<<zcdate<< "not found in LMMTenorStructure" <<std::endl;  
+		}
+	}
+
+	// check if LMMTenorStructure do not have more date than interpolated LIBOR and ZC maturities
+
+	if (   LIBOR_STARTDATES_.size() != pLMMTenorStructure_->get_nbLIBOR()                                         // N+1          
+		|| LIBOR_STARTDATES_.back() != pLMMTenorStructure_->get_tenorDate( pLMMTenorStructure_->get_horizon() )   // T[N]   
+		)
+	{
+		data_is_consistant=false;
+		std::cout<<LMM::ERROR_MSG << "ATMSwaptionStructuredData::check_data_consistance() LIBOR_INIT dates incoherent with LMMTenorStructure dates" <<std::endl;  
+	}
+
+	if (  ZC_MATURITIES_.size() != pLMMTenorStructure_->get_nbLIBOR()+1
+		||ZC_MATURITIES_.back() != pLMMTenorStructure_->get_tenorDate().back()  
+		)
+	{
+		data_is_consistant=false;
+		std::cout<<LMM::ERROR_MSG << "ATMSwaptionStructuredData::check_data_consistance() ZC dates incoherent with LMMTenorStructure dates" <<std::endl;  
+	}
+
+	// check for anuities size
+	size_t nbLmmLibor = ZC_BOND_.size() - 1; // because ZC has first element which is 1
+	size_t nbSwaption = SWAPTION_VECTOR_.size();
+
+	return data_is_consistant;
+}
+
+void ATMSwaptionStructuredData::print(const std::string& filename) const
+{
+	std::string path_FileOut = LMM::get_output_path() + filename;
+
+	std::ofstream outputFile  ;  outputFile.open(path_FileOut.c_str() );
+
+	outputFile << "- LMMTenorStructure ---" << std::endl;
+	//outputFile << *pLMMTenorStructure_<<std::endl<<std::endl; // YY
+
+	outputFile << "- LIBOR INIT START DATE ---" << std::endl;
+	for (auto & libor_m : LIBOR_STARTDATES_) outputFile <<" "<<libor_m << ";";
+	outputFile << std::endl ;
+
+	outputFile << "- LIBORS INIT ---" << std::endl;
+	for (auto & lib_bb : LIBOR_INIT_) outputFile <<" "<< lib_bb << ";";
+	outputFile << std::endl << std::endl<< std::endl;
+
+	outputFile << "- ZC MATURITIES ---" << std::endl;
+	for (auto & zc_m : ZC_MATURITIES_) outputFile <<" "<<zc_m << ";";
+	outputFile << std::endl ;
+
+	outputFile << "- ZC BONDS ---" << std::endl;
+	for (auto & zc_bb : ZC_BOND_) outputFile <<" "<<zc_bb << ";";
+	outputFile << std::endl << std::endl<< std::endl;
+
+	outputFile << "- NUMERAIRE ---" << std::endl;
+	for (auto & num_bb : NUMERAIRE_) outputFile <<" "<<num_bb << ";";
+	outputFile << std::endl << std::endl<< std::endl;
+
+
+	outputFile << std::endl << std::endl;
+
+	outputFile <<  "=======    ATM SWAPTION VOL VECTOR   ========" << std::endl;
+	for (auto & vol_m : VOLATILITY_VECTOR_)  outputFile <<" "<<vol_m << ";";
+	outputFile << std::endl << std::endl;
+
+	outputFile << "=======    SWAP RATES   =========" << std::endl;
+	for (auto & strike_m : SWAPRATE_VECTOR_)  outputFile <<" "<<strike_m << ";";	
+	outputFile << std::endl << std::endl;
+
+	//ctntodo print swaption matrix
+	outputFile << "=======    UNDERLYING SWAPTION VECTOR   =========" << std::endl;
+	for (auto & swaption_m : SWAPTION_VECTOR_)  outputFile << swaption_m.getUnderlyingSwap() << std::endl;	
+
+	outputFile << std::endl;
+
+	outputFile.close();	
+}

@@ -1,0 +1,50 @@
+/*###############################################
+#   chithanhnguyen.math@gmail.com               #
+#                                               #
+#   Lunalogic intership project 2014            #
+#   LIBOR Market Model                          #
+#   Technologies:                               #
+#   - cmake                                     #
+#   - boost                                     #
+#   - QuantLib                                  #
+#                                               #
+###############################################*/
+
+#ifndef LMM_GENERIC_PATH_H
+#define LMM_GENERIC_PATH_H
+
+#include <string>
+
+namespace LMM
+{
+	/*! Function returning the absolut output/input path
+	 *  User when writing a program and need to printout to a file at execution time, 
+	 *  it is recommaned to store the output file in this folder
+	 *  for exemple in your programme, save the file to the path,   
+	 *
+	 *  LMM::get_output_path() + "my_output_file.txt"
+	 */
+
+	//! ctntodo use of boost::filesystem in order to have a generic path
+
+	//! adapt your runtime output path here
+	inline std::string get_output_path()
+	{
+		// set the absolute path to your output folder here (use in execute time)
+		
+		// absolute path common for Yuan Li's computer 
+		return "E:\\Visual_Studio_Project\\Visual_Studio_2012_Project\\LunaLMM\\data\\output\\";
+	}
+	
+
+	//! adapt your runtime input path here
+	inline std::string get_runtime_datapath()
+	{
+		// set the absolute path to your input folder here (use in execute time)
+		
+		// absolute path common for Yuan Li's computer 
+		return "E:\\Visual_Studio_Project\\Visual_Studio_2012_Project\\LunaLMM\\data\\input\\";		        
+	}	
+}
+
+#endif /* LMM_GENERIC_PATH_H */

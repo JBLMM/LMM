@@ -1,0 +1,206 @@
+#include <LMM/LmmModel/UpperTriangleVanillaSwaptionQuotes.h>
+#include <LMM/helper/GenericPath.h>
+#include <LMM/helper/Printer.h>
+#include <LMM/pricer/LmmVanillaSwapPricer.h>
+
+#include <fstream>
+
+// ====   LIBOR QUOTE   ====  LIBOR QUOTE   ====  LIBOR QUOTE   ====  LIBOR QUOTE   ====  //
+LiborQuotes::LiborQuotes(LMMTenorStructure_PTR lmmTenorStructure_ptr, const double constant_rate)
+: lmmTenorStructure_(lmmTenorStructure_ptr) 
+{
+	generate_DiscountFactor(constant_rate) ;
+	initiate_Libors_from_DiscountFactor()  ;
+}
+
+LiborQuotes_ConstPTR LiborQuotes::creaet_LiborInit(LMMTenorStructure_PTR lmmTenorStructure, const double constant_rate)
+{
+		LiborQuotes_ConstPTR libor_quote_ptr(new LiborQuotes(lmmTenorStructure,constant_rate) );
+		return libor_quote_ptr;
+}
+
+void LiborQuotes::generate_DiscountFactor(const double constant_rate)
+{
+	size_t nbDF = lmmTenorStructure_->get_nbLIBOR() +1 ;
+	assert(nbDF>2);
+
+	discountFactor_.resize( nbDF );
+	for(size_t i=0;i<nbDF;++i)
+	{
+		const double date_T_i = lmmTenorStructure_->get_tenorDate(i);
+		discountFactor_[i]= std::exp( - (constant_rate * date_T_i) );
+	}
+}
+
+
+void LiborQuotes::initiate_Libors_from_DiscountFactor()
+{
+	size_t nbLibor = discountFactor_.size() - 1;
+	assert( nbLibor > 0 );//number of discounfactor >=3 in order to generate the Libors
+	assert(nbLibor == lmmTenorStructure_->get_nbLIBOR() );
+
+	liborInit_.resize(nbLibor);
+	for(size_t iLibor=0;iLibor<nbLibor;++iLibor)
+	{
+		const double tau_i = lmmTenorStructure_->get_deltaT(iLibor);
+		liborInit_[iLibor] = 1./tau_i *( discountFactor_[iLibor]/discountFactor_[iLibor+1] - 1. );
+	}
+}
+
+// ====    END LIBOR QUOTE   ====    END LIBOR QUOTE   ====    END LIBOR QUOTE   ====    END LIBOR QUOTE   ====  //
+
+
+UpperTriangleVanillaSwaptionQuotes::UpperTriangleVanillaSwaptionQuotes(
+	LMMTenorStructure_PTR lmmTenorStructure,
+	int   lastYear, 	
+	const Tenor& fixedTenor,
+	const Tenor& floatingTenor,
+	const UpperTriangleDoubleMatrix& strikes, // 1st row and column not used like g!
+	const UpperTriangleDoubleMatrix& quotes)  // 1st row and column not used like g!
+	: lmmTenorStructure_(lmmTenorStructure)
+	, lastYear_(lastYear)
+	, fixedTenor_(fixedTenor)
+	, floatingTenor_(floatingTenor)
+	, indexRatio_(fixedTenor.NbOfMonth()/floatingTenor.NbOfMonth())
+	, upperTriangleVanillaSwaptionQuotes_(lastYear+1, lastYear+1)
+	, indexMapping_gDelegate_gTransformed_(lastYear+1, lastYear+1)
+{
+	assert(lmmTenorStructure_->get_horizon() == lastYear*indexRatio_); 
+	assert(lastYear>1);
+	assert(strikes.size1() == strikes.size2() && strikes.size1() == lastYear_+1); 
+	assert(quotes.size1()  == quotes.size2()  && quotes.size1()  == lastYear_+1);
+	assert(fixedTenor.NbOfMonth() == 12 && fixedTenor.NbOfMonth()%floatingTenor.NbOfMonth() ==0);
+	assert(lmmTenorStructure->get_tenorType() == floatingTenor);
+
+	//! upperTriangle:
+	for(size_t iExpirity = 1; iExpirity<quotes.size1(); ++iExpirity) // row
+	{
+		for(size_t jTenor = 1; jTenor<quotes.size2()-iExpirity; ++jTenor) // col
+		{
+			double strike = strikes(iExpirity,jTenor);
+			size_t indexStart = computeStartIndex(iExpirity);
+			size_t indexEnd   = computeIndexEnd(iExpirity,jTenor);
+			VanillaSwap  vanillaSwap(strike, indexStart, indexEnd, floatingTenor_, fixedTenor_, lmmTenorStructure);
+			VanillaSwaption vanillaSwaption(vanillaSwap, OptionType::OptionType::CALL);
+
+			double quote = quotes(iExpirity,jTenor);
+
+			std::pair<VanillaSwaption, double> p(vanillaSwaption, quote);
+
+			upperTriangleVanillaSwaptionQuotes_(iExpirity,jTenor) = p;
+		}
+	}
+
+	initialize_gDelegate_IndexIngTransformed();
+}
+
+
+
+void UpperTriangleVanillaSwaptionQuotes::initialize_gDelegate_IndexIngTransformed() // 1st row and column not used! as g!  // UTM: upperTriangleMatrix
+{
+	//! 1st column and 1st row initialized to absurd value
+	for(size_t k=0; k<indexMapping_gDelegate_gTransformed_.size1(); ++k)
+	{
+		indexMapping_gDelegate_gTransformed_(0,k) = std::pair<LMM::Index,LMM::Index>(-1000, -1000);
+		indexMapping_gDelegate_gTransformed_(k,0) = std::pair<LMM::Index,LMM::Index>(-1000, -1000);
+	}
+	//! upperTriangle:
+	for(size_t iDelegated = 1; iDelegated<indexMapping_gDelegate_gTransformed_.size1(); ++iDelegated) // row
+	{
+		for(size_t jDelegated = 1; jDelegated<indexMapping_gDelegate_gTransformed_.size2()-iDelegated; ++jDelegated) // col
+		{
+			// ok for any indexRatio_ value
+			size_t jCol_gMatrix = jDelegated*indexRatio_;
+			size_t iRow_gMatrix = iDelegated*indexRatio_;		
+			indexMapping_gDelegate_gTransformed_(iDelegated,jDelegated) = std::pair<LMM::Index,LMM::Index>( iRow_gMatrix, jCol_gMatrix); 
+		}
+	}
+}
+
+size_t UpperTriangleVanillaSwaptionQuotes::computeStartIndex(size_t iMatrix)const 
+{
+	return iMatrix*indexRatio_;
+}
+
+size_t UpperTriangleVanillaSwaptionQuotes::computeIndexEnd(size_t iMatrix, size_t jMatrix)const 
+{
+	return ( computeStartIndex(iMatrix) + jMatrix*indexRatio_ );
+}
+
+
+void UpperTriangleVanillaSwaptionQuotes::print(const std::string& filename) const
+{
+	std::string path_OutPut = LMM::get_output_path() + filename;
+
+	std::vector<PrintElement_PTR> elements_print;
+
+	PrintElement_PTR mapMatrix_print = PrintElement_PTR(new MatrixPrintElement<UpperTriangleIndexPairMatrix>("map matrix",  indexMapping_gDelegate_gTransformed_));
+	elements_print.push_back(mapMatrix_print);
+
+	Printer printer(path_OutPut, elements_print);
+	printer.print();
+}
+
+
+UpperTriangleVanillaSwaptionQuotes_ConstPTR UpperTriangleVanillaSwaptionQuotes::creaet_ATMSwaptionImpliedVol
+(
+	LiborQuotes_ConstPTR libor_quotes_ptr,
+	const Tenor&  fixedTenor,
+	const Tenor&  floatingTenor,
+	LmmVanillaSwaptionApproxPricer_Rebonato_PTR black_vol_approx_ptr
+)
+{
+	LMMTenorStructure_PTR pLMMTenorStructure = libor_quotes_ptr->get_LMMTenorStructure_PTR() ;
+	size_t fix_float_ratio = fixedTenor.ratioTo(floatingTenor);
+	size_t lastLiborIndex  = pLMMTenorStructure->get_nbLIBOR()-1;
+	assert(lastLiborIndex%fix_float_ratio == 0);
+	size_t last_year = lastLiborIndex / fix_float_ratio ;
+
+	size_t matrix_size = last_year+1;
+	UpperTriangleDoubleMatrix swap_rate_matrix(matrix_size,matrix_size);
+	UpperTriangleDoubleMatrix black_vol_matrix(matrix_size,matrix_size);
+
+	//first row and first column never used
+	for(size_t k=0;k<matrix_size;++k)
+	{
+		swap_rate_matrix(k,0) = -1000000; swap_rate_matrix(0,k) = -1000000;
+		black_vol_matrix(k,0) = -1000000; black_vol_matrix(0,k) = -1000000;
+	}
+
+
+	const std::vector<double> & init_libor = libor_quotes_ptr->get_InitLibor();
+	LmmVanillaSwapPricer swap_pricer(pLMMTenorStructure);
+	for(size_t iMaturity=1;iMaturity<matrix_size;++iMaturity)
+	{
+		for(size_t jTenor=1;jTenor<matrix_size - iMaturity ;++jTenor)
+		{
+			size_t start_swap_index = iMaturity * fix_float_ratio;
+			size_t end_swap_index   = (iMaturity+jTenor) * fix_float_ratio;	
+
+			double empty_strike = -100000000;
+			VanillaSwap swap_ij(empty_strike,start_swap_index,end_swap_index,floatingTenor,fixedTenor,pLMMTenorStructure);
+			double swap_rate_ij = swap_pricer.swapRate_Analytical(swap_ij,init_libor);
+			
+			swap_ij.set_strike(swap_rate_ij);
+			swap_rate_matrix(iMaturity,jTenor) = swap_rate_ij;
+
+			VanillaSwaption swaption_ij(swap_ij, OptionType::OptionType::CALL);
+			double black_vol_ij = black_vol_approx_ptr->volBlack(swaption_ij,init_libor);
+
+			black_vol_matrix(iMaturity,jTenor)=black_vol_ij;
+		}
+	}
+
+	UpperTriangleVanillaSwaptionQuotes_ConstPTR atm_swaption_implied_vol 
+		(new UpperTriangleVanillaSwaptionQuotes(
+												pLMMTenorStructure,
+												last_year,
+												fixedTenor,
+												floatingTenor,
+												swap_rate_matrix,
+												black_vol_matrix
+											   ) 
+		);
+
+	return atm_swaption_implied_vol;
+}

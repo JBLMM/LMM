@@ -1,0 +1,95 @@
+#pragma once
+
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include <ql/math/optimization/endcriteria.hpp>
+#include <ql/math/optimization/constraint.hpp>
+#include <ql/math/optimization/problem.hpp>
+
+#include <LMM/helper/Printer.h>
+#include <LMM/helper/GenericPath.h>
+
+#include <LMM/calibration/CalibrationVolCostFunction.h>
+#include <LMM/instrument/VanillaSwaption.h>
+
+#include <LMM/LmmModel/UpperTriangleVanillaSwaptionQuotes.h>
+
+#include <LMM/numeric/Interpolation.h>
+
+typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::lower> LowerTriangularDoubleMatrix; // LTDM
+//typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::upper> UpperAntiTriangularDoubleMatrix; // UTDM
+//typedef boost::numeric::ublas::triangular_matrix<std::pair<LMM::Index,LMM::Index>, boost::numeric::ublas::upper> UpperAntiTriangularIndexPairMatrix; // UTIPM
+
+//TODO: 1. UpperAntiTriangularDoubleMatrix <--> quantilib array (attetion: il ne faut pas faire le pour lowerTriangleMatrix)
+//	  il faut l'implementer dans Helper class 	   
+//	  2. implement Class interpolator in Helper, il ne faut pas implement dans cette class. 
+
+/*!
+*
+*
+* gDelegate_    is a upper anti-triangular matrix
+* gTransformed_ is a upper anti-triangular matrix (interpolated by gDelegate)
+* g_            is a lower triangular matrix (g matrix in hg volatility matrix), that is transformed from gTransformed_
+*
+* The routine is 
+*		gDelegate_ (interpolates) --> gTransformed (update_g_from_gTransforme) -> g
+*/
+
+class GMatrixMapping  
+{
+	LowerTriangularDoubleMatrix  g_;            // libor's vol g, 1st row & col ignored lower triangle: size = 2*year
+	UpperAntiTriangularDoubleMatrix gTransformed_; // libor's vol g: transformed , 1st row & col ignored uppertriangle: size = 2*year
+	UpperAntiTriangularDoubleMatrix gDelegate_;                     // swaption's size, 1st row & col ignored  size = year + 1
+
+	UpperAntiTriangularIndexPairMatrix gDelegate_IndexMappping_gTransformed_; // helper swaption's size, 1st row & col ignored  size = year  + 1
+
+public:
+
+	static size_t get_DelegateSizeFromHorizon(size_t horizon, size_t ratioFixedFloat);
+	static size_t get_FullSizeFromNbYear(size_t nbYear, size_t ratioFixedFloat)      ;
+
+	GMatrixMapping(size_t full_g_size,
+		const UpperAntiTriangularDoubleMatrix&  gDelegate, // used as calibration input
+		const UpperAntiTriangularIndexPairMatrix& gDelegate_IndexMappping_gTransformed);
+
+	size_t get_NbDelegateElement() const;
+
+	QuantLib::Array get_DelegateArray() const;
+
+	//! reset from a QuantLib array to gDelegate and process all the routine.
+	void reset_gDelegate( const QuantLib::Array & qlArray );
+
+	//! getter: 
+	const LowerTriangularDoubleMatrix& get_g_Ref() {return g_;}
+	const UpperAntiTriangularDoubleMatrix& get_gTransformed_Ref() {return gTransformed_;}
+	//LowerTriangularDoubleMatrix& get_g_RefNonConst() {return g_;}                       // this is for calibrator
+	//UpperAntiTriangularDoubleMatrix& get_gTransformed_RefNonConst() {return gTransformed_;} // for calibrator
+
+	void print(const std::string& filename);
+
+private:
+
+	//! gDelegate_ (interpolates) --> gTransformed (update_g_from_gTransforme) -> g
+	void proccess_transform();
+
+	void fetch_gDelegateTogTransformed();
+
+	//! interpolate gDelegate --> gTransformed
+	void interpolate_gTransformed() ;
+
+	//! ignore 1st row & col 
+	void update_g_from_gTransformed() ;	
+	
+	void interpolate_Rows_gTransformed() ;
+	
+	//! giving the delegate row index, we find the sparse indices for gTransformed and interpolate for this rows
+	void interpolate_DelegateRow_gTransformed(size_t iRowDelegate);
+	//! giving the two delegate row index, we find the columns between them and interpolate all these rows
+	void interpolate_Row_gTransformed(size_t iRowDelegate,size_t iiRowDelegate);
+
+	//! top margin of gTransformed is the left margin of g
+	void extrapolate_topmargin_gTransformed() ;
+	void extrapolate_TopLeftMargin_gTransformed(size_t row_offset) ;
+	void extrapolate_TopRightMargin_gTransformed(size_t row_offset,size_t col_offset) ;
+};
+

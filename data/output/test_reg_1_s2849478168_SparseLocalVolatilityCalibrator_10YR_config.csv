@@ -1,0 +1,20 @@
+nbYear,10,,  unique_seed,2849478168,,  penalty_coeff,1,
+
+g_diag_noise,0.1,
+perturbe_noise,0.5,
+
+x_epsilon,1e-010,
+f_epsilon,1e-008,
+maxIter,10000,
+
+a,b,c,d,
+0.22,0.4,0.6,0.15,
+
+Common,test_reg_1_s2849478168_Common_10YR
+Global,test_reg_1_s2849478168_SparseGlobalVolatilityCalibrator_10YR,
+Local,test_reg_1_s2849478168_SparseLocalVolatilityCalibrator_10YR,,,, YES,
+
+Fixed Tenor,Tenor1YR[12MO|1YR],
+Float Tenor,Tenor6M[6MO|0.5YR],
+Sparse Step,2,
+

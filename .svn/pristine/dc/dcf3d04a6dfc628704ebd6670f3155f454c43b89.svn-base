@@ -1,0 +1,58 @@
+#pragma once
+
+#include <vector>
+
+#include <LMM/LmmModel/GMatrixMapping.h>
+
+/*! \class LmmPenalty
+*
+* Routine
+*		- update_penalty
+*		- get_penalty
+*/
+class LmmPenalty
+{
+public:
+
+	//! 
+	const std::vector<double>& get_penalty(const GMatrixMapping_PTR gMatrixMapping_ptr) const
+	{
+		update_penalty_buffer(gMatrixMapping_ptr) ;
+		assert( !buffer_penaltyValues_.empty() ) ;
+		return buffer_penaltyValues_;
+	}
+
+protected : 	
+	
+	mutable std::vector<double>  buffer_penaltyValues_ ; 
+
+	//! when defining a penalty, user has to define how to compute the penalties
+	// penalties can be computed on gDelegate, on gTransformed or on g 
+	virtual void update_penalty_buffer(const GMatrixMapping_PTR gMatrixMapping_ptr) const = 0;
+};
+typedef boost::shared_ptr<LmmPenalty> LmmPenalty_PTR;
+
+
+/*! \class LmmPenalty_Homogeneity
+* 
+*   1st derivatice over diagnol 
+*
+*  First implementation, we implement penalties constant on columns of gDelegate matrix,
+*  Which is equivalently to sparse diagonal, sub diagonal of g matrix
+*
+*/
+class LmmPenalty_Homogeneity : public LmmPenalty
+{
+	virtual void update_penalty_buffer(const GMatrixMapping_PTR gMatrixMapping_ptr) const;
+};
+
+
+////! 2nd deirvative on libor direction 
+//class LmmPenalty_SmoothOnLiborDirection: public LmmPenalty
+//{
+//	virtual void update_penalty_buffer(const GMatrixMapping_PTR gMatrixMapping_ptr)
+//	{
+//		throw("LmmPenalty_SmoothOnLiborDirection::update_penalty is not yet implemented, DO NOT call");
+//	}
+//};
+

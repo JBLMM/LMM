@@ -1,0 +1,122 @@
+
+#include <LMM/numeric/Interpolation.h>
+
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <cassert>
+
+namespace numeric
+{
+
+	void Interpolation::linearInterpolation
+		(
+		std::vector<double>& y         ,
+		std::vector<double>& x         ,
+		const double&        x_interp  ,
+		const double epsilon
+		)
+	{
+		// the inserted point has to be in xmax and xmin
+		if (x_interp < x[0] || x_interp > x[x.size()-1])
+		{
+			throw("Interpolation.cpp ----> Error: invalid absciss input");
+		}
+
+		bool additional_node_is_coincide = false; // if true, no need to interpolate
+
+		// iterate the whole x vector to find the appropriated interpolation position 
+		// find the index after the add point
+		size_t index_interp = 0;
+		for (size_t i = 0; i < x.size(); ++i) 
+		{
+			if( std::abs(x_interp - x[i]) < epsilon ) // x_interp is too close to a node
+			{
+				additional_node_is_coincide=true;     // no need for interpolation
+				break;
+			}
+
+			if(x_interp > x[i]) index_interp++;
+		}
+
+
+		if(!additional_node_is_coincide)
+		{
+
+			//-- Set the dates before and after maturity_date
+			const double& date_prev = x[index_interp-1];
+			const double& date_next = x[index_interp];
+
+			//-- Search in the libor matrix for libors corresponding to the previous dates
+			const double& libor_prev =  y[index_interp-1];
+			const double& libor_next = y[index_interp];
+
+			double coeff_1 = (date_next - x_interp)/(date_next - date_prev);
+			double coeff_2 = (x_interp - date_prev)/(date_next - date_prev);
+
+			double interpolated_libor = coeff_1*libor_prev + coeff_2*libor_next;
+
+			//-- Update vectors of date and values
+			x.insert(x.begin()+index_interp,x_interp);
+			y.insert(y.begin()+index_interp,interpolated_libor);
+
+		}
+	}
+
+
+	double Interpolation::linearInterpolation
+		(
+		const double& x1, 
+		const double& x2, 
+		const double& y1, 
+		const double& y2, 
+		const double& x_interp
+		)
+	{
+		double coeff_1 = (x2 - x_interp)/(x2 - x1);
+		double coeff_2 = (x_interp - x1)/(x2 - x1);
+		double res = coeff_1*y1 + coeff_2*y2;
+		return res;
+	}
+
+	double Interpolation::columnIntepolation(
+		const double & lowvalue , const double& highvalue,
+		size_t          lowIndex, size_t        highIndex, 
+		size_t interpolIndex)
+	{
+		assert(lowIndex<highIndex);
+		assert(lowIndex<interpolIndex && interpolIndex < highIndex);
+
+		double interval    = (double) (highIndex - lowIndex) ;
+		double low_coeff   = (double) (interpolIndex-lowIndex) /interval  ;
+		double hight_coeff = (double) (highIndex-interpolIndex)/interval  ;
+
+		return low_coeff*lowvalue  +  hight_coeff * highvalue ;
+	}
+
+	double Interpolation::matrixIntepolation(
+		const double & v11, const double& v12,const double & v21, const double& v22,
+		size_t        row1, size_t       col1, size_t       row2, size_t       col2, 
+		size_t i, size_t j)
+	{
+		assert(row1<i && i< row2);assert(col1<j && j< col2); // interpolate item has to be in the interior of matrix block
+
+		double col_interval = double (col2 - col1) ;
+		double col_coeff1   = (double) (j-col1) /col_interval ;
+		double col_coeff2   = (double) (col2-j) /col_interval ; 
+
+		double row_interval = double (row2 - row1) ;
+		double row_coeff1   = (double) (i-row1) /row_interval ;
+		double row_coeff2   = (double) (row2-i) /row_interval ; 
+
+		double aux_col_value1,aux_col_value2;
+
+		aux_col_value1 = row_coeff1*v11 + row_coeff2*v12 ;
+		aux_col_value2 = row_coeff1*v21 + row_coeff2*v22 ;
+
+		double result = col_coeff1*aux_col_value1 + col_coeff2*aux_col_value2;
+
+		return result;
+	}
+
+} //end namespace numerica

@@ -1,0 +1,258 @@
+#pragma once
+
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include <ql/math/optimization/endcriteria.hpp>
+#include <ql/math/optimization/constraint.hpp>
+#include <ql/math/optimization/problem.hpp>
+
+#include <LMM/helper/Printer.h>
+#include <LMM/helper/GenericPath.h>
+
+#include <LMM/calibration/CalibrationVolCostFunction.h>
+#include <LMM/instrument/VanillaSwaption.h>
+
+#include <LMM/LmmModel/UpperTriangleVanillaSwaptionQuotes.h>
+
+#include <LMM/numeric/Interpolation.h>
+
+typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::lower> LowerTriangularDoubleMatrix; // LTDM
+//typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::upper> UpperAntiTriangularDoubleMatrix; // UTDM
+//typedef boost::numeric::ublas::triangular_matrix<std::pair<LMM::Index,LMM::Index>, boost::numeric::ublas::upper> UpperAntiTriangularIndexPairMatrix; // UTIPM
+
+//TODO: 1. UpperAntiTriangularDoubleMatrix <--> quantilib array (attetion: il ne faut pas faire le pour lowerTriangleMatrix)
+//	  il faut l'implementer dans Helper class 	   
+//	  2. implement Class interpolator in Helper, il ne faut pas implement dans cette class. 
+
+/*!
+*
+*
+* gDelegate_    is a upper anti-triangular matrix
+* gTransformed_ is a upper anti-triangular matrix (interpolated by gDelegate)
+* g_            is a lower triangular matrix (g matrix in hg volatility matrix), that is transformed from gTransformed_
+*
+* The routine is 
+*		gDelegate_ (interpolates) --> gTransformed (update_g_from_gTransforme) -> g
+*/
+
+class GMatrixMapping  
+{
+	LowerTriangularDoubleMatrix  g_;            // libor's vol g, 1st row & col ignored lower triangle: size = 2*year
+	UpperAntiTriangularDoubleMatrix gTransformed_; // libor's vol g: transformed , 1st row & col ignored uppertriangle: size = 2*year
+	UpperAntiTriangularDoubleMatrix gDelegate_;                     // swaption's size, 1st row & col ignored  size = year + 1
+
+	UpperAntiTriangularIndexPairMatrix gDelegate_IndexMappping_gTransformed_; // helper swaption's size, 1st row & col ignored  size = year  + 1
+
+	std::vector<size_t>  colToInterpolateIndex_;         // the columns to interpolate firstly
+
+	//! reset from a QuantLib array to gDelegate and process all the routine.
+	void reset_gDelegatye( const QuantLib::Array & qlArray )
+	{
+		size_t array_index_counter=0;
+		// first row and firsst column are ignored 
+		for(size_t iDelegate=1; iDelegate<gDelegate_.size1(); ++iDelegate)
+		{
+			for(size_t jDelegate=1; jDelegate<=gDelegate_.size2()-iDelegate; ++jDelegate)
+			{
+				gDelegate_(iDelegate,jDelegate) = qlArray[array_index_counter];
+				++array_index_counter;
+			}
+		}
+		assert(array_index_counter == qlArray.size() );//check if qlArray is fully used
+
+		proccess_transform();
+	}
+
+public:
+
+	static size_t get_DelegateSizeFromHorizon(size_t horizon, size_t ratioFixedFloat)
+	{
+		assert(horizon%ratioFixedFloat==0);
+		return 1+horizon/ratioFixedFloat;// size = nbYear + 1
+	}
+	static size_t get_FullSizeFromNbYear(size_t nbYear, size_t ratioFixedFloat)
+	{
+		return 1 + nbYear*ratioFixedFloat;
+	}
+
+	GMatrixMapping(size_t full_g_size,
+		const UpperAntiTriangularDoubleMatrix&  gDelegate, // used as calibration input
+		const UpperAntiTriangularIndexPairMatrix& gDelegate_IndexMappping_gTransformed)
+		: g_(full_g_size, full_g_size)
+		, gTransformed_(full_g_size,full_g_size)
+		, gDelegate_(gDelegate)
+		, gDelegate_IndexMappping_gTransformed_(gDelegate_IndexMappping_gTransformed)
+	{
+		assert(gDelegate_IndexMappping_gTransformed.size1() == gDelegate_.size1() );
+		assert(gDelegate_IndexMappping_gTransformed.size2() == gDelegate_.size2() );
+
+		//! init first row and first column of g and gTransform to negative values for easily debuguing
+		for(size_t k=0;k<full_g_size;++k)
+		{
+			g_(k,0)=-1.;gTransformed_(0,k)=-1.;gTransformed_(k,0)=-1.;
+		}
+
+		//test
+		double matrix_counter=100;
+		for(size_t i=1; i<g_.size1(); ++i)
+		{
+			for(size_t j=1; j<=i; ++j)
+			{
+				g_(i,j) = matrix_counter;matrix_counter+=100;
+			}
+		}
+
+		 matrix_counter=1;
+		for(size_t i=1; i<gTransformed_.size1(); ++i)
+		{
+			for(size_t j=1; j<gTransformed_.size2()-i; ++j)
+			{
+				gTransformed_(i,j) = matrix_counter;matrix_counter+=1;
+			}
+		}
+
+
+		////! init g to absurd value
+		//for(size_t i=1; i<g_.size1(); ++i)
+		//{
+		//	for(size_t j=1; j<=i; ++j)
+		//	{
+		//		g_(i,j) = 1.0e100;
+		//	}
+		//}
+
+		////! init gTranformed to absurd value
+		//for(size_t i=1; i<gTransformed_.size1(); ++i)
+		//{
+		//	for(size_t j=1; j<gTransformed_.size2()-i; ++j)
+		//	{
+		//		gTransformed_(i,j) = 1.0e100;
+		//	}
+		//}
+
+		initialize_colToInterpolateIndex();
+
+		//! do all the calculation  gDelegate_ (interpolates) --> gTransformed (update_g_from_gTransforme) -> g
+		proccess_transform();
+	}	
+
+private:
+	void initialize_colToInterpolateIndex()
+	{
+		colToInterpolateIndex_.clear();
+		colToInterpolateIndex_.push_back(-100000000);// first element not used
+		for(size_t j=1; j<gDelegate_IndexMappping_gTransformed_.size2(); ++j)
+		{
+			size_t colIndex = gDelegate_IndexMappping_gTransformed_(1,j).second;
+			colToInterpolateIndex_.push_back(colIndex);
+		}		
+	}
+
+	//! interpolate gDelegate --> gTransformed
+	void interpolate_gTransformed() 
+	{
+		//interpolate_cols_gTransformed();
+		//interpolate_rows_gTransformed();
+	}
+
+
+	void fetch_gDelegateTogTransformed()
+	{
+		for (size_t jColDelegate=1; jColDelegate<colToInterpolateIndex_.size(); ++jColDelegate) // row
+		{
+			const size_t jCol = colToInterpolateIndex_[jColDelegate];
+			for (size_t iRowDelegate=1; iRowDelegate<gDelegate_IndexMappping_gTransformed_.size1() - jColDelegate ; ++iRowDelegate) // row
+			{
+				assert(gDelegate_IndexMappping_gTransformed_(iRowDelegate,jColDelegate).second == jCol );
+				size_t iRow    = gDelegate_IndexMappping_gTransformed_(iRowDelegate  ,jColDelegate).first;
+				// fetching values from gDelegate_ to node of gTransformed_
+				gTransformed_(iRow,jCol) =  gDelegate_(iRowDelegate , jColDelegate);
+			}
+		}	
+	}
+
+	void interpolate_cols_gTransformed() // interpolate selective columns
+	{
+		assert(colToInterpolateIndex_.size() == gDelegate_IndexMappping_gTransformed_.size2() );
+
+		numeric::Interpolation interpolation;
+
+		for (size_t jColDelegate=1; jColDelegate<colToInterpolateIndex_.size(); ++jColDelegate) // row
+		{
+			const size_t jCol = colToInterpolateIndex_[jColDelegate];
+			for (size_t iRowDelegate=1; iRowDelegate<gDelegate_IndexMappping_gTransformed_.size1() - jColDelegate ; ++iRowDelegate) // row
+			{
+				assert(gDelegate_IndexMappping_gTransformed_(iRowDelegate,jColDelegate).second == jCol );
+				size_t iRowTop    = gDelegate_IndexMappping_gTransformed_(iRowDelegate  ,jColDelegate).first;
+				size_t iRowBotton = gDelegate_IndexMappping_gTransformed_(iRowDelegate+1,jColDelegate).first;
+				assert(iRowTop<iRowBotton);
+
+				for(size_t iRow=iRowTop+1;iRow<iRowBotton;++iRow)
+				{
+					const double interpolated_value = interpolation.columnIntepolation( 
+						gTransformed_(iRowTop,jCol)
+						, gTransformed_(iRowBotton,jCol)
+						, iRowTop
+						, iRowBotton
+						, iRow );
+					gTransformed_(iRow,jCol)=interpolated_value;
+				}
+			}
+		}
+	}
+
+	void interpolate_rows_gTransformed() // interpolate each rows
+	{
+		/*kuhkuhi*/
+	}
+
+	//! ignore 1st row & col 
+	void update_g_from_gTransformed() 
+	{
+		for(size_t jG=1;jG< g_.size2(); ++jG)
+		{
+			for(size_t iG=jG; iG<g_.size1(); ++iG)
+			{
+				size_t iGTransformed = jG ;
+				size_t jGTransformed = iG - jG + 1;
+				g_(iG,jG) = gTransformed_(iGTransformed,jGTransformed);
+			}
+		}
+	}	
+
+	//! gDelegate_ (interpolates) --> gTransformed (update_g_from_gTransforme) -> g
+	void proccess_transform()
+	{
+		fetch_gDelegateTogTransformed();
+		interpolate_gTransformed();
+		update_g_from_gTransformed();	
+	}
+
+public:
+	//! getter: 
+	const LowerTriangularDoubleMatrix& get_g_Ref() {return g_;}
+	const UpperAntiTriangularDoubleMatrix& get_gTransformed_Ref() {return gTransformed_;}
+	//LowerTriangularDoubleMatrix& get_g_RefNonConst() {return g_;}                       // this is for calibrator
+	//UpperAntiTriangularDoubleMatrix& get_gTransformed_RefNonConst() {return gTransformed_;} // for calibrator
+
+	void print(const std::string& filename)
+	{
+		std::string path_OutPut = LMM::get_output_path() + filename;
+
+		std::vector<PrintElement_PTR> elements_print;
+
+		PrintElement_PTR gDelegate_print = PrintElement_PTR(new MatrixPrintElement<UpperAntiTriangularDoubleMatrix>("gDelegate",  gDelegate_));
+		PrintElement_PTR gTransformed_print = PrintElement_PTR(new MatrixPrintElement<UpperAntiTriangularDoubleMatrix>("gTransformed",  gTransformed_));
+		PrintElement_PTR g_print = PrintElement_PTR(new MatrixPrintElement<LowerTriangularDoubleMatrix>("full g ",  g_));			
+		PrintElement_PTR index_map_print = PrintElement_PTR(new MatrixPrintElement<UpperAntiTriangularIndexPairMatrix>("index Map ",  gDelegate_IndexMappping_gTransformed_));
+
+		elements_print.push_back(gDelegate_print);
+		elements_print.push_back(gTransformed_print);
+		elements_print.push_back(g_print);
+		elements_print.push_back(index_map_print);
+
+		Printer printer(path_OutPut, elements_print);
+		printer.print(); 
+	}
+};
+

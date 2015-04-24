@@ -1,0 +1,41 @@
+Here define the common path rules
+- Path to the Project
+E:\Visual_Studio_Project\Visual_Studio_2012_Project\LunaLMM
+- Path to the Boost root library (WITHOUT NUMBER OF VERSION)
+E:\DevLib\boost
+E:\DevLib\boost\boost
+E:\DevLib\boost\lib
+- Path to the QuantLib root library (WITHOUT NUMBER OF VERSION)
+E:\DevLib\QuantLib
+E:\DevLib\QuantLib\ql
+E:\DevLib\QuantLib\lib
+
+
+Open the projet, in ${LUNA_HELPER} filter, open file GenericPath.h
+change the two absolute path for input and output corresponding to your computer.
+Their relative path are ROOT_LUNA\data\input\ and ROOT_LUNA\data\output\
+NOTE : Simply copy the path do not work, you need to replace '\' by '\\'
+
+Right click on CommonLMM, at the left, 
+
+goto VC++ Directories, in Include Directories, add 
+
+\absolute\path\to\boost\
+\absolute\path\to\QuantLib\
+\absolute\path\to\ThisProject\
+
+goto Linker/Input, add to Additional Dependencies
+
+\absolute\path\to\QuantLib\lib\quantlib.lib
+
+Note that if you build yourselft QuantLib, you may have several versions of quantlib.lib,
+choose the appropriate version for setting in each project/properties/Additional Dependencies.
+
+Every thing build will be in the folder VCBuild
+
+Note that file *.suo *.sdf *.vcxproj.user are 'user dependant', that's something of local
+Specific user can delete them without loose genericity
+
+For adding new executable projet, add projet type Application, link with CommonLMM by right click
+properties/Common Properties/Framework and References/ Add new References/
+Then choose CommonLMM

@@ -1,0 +1,4 @@
+1. #include <ql/math/matrixutilities/pseudosqrt.hpp>: seems only to do PCA ~ Higman BB^T = originalCorrelmatrix.
+2. 
+
+3. need to make correlation as a function of time but not of index !

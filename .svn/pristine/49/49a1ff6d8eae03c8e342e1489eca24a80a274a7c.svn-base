@@ -1,0 +1,52 @@
+#ifndef LMM_NUMERIC_INTERPOLATION_H
+#define LMM_NUMERIC_INTERPOLATION_H
+#pragma once
+
+#include <vector>
+
+namespace numeric //ctntodo change this namespace to interpolation, and remove class interpolation, use free method instead
+{
+
+	class Interpolation
+	{
+	public:
+		//-- Interpolation on y - find value corresponding to given maturity date
+		// Insert a point in the appropriated position in x vector
+		// Compute the coherent point in vector y, and insert it into the appropriated position 
+		void linearInterpolation
+			(
+			std::vector<double>& y        ,
+			std::vector<double>& x        ,
+			const double&        x_interp ,
+			const double epsilon=10e-8    // if x_interp is too close to a node on x vector, we will not interpolate
+			);
+
+		double linearInterpolation
+			(
+			const double& x1, 
+			const double& x2, 
+			const double& y1, 
+			const double& y2, 
+			const double& x_interp
+			);
+
+		/*! interpolation helper for matrice.
+		 *  giving two extremun value and its corresponding indices, interpolate value of a index between them
+		 */
+		double columnIntepolation(const double & lowvalue, const double& highvalue,
+			                      size_t lowIndex, size_t highIndex, 
+								  size_t interpolIndex);
+
+		/*! linear interpolation for a rectangle in the matrix.
+		 *  giving the four corners of matrix indices, and the four corresponding values, interpolate
+		 *  the value of a position in the interior of the block 
+		 * NOTE : attention to the convention of block corners indices (row1,col1) and  (row2,col2)
+		 */
+		double matrixIntepolation(const double & v11, const double& v12,const double & v21, const double& v22,
+			                      size_t        row1, size_t       col1, size_t       row2, size_t       col2, 
+								  size_t i, size_t j);
+
+
+	};
+}
+#endif /* LMM_NUMERIC_INTERPOLATION_H */

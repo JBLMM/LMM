@@ -1,0 +1,38 @@
+[Q ] copy and use
+[R ]
+-----------------------------------------------------------------------
+
+
+[Q ] Yuan Li said all libors quote are forward Libors of the form L(t,Ti,Tii),
+     If then, why we need to do the simulation while this data are already quoted
+[R ]
+-----------------------------------------------------------------------
+
+[Q ] Numeraire for spot probability Adrien report p.20 
+[R ]
+-----------------------------------------------------------------------
+
+[Q ] Why in probability spot, drift coeff is not calculated from index 0, but start from a certain \beta(t)
+[R ]
+-----------------------------------------------------------------------
+
+[Q ] In Adrien report formula (5.7), why the geometric brownian second term is  |s_i|^2 instead of |s_iB_i|^2
+[R ]
+-----------------------------------------------------------------------
+
+[Q4] all simulated Libors are piecewise constant?
+[R4] Yes
+-----------------------------------------------------------------------
+
+[Q3] Weights for RebonatoVolatilityCostfunction, how are their formula (reference articles)?
+[R3] Will see that after
+-----------------------------------------------------------------------
+[Q2] In the ATM Swaption Market Data file.csv, there are not informations about the FixedTenor, FloatTenor
+     How we create that ?
+[R2] Standard Swaption are always the same tenor structure loat-fixed : For european is 6M-1Y, for us is 3M-6M
+------------------------------------------------------------------------
+[Q1] Libor quoted on the market is spot libor or is forward libor ? 
+[R1] There are not spot libor of type L(S,T), it is always L(t,S,T)
+
+
+

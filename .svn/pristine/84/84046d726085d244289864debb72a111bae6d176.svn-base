@@ -1,0 +1,195 @@
+#include <LMM/Test/Test_CalibrationConfig.h>
+
+#include <cassert>
+#include <string.h>
+#include <fstream>
+
+void Test_CalibrationConfig::re_init_filenames()
+{
+	fixedfloatRatio = tenorfixedleg.ratioTo(tenorfloatleg);	
+
+	// setting base name files corresponding to specific test
+	std::ostringstream base_file_name;
+	base_file_name <<"test_"<<"reg_"<<penalty_coeff<<"_s"<<unique_seed<<"_GlobalCalibration_"<<nbYear<<"YR";
+	basefilename_global_calibration = base_file_name.str(); base_file_name.str( std::string() );base_file_name.clear();
+	base_file_name <<"test_"<<"reg_"<<penalty_coeff<<"_s"<<unique_seed<<"_LocalCalibration_"<<nbYear<<"YR";
+	basefilename_local_calibration = base_file_name.str(); base_file_name.str( std::string() );base_file_name.clear();
+	base_file_name <<"test_"<<"reg_"<<penalty_coeff<<"_s"<<unique_seed<<"_Common_"<<nbYear<<"YR";
+	basefilename = base_file_name.str();
+}
+
+void Test_CalibrationConfig::write_to_stream(std::ostream& os)const
+{
+	os<< "nbYear,"<<nbYear<<",,  unique_seed,"<<unique_seed<<",,  penalty_coeff,"<<penalty_coeff <<"," <<std::endl<<std::endl;
+	os<< "g_diag_noise,"<<g_diag_noise<<","<<std::endl<<"perturbe_noise,"<<perturbe_noise<<","<<std::endl<<std::endl;
+	os<< "x_epsilon,"<<x_epsilon<<","<<std::endl<< "f_epsilon,"<<f_epsilon<<","<<std::endl<< "maxIter,"<<maxIter<<","<< "maxIterPenalty,"<<maxIterPenalty<<","<<std::endl<<std::endl;
+	os<< "a,b,c,d,"<<std::endl<<a<<","<<b<<","<<c<<","<<d<<","<<std::endl;
+	os<<"constant_rate,"<<constant_rate<<std::endl<<std::endl; 
+	os<<"Common,"<<basefilename<<std::endl;
+	os<<"Global,"<<basefilename_global_calibration; if(!is_local_test)os<<",,,, YES";  os<<","<<std::endl;
+	os<<"Local,"<<basefilename_local_calibration; if(is_local_test)os<<",,,, YES";  os<<","<<std::endl<<std::endl;
+	os<< "Fixed Tenor,"<<tenorfixedleg<<","<<std::endl
+		<<"Float Tenor,"<<tenorfloatleg<<","<<std::endl
+		<<"Sparse Step,"<<fixedfloatRatio<<","<<std::endl;
+}
+
+void Test_CalibrationConfig::print(const std::string& filename) const 
+{
+	std::string path_OutPut = LMM::get_output_path() + filename;path_OutPut+="_config.csv";
+	std::ofstream configOut;
+
+	configOut.open(path_OutPut.c_str());
+	this->write_to_stream(configOut);
+	configOut<<std::endl;
+	configOut.close();
+}
+
+void Test_CalibrationConfig::re_init_LMM_Components()
+{
+	pLmmPenalty.reset( new LmmPenalty_Homogeneity() );
+
+	fixedfloatRatio = tenorfixedleg.ratioTo(tenorfloatleg);	
+
+	pLMMTenorStructure = create_LMMTenorStructure() ;
+	pLiborQuotes       = LiborQuotes::create_LiborInit(pLMMTenorStructure, constant_rate);
+
+	pConstShifted_HGVolatilityParam          = create_ConstShifted_HGVolatilityParam();
+	pLmmVanillaSwaptionApproxPricer_Rebonato = create_LmmVanillaSwaptionApproxPricer_Rebonato();
+
+	pUpperTriangleVanillaSwaptionQuotes = create_UpperTriangleVanillaSwaptionQuotes();
+
+	pGMatrixMapping = create_GMatrixMapping();
+
+	pLmmCostFunction = create_LmmCostFunction();
+}
+
+LMMTenorStructure_PTR Test_CalibrationConfig::create_LMMTenorStructure() const
+{
+	LMMTenorStructure_PTR new_pLMMTenorStructure (new LMMTenorStructure(tenorfloatleg,nbYear) );
+	return new_pLMMTenorStructure;
+}
+
+ConstShifted_HGVolatilityParam_PTR Test_CalibrationConfig::create_ConstShifted_HGVolatilityParam() const
+{
+	Shifted_HGVolatilityParam::ABCDParameter abcdParam(a,b,c,d);
+	ConstShifted_HGVolatilityParam_PTR new_pConstShifted_HGVolatilityParam( new ConstShifted_HGVolatilityParam(pLMMTenorStructure, abcdParam, 1., 0.));
+	return new_pConstShifted_HGVolatilityParam;
+}
+
+LmmVanillaSwaptionApproxPricer_Rebonato_PTR Test_CalibrationConfig::create_LmmVanillaSwaptionApproxPricer_Rebonato() const
+{
+	//! Correlation 
+	size_t nbFactor       = 3; // need to test nbFactor  = 3, and nbFactor = 
+	size_t correlFullRank = pLMMTenorStructure->get_horizon()+1;
+	size_t correlReducedRank = nbFactor;
+	CorrelationReductionType::CorrelationReductionType correlReductionType = CorrelationReductionType::PCA;
+	double correlAlpha = 0.0;
+	double correlBeta  = 0.1;
+	Correlation_PTR correlation(new XY_beta_Correlation(correlFullRank,correlReducedRank, correlReductionType,correlAlpha,correlBeta));
+	correlation->calculate(); // for print.
+
+	double a=0.22,b=0.4,c=0.6,d=0.15;
+	double g_constParam = 1.;
+	double shift_constParam = 0.0;
+
+	Shifted_HGVolatilityFunction_PTR pVolatilityFunction (new ConstShifted_HGVolatilityFunction(pLMMTenorStructure, correlation, pConstShifted_HGVolatilityParam)); 
+
+	//! Dispersion
+	Dispersion dispersion(pVolatilityFunction);
+
+	Lmm_PTR lmm_ptr(new Lmm(dispersion) );
+
+	LmmVanillaSwaptionApproxPricer_Rebonato_PTR new_pLmmVanillaSwaptionApproxPricer_Rebonato(new LmmVanillaSwaptionApproxPricer_Rebonato(lmm_ptr));	
+
+	return new_pLmmVanillaSwaptionApproxPricer_Rebonato;
+}
+
+UpperTriangleVanillaSwaptionQuotes_ConstPTR Test_CalibrationConfig::create_UpperTriangleVanillaSwaptionQuotes() const 
+{
+	UpperTriangleVanillaSwaptionQuotes_ConstPTR new_pUpperTriangleVanillaSwaptionQuotes = UpperTriangleVanillaSwaptionQuotes::create_ATMSwaptionImpliedVol
+		(
+		pLiborQuotes,
+		tenorfixedleg,
+		tenorfloatleg,
+		pLmmVanillaSwaptionApproxPricer_Rebonato
+		);
+	return new_pUpperTriangleVanillaSwaptionQuotes;
+}
+
+GMatrixMapping_PTR Test_CalibrationConfig::create_GMatrixMapping()
+{
+	size_t        g_matrix_size = GMatrixMapping::get_FullSizeFromNbYear(nbYear,fixedfloatRatio );
+	size_t delegate_matrix_size = GMatrixMapping::get_DelegateSizeFromHorizon(pLMMTenorStructure->get_horizon() ,fixedfloatRatio );
+	UpperAntiTriangularDoubleMatrix empty_delegate_matrix(delegate_matrix_size,delegate_matrix_size);
+
+	GMatrixMapping_PTR new_pGMatrixMapping( new GMatrixMapping(g_matrix_size, empty_delegate_matrix, pUpperTriangleVanillaSwaptionQuotes->get_indexMapping_gDelegate_gTransformed())  );
+
+	initialize_gDelegate_with_noise(new_pGMatrixMapping);
+
+	pConstShifted_HGVolatilityParam->reset_g_matrix( new_pGMatrixMapping->get_g_Ref() );
+	pLmmVanillaSwaptionApproxPricer_Rebonato->update_VolatilityParam(pConstShifted_HGVolatilityParam);
+
+	pUpperTriangleVanillaSwaptionQuotes = create_UpperTriangleVanillaSwaptionQuotes();
+
+	return new_pGMatrixMapping;
+}
+
+LmmCostFunction_PTR Test_CalibrationConfig::create_LmmCostFunction() const 
+{
+	LmmCostFunction_PTR new_pLmmCostFunction(new LmmCostFunction
+		(
+		pLmmVanillaSwaptionApproxPricer_Rebonato,
+		pLiborQuotes,
+		pUpperTriangleVanillaSwaptionQuotes,
+		pGMatrixMapping,
+		pConstShifted_HGVolatilityParam
+		) );
+	return new_pLmmCostFunction;
+}
+
+void Test_CalibrationConfig::initialize_gDelegate_with_noise(GMatrixMapping_PTR pGMatrixMapping ) 
+{
+	QuantLib::Array g_delegate_vector =  pGMatrixMapping->get_DelegateArray();
+
+	size_t nbElement = g_delegate_vector.size();
+
+	// initialize every g node to 1.
+	for(size_t i=0;i<nbElement;++i) 
+	{
+		g_delegate_vector[i] = 1.;
+	}
+
+	// bump a small noise to every g node to 1.
+	std::vector<double> mult_noise = Multiplicative::UniformNoise(nbElement,g_diag_noise,unique_seed);
+
+	for(size_t i=0;i<nbElement;++i)
+	{
+		g_delegate_vector[i] *= mult_noise[i];		
+	}
+
+	pGMatrixMapping->reset_gDelegate(g_delegate_vector);
+}
+
+
+QuantLib::Array Test_CalibrationConfig::get_Perturbed_gDelegateArray(const QuantLib::Array& init_array )const
+{
+	size_t nbElement = init_array.size();
+
+	// copy init to perturbed
+	QuantLib::Array perturbed_gDelegateArray(init_array);
+
+	// bump a small noise to every g node to 1.
+	std::vector<double> mult_noise = Multiplicative::UniformNoise(nbElement,perturbe_noise,unique_seed);
+	
+	for(size_t i=0;i<nbElement;++i)
+	{
+		perturbed_gDelegateArray[i] *= mult_noise[i];		
+	}
+	return perturbed_gDelegateArray;
+}
+
+void Test_CalibrationConfig::update_gDelegateChange() const
+{
+	pConstShifted_HGVolatilityParam->reset_g_matrix( pGMatrixMapping->get_g_Ref() );
+	pLmmVanillaSwaptionApproxPricer_Rebonato->update_VolatilityParam(pConstShifted_HGVolatilityParam);
+}

@@ -1,0 +1,117 @@
+#pragma once
+
+#include <cassert>
+
+#include <boost/numeric/ublas/triangular.hpp>  // Triangular matrix
+#include <boost/numeric/ublas/io.hpp>
+#include <LMM/instrument/VanillaSwaption.h>
+
+
+//typedef boost::numeric::ublas::triangular_matrix<std::pair<LMM::Index,LMM::Index>, boost::numeric::ublas::upper> UpperTriangleIndexPairMatrix; // UTIPM
+//typedef boost::numeric::ublas::triangular_matrix<double, boost::numeric::ublas::upper> UpperTriangleDoubleMatrix; // UTDM
+//typedef boost::numeric::ublas::triangular_matrix<std::pair<VanillaSwaption, double>, boost::numeric::ublas::upper > UpperTriangleVanillaSwaptionQuotesType;
+
+typedef std::pair<VanillaSwaption, double> SwaptionQuote;
+typedef boost::numeric::ublas::matrix<SwaptionQuote > UpperTriangleVanillaSwaptionQuotesType;
+typedef boost::numeric::ublas::matrix<double>         UpperTriangleDoubleMatrix; // UTDM
+typedef boost::numeric::ublas::matrix<std::pair<LMM::Index,LMM::Index> >   UpperTriangleIndexPairMatrix; // UTIPM
+	
+// ====   LIBOR QUOTE   ====  LIBOR QUOTE   ====  LIBOR QUOTE   ====  LIBOR QUOTE   ====  //
+/*! ~ swapRate ~ df
+ *	TODO  Test: check the difference between df implied swapRate with mktSwapRate 
+ */ 
+class LiborQuotes 
+{
+	LMMTenorStructure_PTR lmmTenorStructure_;
+	std::vector<double> liborInit_     ;
+	std::vector<double> discountFactor_;
+
+public:
+
+	//! constructor using constant rate r to generate all rate, libor
+	LiborQuotes(LMMTenorStructure_PTR lmmTenorStructure_ptr, const double constant_rate);  
+
+	LMMTenorStructure_PTR get_LMMTenorStructure_PTR() const {return lmmTenorStructure_ ; }
+
+	//! getters
+	size_t get_nbLIBOR() const { return liborInit_.size(); }
+	size_t get_nbDiscountFactor() const { return discountFactor_.size(); }
+		
+	const std::vector<double>& get_InitLibor     () const { return liborInit_ ; }
+	const std::vector<double>& get_DiscountFactor() const { return discountFactor_ ;}
+
+	double get_InitLibor(size_t liborIndex) const 
+	{
+		assert(liborIndex<lmmTenorStructure_->get_nbLIBOR() ) ; 
+		return liborInit_[liborIndex] ; 
+	}
+	
+	double get_DiscountFactor(size_t dateIndex) const 
+	{
+		assert(dateIndex<(lmmTenorStructure_->get_nbLIBOR()+1) ) ;  
+		return discountFactor_[dateIndex] ; 
+	}
+
+private :
+	void generate_DiscountFactor(const double constant_rate);
+	void initiate_Libors_from_DiscountFactor();
+	//void initiate_DiscountFactor_Libors_from();
+};
+
+// ====    END LIBOR QUOTE   ====    END LIBOR QUOTE   ====    END LIBOR QUOTE   ====    END LIBOR QUOTE   ====  //
+ 
+class UpperTriangleVanillaSwaptionQuotes
+{
+	LMMTenorStructure_PTR lmmTenorStructure_;
+	size_t lastYear_;         // upperTriangleSwaption(i year, j year), i,j \in [1, lastYear_]
+	Tenor  fixedTenor_;
+	Tenor  floatingTenor_; 
+	size_t indexRatio_;       // fixedTenor/floatingTenor
+	UpperTriangleVanillaSwaptionQuotesType upperTriangleVanillaSwaptionQuotes_; // 1st row and column not used! as g!
+	
+	//! index mapping from gDelegate to gTransformed
+	UpperTriangleIndexPairMatrix indexMapping_gDelegate_gTransformed_;
+
+public:	
+
+	UpperTriangleVanillaSwaptionQuotes(
+		LMMTenorStructure_PTR lmmTenorStructure,
+		int   lastYear, 	
+		const Tenor& fixedTenor,
+		const Tenor& floatingTenor,
+		const UpperTriangleDoubleMatrix& strikes, // 1st row and column not used like g!
+		const UpperTriangleDoubleMatrix& quotes);  // 1st row and column not used like g!
+	
+	// 1st row and column not used! as g!  // UTM: upperTriangleMatrix
+	void initialize_gDelegate_IndexIngTransformed() ;
+
+
+	//! getter
+	LMMTenorStructure_PTR get_LMMTenorStructure_PTR() const {return lmmTenorStructure_;}
+	size_t get_lastYear() const {return lastYear_;}
+	Tenor  get_fixedTenor() const{return fixedTenor_;}
+	Tenor  get_floatingTenor() const{ return floatingTenor_;}
+	size_t get_indexRatio() const {return indexRatio_;}
+	UpperTriangleVanillaSwaptionQuotesType  get_upperTriangleVanillaSwaptionQuotes() {return upperTriangleVanillaSwaptionQuotes_;}
+	UpperTriangleIndexPairMatrix get_gDelegate_IndexIngTransformed() const {return indexMapping_gDelegate_gTransformed_;}
+		
+	void print(const std::string& filename) const;
+	void write_to_stream(std::ostream& outputstream) const ;
+
+private:
+
+	//! compute the i,j matrix indices, compute the end index of swaptions
+	size_t computeStartIndex(size_t iMatrix)const ;
+	size_t computeIndexEnd(size_t iMatrix, size_t jMatrix)const ;	
+
+	void printFirstLabelLine(std::ostream & stream) const ;
+	
+	void printToStreamQuoteLine(std::ostream & stream, const size_t row_number) const ;
+	void printToStream_gDelegate_IndiceLine(std::ostream & stream, const size_t row_number) const ;
+	void printToStreamSwaptionIndicesLine(std::ostream & stream, const size_t row_number) const ;
+	void printToStreamSwaptionStrikeLine(std::ostream & stream, const size_t row_number) const ;
+};
+
+typedef boost::shared_ptr<const UpperTriangleVanillaSwaptionQuotes> UpperTriangleVanillaSwaptionQuotes_ConstPTR;
+
+std::ostream& operator<<(std::ostream& os, const UpperTriangleVanillaSwaptionQuotes_ConstPTR& swap);
