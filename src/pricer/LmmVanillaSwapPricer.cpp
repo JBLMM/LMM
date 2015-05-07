@@ -47,7 +47,7 @@ double LmmVanillaSwapPricer::swapNPV_Analytical_1(const VanillaSwap& vanillaSwap
 	const std::vector<LMM::Index>& fixedLegPaymentIndexSchedule  = vanillaSwap.get_fixedLegPaymentIndexSchedule();
 	for(size_t itr = 0; itr < fixedLegPaymentIndexSchedule.size(); ++itr)
 	{
-		size_t fixedLegPaymentIndex = fixedLegPaymentIndexSchedule[itr]; // = i+1
+		size_t fixedLegPaymentIndex = fixedLegPaymentIndexSchedule[itr]; // = itr+1
 		pvFixedLeg 		    	   += fixedLegdelta_T*ZC[fixedLegPaymentIndex];		
 	}
 	pvFixedLeg *= vanillaSwap.get_strike();

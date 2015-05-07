@@ -83,6 +83,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CallableSwap.h" />
+    <ClInclude Include="CappedFlooredCoupon.h" />
+    <ClInclude Include="Coupon.h" />
+    <ClInclude Include="CouponLeg.h" />
+    <ClInclude Include="GeneticSwap.h" />
+    <ClInclude Include="GeneticSwaption.h" />
+    <ClInclude Include="InstrumentFactory.h" />
+    <ClInclude Include="LiborRate.h" />
     <ClInclude Include="LMM\calibration\LmmCalibrationConfig.h" />
     <ClInclude Include="LMM\greek\LmmVega.h" />
     <ClInclude Include="LMM\helper\BuildVariable.h" />
@@ -174,9 +182,13 @@
     <ClInclude Include="LMM\Test\Tests.h" />
     <ClInclude Include="LMM\Test\Test_CalibrationConfig.h" />
     <ClInclude Include="LMM\Test\Test_createLmmModel.h" />
+    <ClInclude Include="RatchetCoupon.h" />
+    <ClInclude Include="Rate.h" />
+    <ClInclude Include="TargetCoupon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LMM\Test\Test.cpp" />
+    <ClCompile Include="LMM\Test\test_beginner.cpp" />
     <ClCompile Include="LMM\Test\Test_BlackGreek.cpp" />
     <ClCompile Include="LMM\Test\Test_CalibrationConfig.cpp" />
     <ClCompile Include="LMM\Test\Test_createLmmModel.cpp" />

@@ -91,7 +91,7 @@ private:
 	std::vector<LMM::Index> fixedLegPaymentIndexSchedule_   ;    
 	
 	std::vector<double> deltaTFloatingLeg_;
-	std::vector<double> deltaTFixedLeg_   ;	
+	std::vector<double> deltaTFixedLeg_;	
 
 public:
 	void write_to_stream(std::ostream& outputstream)const ;

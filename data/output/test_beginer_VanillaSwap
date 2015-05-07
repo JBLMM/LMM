@@ -1,0 +1,13 @@
+--- VanillaSwap Info ---
+floatingLegTenorType_ ;  fixedLegTenorType_ ;  simulationTenorType_ ; 
+Tenor6M[6MO|0.5YR] ; Tenor12M[12MO|1YR] ; Tenor6M[6MO|0.5YR] ; 
+strike_ ;  indexStart_ ;  indexEnd_ ; 
+0.6 ; 1 ; 3 ; 
+     ;  Date Start ;  Date End; 
+     ; 0.5 ; 1.5;
+;;;;LMM Dates ; 0;0.5;1;1.5;2;2.5;3;3.5;
+;;;;floatingPaymentIndexSchedule_ ; 2;3;
+;;;;fixedLegPaymentIndexSchedule_ ; 3;
+;;;;deltaTFloatingLeg_ ;0.5;0.5;
+;;;;deltaTFixedLeg_ ;1;
+

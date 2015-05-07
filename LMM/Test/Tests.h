@@ -43,6 +43,9 @@ void test_LmmCalibrationMarketData();
 void test_LmmCalibrationSensitivity();	
 void test_LmmRegularizedCalibrationMarketData();
 
+//test JB
+void test_beginner();
+
 LmmSwaptionMarketData_PTR get_LmmSwaptionMarketData(const LmmCalibrationConfig& config, const std::string& input_file);
 
 

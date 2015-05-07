@@ -73,15 +73,18 @@
     <Filter Include="LMM_greek">
       <UniqueIdentifier>{40c6088c-1c9a-4b30-a5a4-b086cd3bd45f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LMM_pricer\FRAPricer\GeneticSwap">
+      <UniqueIdentifier>{4f70ec42-0f2f-4a9a-8474-94b006e6dc83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LMM_instrument\GeneticSwap">
+      <UniqueIdentifier>{b5caf971-fcab-495a-ac2b-9e918203b128}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LMM\RNGenerator\McGenerator.h">
       <Filter>RNGenerator</Filter>
     </ClInclude>
     <ClInclude Include="LMM\RNGenerator\QMcGenerator.h">
-      <Filter>RNGenerator</Filter>
-    </ClInclude>
-    <ClInclude Include="LMM\RNGenerator\RNGenerator.h">
       <Filter>RNGenerator</Filter>
     </ClInclude>
     <ClInclude Include="LMM\numeric\BilinearInterpolation.h">
@@ -347,6 +350,42 @@
     </ClInclude>
     <ClInclude Include="LMM\LmmModel\LmmCascade_gCalibrator.h">
       <Filter>LMM_Model\Calibration</Filter>
+    </ClInclude>
+    <ClInclude Include="Rate.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="LiborRate.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="LMM\RNGenerator\RNGenerator.h">
+      <Filter>RNGenerator</Filter>
+    </ClInclude>
+    <ClInclude Include="Coupon.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="CouponLeg.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="RatchetCoupon.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="TargetCoupon.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="CappedFlooredCoupon.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneticSwap.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneticSwaption.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="CallableSwap.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="InstrumentFactory.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -654,6 +693,9 @@
     </ClCompile>
     <ClCompile Include="src\helper\BuildVariable.cpp">
       <Filter>LMM_helper</Filter>
+    </ClCompile>
+    <ClCompile Include="LMM\Test\test_beginner.cpp">
+      <Filter>Test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

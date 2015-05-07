@@ -1685,3 +1685,27 @@ Time_Homo Coeff    ,0.01,,,L2 Time_Homo    ,0.0620295,,L1 Time_Homo    ,0.051649
 
 Libor_Smooth Coeff ,0.4,,,L2 Libor_Smooth   ,0.000723407,,L1 Libor_Smooth   ,0.000350896,,LINF Libor_Smooth ,0.00372203,,
 
+
+
+============= Test At    Date 28/4/2015  17:23:43,,,,,, Error LInf, 0.00045585
+Global gCalibrator,, DataFile ,,VCUB_2008_01_02.csv
+Use Positive Constraint 
+Convergence,MaxIterations
+2059 ,called ,
+204.479 s, Time,
+L2 Global Error ,0.000142259,
+L1 Global Error ,9.59547e-005,
+LInf Global Error ,0.00045585,
+0.403407, Max Quote Relative Error(%),(10;5)
+0.00045585, Max Quote Absolute Error,(10;5)
+a,b,c,d
+1.9515e-012,0.101405,0.803721,0.120859,
+BAD Calibrated ,,(10;5)  ,
+BAD calibrated Value ,,3.45202e-005 ,
+Solver Stop 
+Calibrator Constraint ,
+Positivity ,YES ,
+Time_Homo Coeff    ,0.0001,,,L2 Time_Homo    ,0.139599,,L1 Time_Homo    ,0.115977,,LINF Time_Homo  ,0.335377,,
+
+Libor_Smooth Coeff ,1e-006,,,L2 Libor_Smooth   ,0.234466,,L1 Libor_Smooth   ,0.170881,,LINF Libor_Smooth ,0.763656,,
+

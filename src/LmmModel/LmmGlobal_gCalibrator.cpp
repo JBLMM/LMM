@@ -71,7 +71,7 @@ void LmmGlobal_gCalibrator::retreive_calib_info()
 	std::stringstream general_info;
 
 	Shifted_HGVolatilityParam::ABCDParameter abcdParam = pLmmGlobal_gCostFunction->get_Shifted_HGVolatilityParam()->get_ABCD();
-	general_info<<"a,b,c,d"<<std::endl;
+	general_info<<"a,b,c,d"<<std::endl;		
 	general_info<<abcdParam.a_<<","<<abcdParam.b_<<","<<abcdParam.c_<<","<<abcdParam.d_<<","<<std::endl;
 	
 	// ------ print BAD SWAPTIONS
