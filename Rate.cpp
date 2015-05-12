@@ -1,10 +1,7 @@
 #include "Rate.h"
 #include <boost/shared_ptr.hpp>
 
-typedef boost::shared_ptr<Rate> Rate_PTR;
-typedef boost::shared_ptr<const Rate> Rate_CONSTPTR;
-
-Rate::~Rate(){};
+boost::shared_ptr<Rate1> Rate1::clone()const{return boost::shared_ptr<Rate1>(new Rate1(*this));}
 
 //Rate_PTR Rate::clone_Rate_PTR()const{return Rate_PTR(new Rate(*this));}
 

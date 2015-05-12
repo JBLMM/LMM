@@ -89,6 +89,7 @@
     <ClInclude Include="CouponLeg.h" />
     <ClInclude Include="GeneticSwap.h" />
     <ClInclude Include="GeneticSwaption.h" />
+    <ClInclude Include="GeneticVanillaSwap.h" />
     <ClInclude Include="InstrumentFactory.h" />
     <ClInclude Include="LiborRate.h" />
     <ClInclude Include="LMM\calibration\LmmCalibrationConfig.h" />
@@ -182,11 +183,20 @@
     <ClInclude Include="LMM\Test\Tests.h" />
     <ClInclude Include="LMM\Test\Test_CalibrationConfig.h" />
     <ClInclude Include="LMM\Test\Test_createLmmModel.h" />
+    <ClInclude Include="McGeneticSwap.h" />
     <ClInclude Include="RatchetCoupon.h" />
     <ClInclude Include="Rate.h" />
     <ClInclude Include="TargetCoupon.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CappedFlooredCoupon.cpp" />
+    <ClCompile Include="Coupon.cpp" />
+    <ClCompile Include="CouponLeg.cpp" />
+    <ClCompile Include="GeneticSwap.cpp" />
+    <ClCompile Include="GeneticSwaption.cpp" />
+    <ClCompile Include="GeneticVanillaSwap.cpp" />
+    <ClCompile Include="InstrumentFactory.cpp" />
+    <ClCompile Include="LiborRate.cpp" />
     <ClCompile Include="LMM\Test\Test.cpp" />
     <ClCompile Include="LMM\Test\test_beginner.cpp" />
     <ClCompile Include="LMM\Test\Test_BlackGreek.cpp" />
@@ -213,6 +223,9 @@
     <ClCompile Include="LMM\Test\Test_VanillaSwaptionPricer.cpp" />
     <ClCompile Include="LMM\Test\Test_VanillaSwaptionPricer_MCvsApprox.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="McGeneticSwap.cpp" />
+    <ClCompile Include="RatchetCoupon.cpp" />
+    <ClCompile Include="Rate.cpp" />
     <ClCompile Include="src\calibration\LmmCalibrationConfig.cpp" />
     <ClCompile Include="src\helper\BuildVariable.cpp" />
     <ClCompile Include="src\helper\CalibrationType.cpp" />
@@ -290,6 +303,8 @@
     <ClCompile Include="src\pricer\LmmVanillaSwapPricer.cpp" />
     <ClCompile Include="src\RNGenerator\McGenerator.cpp" />
     <ClCompile Include="src\RNGenerator\QMcGenerator.cpp" />
+    <ClCompile Include="TargetCoupon.cpp" />
+    <ClCompile Include="Test_Comparaison_VanillaSwap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TODO" />

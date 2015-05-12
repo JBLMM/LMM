@@ -1,15 +1,14 @@
 #include <LMM/Test/Tests.h>
 #include <stdio.h>
-#include <CouponLeg.h>
-#include <CappedFlooredCoupon.h>
-#include <GeneticSwap.h>
+
 
 
 
 int main()
 {
 	//test JB
-	test_beginner();
+	//test_beginner();
+	vanillaSwapComparaisonExemple();
 	//test_Noise();  //------------------------------------Bon SC
 	//test_HGVolatility();  //--------------------------------------Bug: LNK2019 and 1120 
 	//test_Functional(); //----------------------------------Bon

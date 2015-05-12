@@ -79,6 +79,9 @@
     <Filter Include="LMM_instrument\GeneticSwap">
       <UniqueIdentifier>{b5caf971-fcab-495a-ac2b-9e918203b128}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LMM_pricer\GeneticSwapPricer">
+      <UniqueIdentifier>{c3e00c12-67f8-4895-be38-a3fc4c763f3f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LMM\RNGenerator\McGenerator.h">
@@ -386,6 +389,12 @@
     </ClInclude>
     <ClInclude Include="InstrumentFactory.h">
       <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="McGeneticSwap.h">
+      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneticVanillaSwap.h">
+      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -696,6 +705,45 @@
     </ClCompile>
     <ClCompile Include="LMM\Test\test_beginner.cpp">
       <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="Test_Comparaison_VanillaSwap.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="McGeneticSwap.cpp">
+      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneticVanillaSwap.cpp">
+      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
+    </ClCompile>
+    <ClCompile Include="CappedFlooredCoupon.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="CouponLeg.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="LiborRate.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="Coupon.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="Rate.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="RatchetCoupon.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="TargetCoupon.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneticSwaption.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneticSwap.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="InstrumentFactory.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,4 @@
 #include "Coupon.h"
 
-Coupon::~Coupon(){}
-Coupon_PTR  Coupon::clone_Coupon_PTR()const{return Coupon_PTR(new Coupon(*this));}
+
+boost::shared_ptr<Coupon> Coupon::clone()const{return boost::shared_ptr<Coupon>(new Coupon(*this));}

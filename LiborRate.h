@@ -9,7 +9,10 @@ class LiborRate : public Rate1
 {
 	double fixingTime_; // T_{i-1}
 	Tenor  duration_; // 3m, 6m 
-	Rate_PTR clone(){return Rate_PTR(new boost::shared_ptr<LiborRate>(*this));}
+public:
+	LiborRate();
+	LiborRate(double fixingTime, const Tenor duration);
+	Rate_PTR clone()const;
 };
 typedef boost::shared_ptr<LiborRate> LiborRate_PTR;
 typedef boost::shared_ptr<LiborRate> LiborRate_CONSTPTR;
