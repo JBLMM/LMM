@@ -6,7 +6,7 @@
 
 #include <LMM/pricer/LmmVanillaSwapPricer.h>
 #include <GeneticSwap.h>
-#include <GeneticVanillaSwap.h>
+#include <GeneticVanillaSwapPricer.h>
 #include <Coupon.h>
 #include <CappedFlooredCoupon.h>
 #include <InstrumentFactory.h>

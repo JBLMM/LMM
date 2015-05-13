@@ -89,7 +89,7 @@
     <ClInclude Include="CouponLeg.h" />
     <ClInclude Include="GeneticSwap.h" />
     <ClInclude Include="GeneticSwaption.h" />
-    <ClInclude Include="GeneticVanillaSwap.h" />
+    <ClInclude Include="GeneticVanillaSwapPricer.h" />
     <ClInclude Include="InstrumentFactory.h" />
     <ClInclude Include="LiborRate.h" />
     <ClInclude Include="LMM\calibration\LmmCalibrationConfig.h" />
@@ -183,7 +183,7 @@
     <ClInclude Include="LMM\Test\Tests.h" />
     <ClInclude Include="LMM\Test\Test_CalibrationConfig.h" />
     <ClInclude Include="LMM\Test\Test_createLmmModel.h" />
-    <ClInclude Include="McGeneticSwap.h" />
+    <ClInclude Include="McGeneticSwapLMMPricer.h" />
     <ClInclude Include="RatchetCoupon.h" />
     <ClInclude Include="Rate.h" />
     <ClInclude Include="TargetCoupon.h" />
@@ -194,7 +194,7 @@
     <ClCompile Include="CouponLeg.cpp" />
     <ClCompile Include="GeneticSwap.cpp" />
     <ClCompile Include="GeneticSwaption.cpp" />
-    <ClCompile Include="GeneticVanillaSwap.cpp" />
+    <ClCompile Include="GeneticVanillaSwapPricer.cpp" />
     <ClCompile Include="InstrumentFactory.cpp" />
     <ClCompile Include="LiborRate.cpp" />
     <ClCompile Include="LMM\Test\Test.cpp" />
@@ -223,7 +223,7 @@
     <ClCompile Include="LMM\Test\Test_VanillaSwaptionPricer.cpp" />
     <ClCompile Include="LMM\Test\Test_VanillaSwaptionPricer_MCvsApprox.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="McGeneticSwap.cpp" />
+    <ClCompile Include="McGeneticSwapLMMPricer.cpp" />
     <ClCompile Include="RatchetCoupon.cpp" />
     <ClCompile Include="Rate.cpp" />
     <ClCompile Include="src\calibration\LmmCalibrationConfig.cpp" />
@@ -305,6 +305,7 @@
     <ClCompile Include="src\RNGenerator\QMcGenerator.cpp" />
     <ClCompile Include="TargetCoupon.cpp" />
     <ClCompile Include="Test_Comparaison_VanillaSwap.cpp" />
+    <ClCompile Include="Test_McGeneticSwapLMMPricer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TODO" />

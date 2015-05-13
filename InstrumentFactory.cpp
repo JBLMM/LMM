@@ -70,7 +70,7 @@
 			size_t i=fixedLegPaymentIndexSchedule[j];
 			Rate_PTR rate(new LiborRate());
 			fixedLeg->addLeg1(Coupon_PTR(new CappedFlooredCoupon(
-				swapStructure->get_tenorDate(i), nominal, floatingLegTenor.YearFraction(), strike, 0.0, rate, 0.0, 0.0, swapStructure->get_tenorDate(i))));
+				swapStructure->get_tenorDate(i), nominal*2, floatingLegTenor.YearFraction(), strike, 0.0, rate, 0.0, 0.0, swapStructure->get_tenorDate(i))));
 		}
 
 		//return vanillaSwap

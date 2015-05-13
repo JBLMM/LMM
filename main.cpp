@@ -6,9 +6,12 @@
 
 int main()
 {
-	//test JB
+	//-------------------------------------------test JB  ------------------------------------------
 	//test_beginner();
-	vanillaSwapComparaisonExemple();
+	//vanillaSwapComparaisonExemple();
+	Test_McGeneticSwapLMMPricer();
+
+
 	//test_Noise();  //------------------------------------Bon SC
 	//test_HGVolatility();  //--------------------------------------Bug: LNK2019 and 1120 
 	//test_Functional(); //----------------------------------Bon
