@@ -39,7 +39,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\junbin.liu\Documents\LunaLMM;C:\boost&amp;quantlib\boost_1_58_0;C:\boost&amp;quantlib\QuantLib-1.2.1;$(IncludePath)</IncludePath>
+    <IncludePath>E:\Visual_Studio_Project\Visual_Studio_2012_Project\LunaLibrary;C:\boost&amp;quantlib\boost_1_58_0;C:\boost&amp;quantlib\QuantLib-1.2.1;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)VCBuild\$(Configuration)\</OutDir>
     <IntDir>VCBuild\$(Configuration)\</IntDir>
     <LibraryPath>C:\boost&amp;quantlib\QuantLib-1.2.1\lib;C:\boost&amp;quantlib\boost_1_58_0\libs;$(LibraryPath)</LibraryPath>
@@ -54,7 +54,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\boost&amp;quantlib\boost_1_58_0;C:\Users\junbin.liu\Documents\LunaLMM;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\boost&amp;quantlib\boost_1_58_0;E:\Visual_Studio_Project\Visual_Studio_2012_Project\LunaLibrary</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -144,6 +144,7 @@
     <ClInclude Include="LMM\LmmModel\LmmShiftCalibrator.h" />
     <ClInclude Include="LMM\LmmModel\LmmSkewCostFunction.h" />
     <ClInclude Include="LMM\LmmModel\LmmSwaptionMarketData.h" />
+    <ClInclude Include="LMM\numeric\Integrator1D.h" />
     <ClInclude Include="LMM\numeric\UpperTriangularMatrixInterpolator.h" />
     <ClInclude Include="LMM\pricer\McLmmCallableOptionPricer.h" />
     <ClInclude Include="LMM\pricer\Regression.h" />
@@ -265,6 +266,7 @@
     <ClCompile Include="src\LmmModel\LmmShiftCalibrator.cpp" />
     <ClCompile Include="src\LmmModel\LmmSkewCostFunction.cpp" />
     <ClCompile Include="src\LmmModel\LmmSwaptionMarketData.cpp" />
+    <ClCompile Include="src\numeric\Integrator1D.cpp" />
     <ClCompile Include="src\numeric\UpperTriangularMatrixInterpolator.cpp" />
     <ClCompile Include="src\pricer\McLmmCallableOptionPricer.cpp" />
     <ClCompile Include="src\LmmModel\BetaLmm.cpp" />
@@ -304,6 +306,7 @@
     <ClCompile Include="src\RNGenerator\McGenerator.cpp" />
     <ClCompile Include="src\RNGenerator\QMcGenerator.cpp" />
     <ClCompile Include="TargetCoupon.cpp" />
+    <ClCompile Include="test\unit_test\test_Integrator1D.cpp" />
     <ClCompile Include="Test_Comparaison_VanillaSwap.cpp" />
     <ClCompile Include="Test_McGeneticSwapLMMPricer.cpp" />
   </ItemGroup>
