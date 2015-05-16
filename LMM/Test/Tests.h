@@ -7,6 +7,9 @@
 #include <LMM/calibration/LmmCalibrationConfig.h>
 #include <LMM/LmmModel/GMatrixMapping.h>
 
+void test_Integrator1D(); 
+
+
 void test_BlackGreek();
 void test_VanillaSwapCreation();
 void test_McTerminalLmm();

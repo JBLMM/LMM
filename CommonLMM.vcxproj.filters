@@ -399,6 +399,9 @@
     <ClInclude Include="McGeneticSwapLMMPricer.h">
       <Filter>LMM_pricer\GeneticSwapPricer</Filter>
     </ClInclude>
+    <ClInclude Include="LMM\numeric\Integrator1D.h">
+      <Filter>LMM_numeric</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pricer\LmmTarnPricer.cpp">
@@ -750,6 +753,12 @@
     </ClCompile>
     <ClCompile Include="Test_McGeneticSwapLMMPricer.cpp">
       <Filter>Test\Test_JL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\numeric\Integrator1D.cpp">
+      <Filter>LMM_numeric</Filter>
+    </ClCompile>
+    <ClCompile Include="test\unit_test\test_Integrator1D.cpp">
+      <Filter>Test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
