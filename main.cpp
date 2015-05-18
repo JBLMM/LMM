@@ -1,19 +1,29 @@
-#include <LMM/Test/Tests.h>
+//#include <LMM/Test/Tests.h>
 #include <stdio.h>
+
+#include <Cheyette/TestApproxDD.h>
+#include <Cheyette/CheyetteDD_Model.h>
+//#include <Cheyette/CheyetteDD_VanillaSwaptionApproxPricer.h>
+
 
 
 
 int main()
 {
-
+	
 	//test_beginner();							//test_JB
 	//vanillaSwapComparaisonExemple();			//test_JB		
 	//Test_McGeneticSwapLMMPricer();			//test_JB
+	//createDDModel_xyz() ;
+	
+	//tests JL
+	createSwap() ;
+	createDDModel() ;
+	
 
+	//test_Integrator1D();
 
-	test_Integrator1D();
-
-
+		
 	//test_Noise();  
 	//test_HGVolatility();  
 	//test_Functional(); 

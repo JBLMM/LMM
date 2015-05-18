@@ -8,20 +8,20 @@
 //c'est la courbe spot des taux ZC
 
 //Singleton...
-class courbeInput
+class CourbeInput
 {
 private:
 	std::vector<double> listeMatu_ ;
 	std::vector<double> tauxZC_ ;
 
 public:
-	courbeInput(void);
-	courbeInput(std::vector<double> listeMatu, std::vector<double> tauxZC);
-	~courbeInput(void);
+	CourbeInput(void);
+	CourbeInput(std::vector<double> listeMatu, std::vector<double> tauxZC);
+	~CourbeInput(void);
 
-	double get_ZC_maturite_T(double T) ;
+	double get_ZC0(double T) ;
 	void showCourbeInput() ;
 };
 
-typedef boost::shared_ptr<courbeInput> courbeInput_PTR;
-typedef boost::shared_ptr<const courbeInput> courbeInput_CONSTPTR;
+typedef boost::shared_ptr<CourbeInput> courbeInput_PTR;
+typedef boost::shared_ptr<const CourbeInput> courbeInput_CONSTPTR;

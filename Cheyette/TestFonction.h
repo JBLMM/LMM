@@ -1,7 +1,7 @@
 #ifndef _TEST_FONCTION_
 #define _TEST_FONCTION_
 
-#include "CheyetteModel.h"
+#include "CheyetteDD_Model.h"
 #include "InverseFunction.h"
 #include <LMM/instrument/VanillaSwaption.h>
 

@@ -1,29 +1,20 @@
-#include "courbeInput.h"
+#include <Cheyette/courbeInput.h>
+
+CourbeInput::CourbeInput(void){}
 
 
-courbeInput::courbeInput(void)
-{
-	listeMatu_.clear() ; tauxZC_.clear() ;
-	listeMatu_.push_back(0) ; listeMatu_.push_back(1) ; listeMatu_.push_back(2) ; listeMatu_.push_back(3) ; 
-	listeMatu_.push_back(4) ; listeMatu_.push_back(5) ; listeMatu_.push_back(10) ; listeMatu_.push_back(15) ; 
-	listeMatu_.push_back(20) ; listeMatu_.push_back(25) ;
-	tauxZC_.push_back(0.8/100) ; tauxZC_.push_back(0.85/100) ; tauxZC_.push_back(0.9/100) ; tauxZC_.push_back(0.92/100) ; 
-	tauxZC_.push_back(0.95/100) ; tauxZC_.push_back(1.00/100) ; tauxZC_.push_back(1.5/100) ; tauxZC_.push_back(2/100) ; 
-	tauxZC_.push_back(2.5/100) ; tauxZC_.push_back(2.3/100) ; 
-}
-
-courbeInput::courbeInput(std::vector<double> listeMatu, std::vector<double> tauxZC)
+CourbeInput::CourbeInput(std::vector<double> listeMatu, std::vector<double> tauxZC)
 	: listeMatu_(listeMatu), tauxZC_(tauxZC)
 {
 	assert(listeMatu_.size() == tauxZC_.size()) ;
 }
 
 
-courbeInput::~courbeInput(void)
+CourbeInput::~CourbeInput(void)
 {
 }
 
-double courbeInput::get_ZC_maturite_T(double T)
+double CourbeInput::get_ZC0(double T)
 {
 	int N = listeMatu_.size() ;
 	assert (N > 0) ;
@@ -34,7 +25,7 @@ double courbeInput::get_ZC_maturite_T(double T)
 	return ( tauxZC_[i] + (tauxZC_[i+1] - tauxZC_[i])/(listeMatu_[i+1] - listeMatu_[i])*(T - listeMatu_[i]) ) ;
 }
 
-void courbeInput::showCourbeInput()
+void CourbeInput::showCourbeInput()
 {
 	int N = listeMatu_.size() ;
 	std::cout << "listeMatu   |   tauxZC" << std::endl ;

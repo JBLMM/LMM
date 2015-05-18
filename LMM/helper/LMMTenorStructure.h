@@ -65,7 +65,7 @@ public:
 
 	double					   get_tenorDate(size_t index) const ;
 	const std::vector<double>& get_tenorDate(            ) const ;
-	bool                       is_TenorDate(const double&) const ; //check if a date exist in the tenor date list
+	bool                       is_TenorDate(const double&) const ; //check if a date exists in the tenor date list
 
 	//! equal operator: 
     bool operator == (const LMMTenorStructure& LMMTenorStructure) const;
