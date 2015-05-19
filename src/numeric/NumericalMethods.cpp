@@ -79,7 +79,7 @@ double Black_Vega(const double& fwd, const double& strike, const double& vol, co
 	return fwd*ND(d1)*sqrt(T);
 }
 
-//! TT: not that efficient, but who cares ...
+
 double Black_Volga(const double& fwd, const double& strike, const double& vol, const double& T) 
 {
 	

@@ -8,18 +8,7 @@
 #include <LMM/helper/Name.h>
 #include <LMM/helper/BuildVariable.h>
 
-
-VanillaSwap::VanillaSwap()// add default constructor used for building Upper Triangle Vanilla Swap Quotes UpperTriangularVanillaSwaptionQuotes
-	: strike_(-1e10)
-	, indexStart_(-10000000)
-	, indexEnd_(-100000000)       
-	, floatingLegTenorType_(Tenor::_Non)
-	, fixedLegTenorType_(Tenor::_Non)
-	, floatingVsLiborTenorTypeRatio_(-10000)
-	, fixedVsLiborTenorTypeRatio_(-10000)
-{
-	// Every values are initialized absurdly here, need to reset the values
-}
+VanillaSwap::VanillaSwap(){}
 
 //! Suppose there is a LMM Tenor structure: {T_k}_{k=0}^{N}, and forall k, T_{k+1} - T_k = liborTenor, the unity is in Month. 
 //! a swap begins at: T_i, end at T_j.

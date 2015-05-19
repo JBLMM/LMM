@@ -7,27 +7,25 @@
 #include <boost/pointer_cast.hpp>
 
 
-
 CheyetteDD_VanillaSwaptionApproxPricer::CheyetteDD_VanillaSwaptionApproxPricer
-						(const CheyetteDD_Model_PTR&	cheyetteModel, 
+						(const CheyetteDD_Model_PTR&	cheyetteDD_Model, 
 						const VanillaSwaption_PTR&		swaption)
 {
 	// domaine de validité de l'approximation :
 	//assert(lmm_->get_dispersionRef().get_VolatilityFunction_PTR()->isConstShift()); 
-	cheyetteDD_Model_	= cheyetteModel ;
+	cheyetteDD_Model_	= cheyetteDD_Model ;
 	swaption_			= swaption ;
 
 	//pour S0 : 
 	//remplir en faisant appel au fichier input de calibration avec données de marché
 
-	double buffer_T0_  = swaption_->getUnderlyingSwap().get_StartDate() ;		//1ere date de fixing
-	double buffer_TN_  = swaption_->getUnderlyingSwap().get_EndDate() ;			//date dernier flux (setté en T_{N-1})
+	buffer_UnderlyingSwap_				= swaption->getUnderlyingSwap() ;
+	buffer_T0_							= swaption->getUnderlyingSwap().get_StartDate() ;		//1ere date de fixing
+	buffer_TN_							= swaption->getUnderlyingSwap().get_EndDate() ;			//date dernier flux (setté en T_{N-1})
+	buffer_fixedLegPaymentIndexSchedule_= buffer_UnderlyingSwap_.get_fixedLegPaymentIndexSchedule() ;
+	buffer_deltaTFixedLeg_				= buffer_UnderlyingSwap_.get_DeltaTFixedLeg() ;
 
-	VanillaSwap buffer_UnderlyingSwap_							= swaption_->getUnderlyingSwap() ;
-	std::vector<LMM::Index> buffer_fixedLegPaymentIndexSchedule_ = buffer_UnderlyingSwap_.get_fixedLegPaymentIndexSchedule() ;
-	std::vector<double> buffer_deltaTFixedLeg_					= buffer_UnderlyingSwap_.get_DeltaTFixedLeg() ;
-
-	courbeInput_PTR buffer_courbeInput_ = cheyetteDD_Model_->get_courbeInput_PTR() ;
+	buffer_courbeInput_					= cheyetteDD_Model->get_courbeInput_PTR() ;
 }
 
 
@@ -38,42 +36,37 @@ double CheyetteDD_VanillaSwaptionApproxPricer::calculate_y_bar(double t) const
 	//les abscisses et ordonnees de la fonction sigma
 	std::vector<double> x = this->get_CheyetteDD_Model()->get_CheyetteDD_Parameter().sigma_.getx_() ;
 	std::vector<double> y = this->get_CheyetteDD_Model()->get_CheyetteDD_Parameter().sigma_.gety_() ;
+
+	if (t > x[x.size() - 1]){std::cout << "extrapolation de sigma pour l'integration" << std::endl; }
+	assert(t <= x[x.size() - 1]);
 	double integrale(0) ;
-	for (int i = 0 ; i < x.size() - 2 ; ++i)
+	for (int i = 0 ; i < x.size() - 1 ; ++i) //on peut optimiser avec un while
 	{
-		integrale += y[i] * y[i] * (exp(2 * k * x[i+1]) - exp(2 * k * x[i])) / (2 * k);
+		integrale += y[i] * y[i] * (exp(2 * k * std::min(x[i+1], t)) - exp(2 * k * std::min(x[i], t))) / (2 * k);
 	}
 	return exp(- 2 * k * t) * integrale ; 
 }
 
-////evaluee en t=0 et pour un taux de swap s_bar = s0_
-////double CheyetteDD_VanillaSwaptionApproxPricer::calculate_phi_0_s_bar() const
-////{
-////	TODO
-////	std::cout << "fonction Phi_t_s_barre(t) pas encore codee" << std::endl ;
-////	coder dS(t)/dx(t) sigma_r(t) (t, inverse, y_bar)
-////	
-////	return 0 ;
-////}
 
+double CheyetteDD_VanillaSwaptionApproxPricer::ZC_1stDerivative_on_xt(double T) const
+{
+	//assert(0 <= T && T <= buffer_TN_) ;
+	//double ZC = cheyetteDD_Model_->P(t, T, x_t, y_t) ;
+	double tauxZC = buffer_courbeInput_->get_tauxZC0(T) ;
+	double P_0_T = exp(- tauxZC * T) ;
+	return (- cheyetteDD_Model_->G(0,T) * P_0_T ) ;	//- G(0, T) P(0, T) 
+}
 
-//double CheyetteDD_VanillaSwaptionApproxPricer::ZC_1stDerivative_on_xt(double T) const
-//{
-//	assert(0 <= T && T <= buffer_TN_) ;
-//	//double ZC = cheyetteDD_Model_->P(t, T, x_t, y_t) ;
-//	double P_0_T = buffer_courbeInput_->get_ZC0(T) ;
-//	return (- cheyetteDD_Model_->G(0,T) * P_0_T ) ;
-//}
-//
-//double CheyetteDD_VanillaSwaptionApproxPricer::ZC_2ndDerivative_on_xt(double T) const
-//{
-//	assert(0 <= T && T <= buffer_TN_) ;
-//	//double ZC = Cheyette_->P(t, T, x_t, y_t) ;
-//	double P_0_T = buffer_courbeInput_->get_ZC0(T) ;
-//	double g = cheyetteDD_Model_->G(0,T) ;
-//	return (g * g * P_0_T ) ;
-//}
-//
+double CheyetteDD_VanillaSwaptionApproxPricer::ZC_2ndDerivative_on_xt(double T) const
+{
+	//assert(0 <= T && T <= buffer_TN_) ;
+	//double ZC = Cheyette_->P(t, T, x_t, y_t) ;
+	double tauxZC = buffer_courbeInput_->get_tauxZC0(T) ;
+	double P_0_T  = exp(- tauxZC * T) ;
+	double g = cheyetteDD_Model_->G(0,T) ;
+	return (g * g * P_0_T ) ;
+}
+
 //// Numerator = P(t, T0) - P(t, TN)
 //double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator(double t) const 
 //{
@@ -183,7 +176,13 @@ double CheyetteDD_VanillaSwaptionApproxPricer::calculate_y_bar(double t) const
 //	return 0 ;
 //}
 //
-///*
+///*//evaluee en t=0 et pour un taux de swap s_bar = s0_
+//double CheyetteDD_VanillaSwaptionApproxPricer::calculate_phi_0_s_bar() const
+//{
+//	//retourne dS(t)/dx(t) sigma_r(t) (t=0, inverse, y_bar)
+//	
+//	return 0 ;
+//}
 //double CheyetteVanillaSwaptionApproxPricer_Piterbarg::swapRateVolatility_approx_lineaire(double t) const
 //{
 //	return ( Phi_t_s_bar_ + swapRateVolatility_1stDerivative(s) * (s - s_bar_) ) ;

@@ -19,7 +19,7 @@ public:
 	CourbeInput(std::vector<double> listeMatu, std::vector<double> tauxZC);
 	~CourbeInput(void);
 
-	double get_ZC0(double T) ;
+	double get_tauxZC0(double T) ;
 	void showCourbeInput() ;
 };
 

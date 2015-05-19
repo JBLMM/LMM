@@ -16,14 +16,17 @@ int main()
 	//Test_McGeneticSwapLMMPricer();			//test_JB
 	//createDDModel_xyz() ;
 	
-	//tests JL
-	createSwap() ;
-	createDDModel() ;
-	
+	/************    tests JL   ************************/
+	//createSwap() ;
+	//createDDModel() ;
+	//test_y_barre(0) ;
+	//test_y_barre(0.5) ;
+	//test_y_barre(1.0) ;
+	//test_Derivative_ZC() ;
 
 	//test_Integrator1D();
 
-		
+	/************  tests LMM   *************************/
 	//test_Noise();  
 	//test_HGVolatility();  
 	//test_Functional(); 

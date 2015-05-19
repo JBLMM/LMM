@@ -30,16 +30,16 @@ private:
 	double s0_; //  en input // double s_bar_ ;       
 
 	//appel fréquent aux éléments suivants -> buffer
+	mutable VanillaSwap				buffer_UnderlyingSwap_ ;
 	mutable double					buffer_T0_ ;
 	mutable double					buffer_TN_ ;
-	mutable VanillaSwap				buffer_UnderlyingSwap_ ;
 	mutable std::vector<LMM::Index> buffer_fixedLegPaymentIndexSchedule_ ;
 	mutable std::vector<double>		buffer_deltaTFixedLeg_ ;
 	mutable courbeInput_PTR			buffer_courbeInput_ ;
 
 public :
 	//constructor  
-	CheyetteDD_VanillaSwaptionApproxPricer(	const CheyetteDD_Model_PTR& cheyetteModel, 
+	CheyetteDD_VanillaSwaptionApproxPricer(	const CheyetteDD_Model_PTR& cheyetteDD_Model, 
 											const VanillaSwaption_PTR&	swaption); 
 	//destructor
 	virtual ~CheyetteDD_VanillaSwaptionApproxPricer(){};
@@ -52,15 +52,12 @@ public :
 	double calculate_y_bar(double t) const;								//sa valeur depend du paramètre k !
 	// ! pendant la calibration, remettre à jour la valeur de y_barre ?
 
-//	//evaluee en t=0 et pour un taux de swap s_bar = s0_
-//	double calculate_phi_0_s_bar() const; 
-//
-//	//pas de y_t : figé à y_bar pour la calibration
-//	//dérivée du ZC de maturité T évaluée en t = 0
-//		double ZC_1stDerivative_on_xt(double T) const ;
-//		double ZC_2ndDerivative_on_xt(double T) const;
-//
-//		
+	//pas de y_t : figé à y_bar pour la calibration
+	//dérivée du ZC de maturité T évaluée en t = 0
+		double ZC_1stDerivative_on_xt(double T) const ;
+		double ZC_2ndDerivative_on_xt(double T) const;
+
+		
 //	//Numerateur
 //		double swapRateNumerator(double t) const; 
 //		//derivee 1ère par rapport à x_t
@@ -88,6 +85,9 @@ public :
 //		// d\Phi /ds (t, \bar{s})
 //		double swapRateVolatility_1stDerivative(double t) const;
 //
+		//evaluee en t=0 et pour un taux de swap s_bar = s0_
+	//double calculate_phi_0_s_bar() const; 
+
 //		// approximation lineaire de \Phi(t, \bar{s})
 //		double swapRateVolatility_approx_lineaire(double t) const;
 //

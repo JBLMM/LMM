@@ -14,7 +14,7 @@ CourbeInput::~CourbeInput(void)
 {
 }
 
-double CourbeInput::get_ZC0(double T)
+double CourbeInput::get_tauxZC0(double T)
 {
 	int N = listeMatu_.size() ;
 	assert (N > 0) ;

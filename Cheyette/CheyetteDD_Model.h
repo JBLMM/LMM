@@ -52,7 +52,6 @@ private:
 	CheyetteDD_Parameter	CheyetteDD_Parameter_;
 
 public:
-
 	CheyetteDD_Model(courbeInput_PTR courbeInput_PTR, const CheyetteDD_Parameter& CheyetteParam)
 		: courbeInput_PTR_(courbeInput_PTR), CheyetteDD_Parameter_(CheyetteParam)
 	{}

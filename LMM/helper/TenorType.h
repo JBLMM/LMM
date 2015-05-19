@@ -40,6 +40,7 @@ public:
 	static const TenorType<6>  _1YR;typedef TenorType<6> TYPE_6;
 
 
+	Tenor::Tenor(){}
 	//! Constructor build a tenor by giving its type
 	template<unsigned int NBMONTH>
 	Tenor(const TenorType<NBMONTH>&):name(&TenorType<NBMONTH>::NAME),nbMonth(&TenorType<NBMONTH>::NB_MONTH), yearFrac(&TenorType<NBMONTH>::YEAR_FRAC){}
