@@ -402,6 +402,9 @@
     <ClInclude Include="LMM\numeric\Integrator1D.h">
       <Filter>LMM_numeric</Filter>
     </ClInclude>
+    <ClInclude Include="VanillaSwapRate.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pricer\LmmTarnPricer.cpp">
@@ -661,9 +664,6 @@
     <ClCompile Include="src\calibration\LmmCalibrationConfig.cpp">
       <Filter>LMM_Model\Calibration</Filter>
     </ClCompile>
-    <ClCompile Include="LMM\Test\Test_LmmCalibrationConfig.cpp">
-      <Filter>Test</Filter>
-    </ClCompile>
     <ClCompile Include="LMM\Test\Test_LmmVirtualCorrelationCalibraton.cpp">
       <Filter>Test</Filter>
     </ClCompile>
@@ -759,6 +759,15 @@
     </ClCompile>
     <ClCompile Include="test\unit_test\test_Integrator1D.cpp">
       <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="LMM\Test\Test_LmmCalibrationConfig.cpp">
+      <Filter>Test\Test_JL</Filter>
+    </ClCompile>
+    <ClCompile Include="VanillaSwapRate.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="CallableSwap.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,8 +1,13 @@
 #include "GeneticSwap.h"
 
+GeneticSwap::GeneticSwap(CouponLeg_CONSTPTR leg1, CouponLeg_CONSTPTR leg2)
+	:leg1_(leg1),
+	 leg2_(leg2)
+	{
+	}
 
-boost::shared_ptr<GeneticSwap> GeneticSwap::getSubGeneticSwap(size_t indexStart, size_t indexEnd) const
+ GeneticSwap_PTR GeneticSwap::getSubGeneticSwap(size_t indexStart, size_t indexEnd) const
 {
-	return boost::shared_ptr<GeneticSwap>(new GeneticSwap(leg1_->getCouponLeg(indexStart,indexEnd), 
-		                                   leg2_->getCouponLeg(indexStart,indexEnd)));
+	return GeneticSwap_PTR(new GeneticSwap(getLeg1()->getSubCouponLeg(indexStart,indexEnd), 
+		                                   getLeg2()->getSubCouponLeg(indexStart,indexEnd)));
 }

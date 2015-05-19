@@ -20,6 +20,9 @@
 #include <GeneticSwap.h>   //instrument
 #include <Coupon.h>
 
+
+/*
+
 class McGeneticSwapLMMPricer// want to use the pre-calculation of
 {
 protected:
@@ -37,9 +40,9 @@ public:
 	//! 
 	void resetGeneratorToinitSeed(){mcLmm_->get_RNGenerator()->resetGeneratorToinitSeed();}
 
-	size_t find(double paymentDay, std::vector<double> dateLibor)const;
+	// size_t find(double paymentDay, std::vector<double> dateLibor)const;
 	
-	double calculate(Coupon_PTR coupon, double liborValue)const;
+	double calculate(Coupon_CONSTPTR coupon, double liborValue)const;
 
 protected: 
 
@@ -74,3 +77,4 @@ public:
 
 typedef boost::shared_ptr<McGeneticSwapLMMPricer> McGeneticSwapLMMPricer_PTR;
 
+*/

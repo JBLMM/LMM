@@ -18,19 +18,23 @@
 //	throw("Error: not implemented");
 //}
 
-size_t McGeneticSwapLMMPricer::find(double paymentDay, std::vector<double> dateLibor)const
-{
-	assert(paymentDay>=0);
-	for(size_t i=0; i<dateLibor.size();i++)
-	{
-		if(paymentDay<dateLibor[i]){return i-1;}
-	}
-	return dateLibor.size()-1;
-}
+//size_t McGeneticSwapLMMPricer::find(double paymentDay, std::vector<double> dateLibor)const
+//{
+//	assert(paymentDay>=0);
+//	for(size_t i=0; i<dateLibor.size();i++)
+//	{
+//		if(paymentDay<dateLibor[i]){return i-1;}
+//	}
+//	return dateLibor.size()-1;
+//}
 
+/*
 double McGeneticSwapLMMPricer::calculate(const Coupon_PTR coupon, double liborValue)const
 {
-	return coupon->getNominal()*coupon->getPeriod()*std::max(coupon->getFloor(), std::min(coupon->getCap(),coupon->getMultiFactor()*liborValue+coupon->getAddFactor()));
+	double nominal = coupon->getNominal(); 
+	... 
+	// rewrite to a more compact form 
+	// return coupon->getNominal()*coupon->getPeriod()*std::max(coupon->getFloor(), std::min(coupon->getCap(),coupon->getMultiFactor()*liborValue+coupon->getAddFactor()));
 }
 
 //simulation
@@ -43,10 +47,10 @@ double McGeneticSwapLMMPricer::swapNPV(const GeneticSwap_PTR geneticSwap, size_t
 	for(size_t itrSimulation=0; itrSimulation<nbSimulation; ++itrSimulation)
 	{
 		mcLmm_->simulateLMM();  // YY TODO: not efficient at all, don't need to do all the simulation ... 
-		double npvFloatingLeg_Get = pvFloatingLeg(indexValuationDate, geneticSwap->getLeg1(), mcLmm_->get_numeraire(), mcLmm_->get_liborMatrix(),lmmTenorStructure);
+		double npvFloatingLeg_Get  = pvFloatingLeg(indexValuationDate, geneticSwap->getLeg1(), mcLmm_->get_numeraire(), mcLmm_->get_liborMatrix(),lmmTenorStructure);
 		double npvFixedLeg_Give    = pvFloatingLeg  (indexValuationDate, geneticSwap->getLeg2(), mcLmm_->get_numeraire(), mcLmm_->get_liborMatrix(),lmmTenorStructure);
-		double npvSwap		  = npvFloatingLeg_Get - npvFixedLeg_Give;
-		result				 += npvSwap;
+		double npvSwap		       = npvFloatingLeg_Get - npvFixedLeg_Give;
+		result				      += npvSwap;
 		variance += npvSwap*npvSwap;
 	}
 	result   /=nbSimulation; 
@@ -80,8 +84,10 @@ double McGeneticSwapLMMPricer::pvFloatingLeg(LMM::Index indexValuationDate,
 	for(size_t i=0; i<couponList.size(); i++)
 	{
 		Coupon_PTR coupon=couponList[i];
-		size_t j=find(coupon->getPaymentDate(), lmmTenorStructure->get_tenorDate());
+		//size_t j=find(coupon->getPaymentDate(), lmmTenorStructure->get_tenorDate());
+		
 		assert(coupon->getPaymentDate()==lmmTenorStructure->get_tenorDate()[j]);
+		
 		if(indexValuationDate>=j)continue;
 		price+=numeraire[indexValuationDate]/numeraire[j]*calculate(coupon, liborMatrix(indexValuationDate,j-1));
 	}
@@ -100,7 +106,7 @@ double McGeneticSwapLMMPricer::pvFloatingLeg(LMM::Index indexValuationDate,
 	return price;
 }
 
-
+*/
 //double McGeneticSwapPricer::swapRate(LMM::Index indexValuationDate,
 //					const GeneticSwap_PTR geneticSwap,
 //					const std::vector<double>& numeraire, 

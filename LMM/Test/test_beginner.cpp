@@ -23,7 +23,7 @@ void test_beginner()
 	int liborLength=myTS->get_horizon();
 	std::vector<double> myInitialLibor(liborLength+1);
 	cout << 1<< endl;
-	for (int i = 0; i <myInitialLibor.size(); i++)
+	for (size_t i = 0; i <myInitialLibor.size(); i++)
 	{
 		myInitialLibor[i]=1.0;
 	}

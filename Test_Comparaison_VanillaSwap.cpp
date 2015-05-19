@@ -16,6 +16,7 @@
 
 void vanillaSwapComparaisonExemple()
 {
+
 	double strike=1.6;
 	size_t indexStart=3;
 	size_t indexEnd=19;
@@ -27,25 +28,22 @@ void vanillaSwapComparaisonExemple()
 	std::vector<double> myInitialLibor(liborIndex);
 	for (size_t i = 0; i <myInitialLibor.size(); i++)
 	{
-		myInitialLibor[i]=0.02+((double)i)*0.01;
+		myInitialLibor[i]=0.02;//+((double)i)*0.01;
 	}
 
 
-	CouponLeg_PTR cl(new CouponLeg());
-	cl->addLeg1(Coupon_PTR(new Coupon()));
-
-	//VaniSwap_Particulier
+	//VaniSwap_Chi_Trang
 	VanillaSwap myVS(strike, indexStart , indexEnd, floatingTenor, fixedTenor, lmmTenorStructure);
 	myVS.print("test_beginer_VanillaSwap.txt");
 	LmmVanillaSwapPricer myVSP(lmmTenorStructure);
 	double prix_swap=myVSP.swapNPV_Analytical_1(myVS, myInitialLibor);
-	cout << "FirstVersionSwapPrice: "<<prix_swap << endl;
+	cout << "FirstVersionSwapPrice: "<< prix_swap << endl;
 
 	//GeneticSwap test
-	GeneticSwap_PTR vanillaSwap_Genetic=InstrumentFactory::createVanillaSwap(
-		strike,indexStart,indexEnd,floatingTenor,fixedTenor,lmmTenorStructure,1.0, myInitialLibor);
-	GeneticVanillaSwapPricer_PTR geneticVanillaSwapPricer(new GeneticVanillaSwapPricer(vanillaSwap_Genetic));
-	double geneticPrice=geneticVanillaSwapPricer->geneticVanillaSwap_Analytical_1(myInitialLibor, lmmTenorStructure->get_tenorDate());
+	GeneticSwap_CONSTPTR vanillaSwap_Genetic=InstrumentFactory::createVanillaSwap(
+		strike,indexStart,indexEnd,floatingTenor,fixedTenor,lmmTenorStructure,1.0);
+	GeneticVanillaSwapPricer_PTR geneticVanillaSwapPricer(new GeneticVanillaSwapPricer());
+	double geneticPrice=geneticVanillaSwapPricer->geneticVanillaSwap_Analytical(vanillaSwap_Genetic, myInitialLibor);
 	cout << "GeneticSwapTest: "<<geneticPrice << endl;
 
 	cout << "Difference:" << geneticPrice-prix_swap<< endl;

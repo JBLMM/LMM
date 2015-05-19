@@ -26,18 +26,14 @@
 class GeneticSwap
 {
 public:
-	CouponLeg_PTR leg1_;
-	CouponLeg_PTR leg2_;
+	CouponLeg_CONSTPTR leg1_;
+	CouponLeg_CONSTPTR leg2_;
 
 	// constructor, destructor, gettor 
-	GeneticSwap(CouponLeg_PTR leg1, CouponLeg_PTR leg2)
-	{
-		leg1_=leg1;
-		leg2_=leg2;
-	}
+	GeneticSwap(CouponLeg_CONSTPTR leg1, CouponLeg_CONSTPTR leg2);
 	virtual ~GeneticSwap(){}
-	CouponLeg_PTR getLeg1(){return leg1_;}
-	CouponLeg_PTR getLeg2(){return leg2_;}
+	CouponLeg_CONSTPTR getLeg1()const{return leg1_;}
+	CouponLeg_CONSTPTR getLeg2()const{return leg2_;}
 	// implement 
 	boost::shared_ptr<GeneticSwap> getSubGeneticSwap(size_t indexStart, size_t indexEnd) const;
 

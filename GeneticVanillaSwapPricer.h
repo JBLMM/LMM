@@ -4,21 +4,23 @@
 
 class GeneticVanillaSwapPricer
 {
-	GeneticSwap_PTR geneticVanillaSwap_;
+	//GeneticSwap_PTR geneticVanillaSwap_;
+
 public:
 	//! constructor
-	GeneticVanillaSwapPricer(GeneticSwap_PTR geneticVanillaSwap):geneticVanillaSwap_(geneticVanillaSwap){}
+	//GeneticVanillaSwapPricer(GeneticSwap_PTR geneticVanillaSwap):geneticVanillaSwap_(geneticVanillaSwap){}
 	//! destructor
 	virtual ~GeneticVanillaSwapPricer(){}	
 
 	//! To validate the result
 	// initLibor[i] = L_i[T_0]
-	double geneticVanillaSwap_Analytical_1(std::vector<double> liborInitValue, std::vector<double> dateLibor)const;
+	double geneticVanillaSwap_Analytical(GeneticSwap_CONSTPTR geneticVanillaSwap, const std::vector<double>& liborInitValue)const;
+	//double geneticVanillaSwap_MC(GeneticSwap_CONSTPTR geneticVanillaSwap, const std::vector<double>& liborInitValue)const;
 
 	//getter
-	GeneticSwap_PTR getGeneticVanillaSwap()const{return geneticVanillaSwap_;}
+	//GeneticSwap_PTR getGeneticVanillaSwap()const{return geneticVanillaSwap_;}
 
-	size_t find(double paymentDay, std::vector<double> dateLibor)const;
+	//size_t find(double paymentDay, std::vector<double> dateLibor)const;
 
 
 
