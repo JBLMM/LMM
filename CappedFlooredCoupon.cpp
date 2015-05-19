@@ -1,34 +1,44 @@
 #include "CappedFlooredCoupon.h"
+#include <LMM/helper/Name.h>
 
-CappedFlooredCoupon::CappedFlooredCoupon(double paymentDate, double nominal, double period,  double floor,  double cap, Rate_PTR rate, double multiFactor,double addFactor, double valuationDate)
-{
-		paymentDate_=paymentDate;
-		nominal_=nominal;
-		period_=period;
-		//ifFloored_=ifFloored;
-		floor_=floor;
-		//ifCapped_=ifCapped;
-		cap_=cap;
-		rate_=rate;
-		multiFactor_=multiFactor;
-		addFactor_=addFactor;
-		valuationDate_=valuationDate;
-}
+CappedFlooredCoupon::CappedFlooredCoupon(	LMM::Index paymentIndex,
+											double nominal,
+											double period,  
+											bool ifFloored,
+											double floorStrike,
+											bool ifCapped,
+											double capStrike,
+											Rate_CONSTPTR rate,
+											double multiFactor,
+											double addFactor,
+											LMM::Index valuationDateIndex)
+										 : 
+		Coupon(paymentIndex),
+		nominal_(nominal),
+		period_(period),
+		ifFloored_(ifFloored),
+		floorStrike_(floorStrike),
+		ifCapped_(ifCapped),
+		capStrike_(capStrike),
+		rate_(rate),
+		multiFactor_(multiFactor),
+		addFactor_(addFactor),
+		valuationDate_(valuationDateIndex)
+{}
 
-
-CappedFlooredCoupon::CappedFlooredCoupon(const CappedFlooredCoupon& c)
+//TODO?latter too long to write the code ... 
+CappedFlooredCoupon::CappedFlooredCoupon(const CappedFlooredCoupon& c): Coupon(c.getPaymentIndex()),
+																		nominal_(c.getNominal()),
+																		period_(c.getPeriod()),
+																		ifFloored_(c.getIfFloored()),
+																		floorStrike_(c.getFloorStrike()),
+																		ifCapped_(c.getIfCapped()),
+																		capStrike_(c.getCapStrike()),	
+																		multiFactor_(c.getMultiFactor()),
+																		addFactor_(c.getAddFactor()),
+																		valuationDate_(c.getValuationDate())
 {		
-		paymentDate_=c.getPaymentDate();
-		nominal_=c.getNominal();
-		period_=c.getPeriod();
-		//ifFloored_=c.getIfFloored();
-		floor_=c.getFloor();
-		//ifCapped_=c.getIfCapped();
-		cap_=c.getCap();
 		rate_=(c.getRate()->clone());
-		multiFactor_=c.getMultiFactor();
-		addFactor_=c.getAddFactor();
-		valuationDate_=c.getValuationDate();
 }
 
 

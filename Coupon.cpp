@@ -1,4 +1,4 @@
 #include "Coupon.h"
 
-
-boost::shared_ptr<Coupon> Coupon::clone()const{return boost::shared_ptr<Coupon>(new Coupon(*this));}
+Coupon::Coupon(const LMM::Index paymentIndex):paymentIndex_(paymentIndex){}
+Coupon_PTR Coupon::clone()const{return Coupon_PTR(new Coupon(*this));}

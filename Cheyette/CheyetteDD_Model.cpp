@@ -38,14 +38,16 @@ double CheyetteDD_Model::annuity(const VanillaSwap& vanillaSwap)
 	double delta_T, ZC ;
 	size_t  fixedLegPaymentIndex ;
 	//double T_N = fixedLegPaymentIndexSchedule[fixedLegPaymentIndexSchedule.size() - 1] ;
-	
+	Tenor fixed_tenor = vanillaSwap.get_fixedLegTenorType()
+
+
 	for(size_t itr = 0; itr < fixedLegPaymentIndexSchedule.size(); ++itr)     // !!!!!!!!   check iteration !!!!!!!!!!!!
 	{
 		fixedLegPaymentIndex = fixedLegPaymentIndexSchedule[itr]; 
 		delta_T              = vanillaSwap.get_DeltaTFixedLeg(itr);
 
 		//à modifier : !!!!!! :
-		ZC = exp( - courbeInput_PTR_->get_tauxZC0(fixedLegPaymentIndex) ); //P(0, fixedLegPaymentIndex, 0, 0) ;
+		ZC = exp( - courbeInput_PTR_->get_tauxZC0(fixedLegPaymentIndex * min()) ); //P(0, fixedLegPaymentIndex, 0, 0) ;
 
 		price += delta_T * ZC ;		
 	}

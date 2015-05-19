@@ -14,7 +14,7 @@
 #include <GeneticVanillaSwapPricer.h>
 
 
-
+/*
 void Test_McGeneticSwapLMMPricer()
 {
 	//! LMMTenorStructure
@@ -105,3 +105,4 @@ void Test_McGeneticSwapLMMPricer()
 	McTerminalLmm mcTerminalLmm(shiftedLmm, liborsInitValue, rnGenerator, MCSchemeType::EULER);
     mcTerminalLmm.print("test_McTerminalLmm_McTerminal.csv");  // Attention, there are two print: parent class and derived class
 }
+*/

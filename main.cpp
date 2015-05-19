@@ -10,6 +10,7 @@
 
 int main()
 {
+<<<<<<< HEAD
 	
 	//test_beginner();							//test_JB
 	//vanillaSwapComparaisonExemple();			//test_JB		
@@ -40,8 +41,17 @@ int main()
 	{
 		std::cout << vect_fixedLegPaymentIndexSchedule[i] << std::endl ;
 	}
+=======
 
+	//test_beginner();							//test_JB
+	vanillaSwapComparaisonExemple();			//test_JB		
+	//Test_McGeneticSwapLMMPricer();			//test_JB
 
+>>>>>>> 76ecbbaa198c92b85560d7aa7fe2d3000883ac38
+
+	//test_Integrator1D();
+
+<<<<<<< HEAD
 	/************  tests LMM   *************************/
 	//test_Noise();  
 	//test_HGVolatility();  
@@ -55,6 +65,21 @@ int main()
 	//test_VanillaSwaptionPricer();    
 	//test_VanialSwaptionPricer_MCvsApprox(); 
 
+=======
+
+	//test_Noise();  
+	//test_HGVolatility();  
+	//test_Functional(); 
+	//test_BlackGreek(); 
+	//test_McTerminalLmm(); 
+
+	//test_VanillaFRAPricer();  
+	//test_VanillaCapletPricer(); 
+	//test_VanillaSwapPricer();  
+	//test_VanillaSwaptionPricer();    
+	//test_VanialSwaptionPricer_MCvsApprox(); 
+
+>>>>>>> 76ecbbaa198c92b85560d7aa7fe2d3000883ac38
 	//test_SwaptionMarketDataContainer();		
 	//test_CalibrationWithATMSwaptionVol();		
 	//test_CalibrationShiftWithSwaptionVolSkew();

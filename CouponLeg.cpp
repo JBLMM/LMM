@@ -1,32 +1,29 @@
 #include "CouponLeg.h"
 #include <vector>
 
-CouponLeg::CouponLeg(std::vector<Coupon_PTR>  leg1, std::vector<Coupon_PTR>  leg2)
-	{
-		leg1_=leg1;
-		leg2_=leg2;
-	}
+CouponLeg::CouponLeg(const  std::vector<Coupon_CONSTPTR>&  leg)
+	:
+		leg_(leg)
+{
+}
 
-boost::shared_ptr<CouponLeg> CouponLeg::getCouponLeg(size_t indexStart, size_t indexEnd) const
+CouponLeg_CONSTPTR CouponLeg::getSubCouponLeg(size_t indexStart, size_t indexEnd) const  //Question: why boost::shared_ptr<const CouponLeg&>?  //deep copy a sub-sequence of CouponLeg
 	{
-		std::vector<Coupon_PTR>  leg1;
-		std::vector<Coupon_PTR>  leg2;
-		for(size_t i=0; i<getLeg1().size(); i++)
+		std::vector<Coupon_CONSTPTR>  leg;
+
+		for(size_t i=0; i<getLeg().size(); i++)
 		{
-			Coupon_PTR coupon=getLeg1()[i];
-			if(coupon->getPaymentDate()>=indexStart&&coupon->getPaymentDate()<indexEnd)
+			Coupon_CONSTPTR coupon=getLeg()[i];
+			if(coupon->getPaymentIndex() >= indexStart&&coupon->getPaymentIndex()<indexEnd)
 			{
-				leg1.push_back(coupon->clone());
+				leg.push_back(coupon->clone());  // ! deep copy
 			}
 		}
-		for (size_t i=0; i<getLeg2().size(); i++)
-		{
-			Coupon_PTR coupon=getLeg1()[i];
-			if(coupon->getPaymentDate()>=indexStart&&coupon->getPaymentDate()<indexEnd)
-			{
-				leg2.push_back(coupon->clone());
-			}
-		}
-		return boost::shared_ptr<CouponLeg>(new CouponLeg(leg1, leg2)); // copy coupon other than use smart pointer   !!!!!!!!!!!!!!!!!!!!! YY !!!!!!!!!!!!!!!!!!
-	}
 
+		return CouponLeg_CONSTPTR(new CouponLeg(leg)); // copy coupon other than use smart pointer   !!!!!!!!!!!!!!!!!!!!! YY !!!!!!!!!!!!!!!!!!
+}
+
+void CouponLeg::addToLeg(Coupon_CONSTPTR coupon)
+{
+	leg_.push_back(coupon);
+}
