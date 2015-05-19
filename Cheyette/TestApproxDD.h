@@ -20,6 +20,9 @@
 //test de CheyetteDD_VanillaSwaptionApproxPricer.h
 	void test_y_barre(double t) ;
 	void createSwap();
+
+	void testSwap() ;
+
 	VanillaSwaption createSwaption() ;
 	//void TestApprox() ;
 

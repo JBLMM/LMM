@@ -64,59 +64,59 @@ double CheyetteDD_VanillaSwaptionApproxPricer::ZC_2ndDerivative_on_xt(double T) 
 	double tauxZC = buffer_courbeInput_->get_tauxZC0(T) ;
 	double P_0_T  = exp(- tauxZC * T) ;
 	double g = cheyetteDD_Model_->G(0,T) ;
-	return (g * g * P_0_T ) ;
+	return (g * g * P_0_T ) ;					//- G(0, T)^2 P(0, T) 
 }
 
-//// Numerator = P(t, T0) - P(t, TN)
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator(double t) const 
-//{
-//	//double ZC_T0 = cheyetteDD_Model_->P(t_, buffer_T0_, x_t, y_t) ;
-//	//double ZC_TN = cheyetteDD_Model_->P(t_, buffer_TN_, x_t, y_t) ;
-//	double ZC_T0 = buffer_courbeInput_->get_ZC0(buffer_T0_) ;
-//	double ZC_TN = buffer_courbeInput_->get_ZC0(buffer_TN_) ;
-//	return (ZC_T0 - ZC_TN) ; 
-//}
-//
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator_1stDerivative(double t) const
-//{
-//	return ( ZC_1stDerivative_on_xt(buffer_T0_) - ZC_1stDerivative_on_xt(buffer_TN_) ) ;
-//}
-//
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator_2ndDerivative(double t) const
-//{
-//	return ( ZC_2ndDerivative_on_xt(buffer_T0_) - ZC_2ndDerivative_on_xt(buffer_TN_) ) ;
-//}
-//
-//// Denominator = \sum delta_k P(t,T_k)
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator(double t) const 
-//{
-//	return cheyetteDD_Model_->annuity(buffer_UnderlyingSwap_) ;
-//}
-//
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_1stDerivative(double t) const
-//{
-//	double result = 0;
-//
-//	for(size_t i=0; i<buffer_fixedLegPaymentIndexSchedule_.size(); ++i)
-//	{
-//		size_t	fixedLegPaymentIndex = buffer_fixedLegPaymentIndexSchedule_[i];
-//		result += buffer_deltaTFixedLeg_[i] * ZC_1stDerivative_on_xt(fixedLegPaymentIndex) ;	
-//	}
-//	return result;
-//}
-//
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_2ndDerivative(double t) const
-//{
-//	double result = 0;
-//
-//	for(size_t i=0; i<buffer_fixedLegPaymentIndexSchedule_.size(); ++i)
-//	{
-//		size_t	fixedLegPaymentIndex = buffer_fixedLegPaymentIndexSchedule_[i];
-//		result += buffer_deltaTFixedLeg_[i] * ZC_2ndDerivative_on_xt(fixedLegPaymentIndex) ;		
-//	}
-//	return result;
-//}
-//
+// Numerator = P(t, T0) - P(t, TN) en t=0
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator() const 
+{
+	//double ZC_T0 = cheyetteDD_Model_->P(t_, buffer_T0_, x_t, y_t) ;
+	//double ZC_TN = cheyetteDD_Model_->P(t_, buffer_TN_, x_t, y_t) ;
+	double ZC_T0 = exp( - buffer_courbeInput_->get_tauxZC0(buffer_T0_) * buffer_T0_) ;
+	double ZC_TN = exp( - buffer_courbeInput_->get_tauxZC0(buffer_TN_) * buffer_TN_) ;
+	return (ZC_T0 - ZC_TN) ; 
+}
+
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator_1stDerivative() const
+{
+	return ( ZC_1stDerivative_on_xt(buffer_T0_) - ZC_1stDerivative_on_xt(buffer_TN_) ) ;
+}
+
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator_2ndDerivative() const
+{
+	return ( ZC_2ndDerivative_on_xt(buffer_T0_) - ZC_2ndDerivative_on_xt(buffer_TN_) ) ;
+}
+
+// Denominator = \sum delta_k P(t,T_k) en t = 0
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator(double t) const 
+{
+	return cheyetteDD_Model_->annuity(buffer_UnderlyingSwap_) ;
+}
+
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_1stDerivative(double t) const
+{
+	double result = 0;
+
+	for(size_t i=0; i<buffer_fixedLegPaymentIndexSchedule_.size(); ++i)
+	{
+		size_t	fixedLegPaymentIndex = buffer_fixedLegPaymentIndexSchedule_[i];
+		result += buffer_deltaTFixedLeg_[i] * ZC_1stDerivative_on_xt(fixedLegPaymentIndex) ;	
+	}
+	return result;
+}
+
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_2ndDerivative(double t) const
+{
+	double result = 0;
+
+	for(size_t i=0; i<buffer_fixedLegPaymentIndexSchedule_.size(); ++i)
+	{
+		size_t	fixedLegPaymentIndex = buffer_fixedLegPaymentIndexSchedule_[i];
+		result += buffer_deltaTFixedLeg_[i] * ZC_2ndDerivative_on_xt(fixedLegPaymentIndex) ;		
+	}
+	return result;
+}
+
 //double CheyetteDD_VanillaSwaptionApproxPricer::swapRate(double t) const
 //{
 //	double n      = swapRateNumerator(x_t, y_t);

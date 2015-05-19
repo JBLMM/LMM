@@ -58,22 +58,22 @@ public :
 		double ZC_2ndDerivative_on_xt(double T) const;
 
 		
-//	//Numerateur
-//		double swapRateNumerator(double t) const; 
-//		//derivee 1ère par rapport à x_t
-//		double swapRateNumerator_1stDerivative(double t) const;
-//		//derivee seconde par rapport à x_t
-//		double swapRateNumerator_2ndDerivative(double t) const;
-//
-//
-//	//Denominateur
-//		double swapRateDenominator(double t) const;
-//		//derivee 1ère par rapport à x_t
-//		double swapRateDenominator_1stDerivative(double t) const;
-//		//derivee seconde par rapport à x_t
-//		double swapRateDenominator_2ndDerivative(double t) const;
-//
-//
+	//Numerateur
+		double swapRateNumerator() const; 
+		//derivee 1ère par rapport à x_t
+		double swapRateNumerator_1stDerivative() const;
+		//derivee seconde par rapport à x_t
+		double swapRateNumerator_2ndDerivative() const;
+
+
+	//Denominateur
+		double swapRateDenominator(double t) const;
+		//derivee 1ère par rapport à x_t
+		double swapRateDenominator_1stDerivative(double t) const;
+		//derivee seconde par rapport à x_t
+		double swapRateDenominator_2ndDerivative(double t) const;
+
+
 //	//swapRate = swapNumerator / swapDenominator
 //		double swapRate(double t) const;
 //		double swapRate_1stDerivative(double t) const;

@@ -26,6 +26,22 @@ int main()
 
 	//test_Integrator1D();
 
+	double strike          = 0.04;
+	LMM::Index  indexStart = 0; 
+	LMM::Index  indexEnd   = 8; 
+	Tenor	floatingLegTenorType = Tenor::_6M;
+	Tenor	fixedLegTenorType    = Tenor::_1YR;
+	LMMTenorStructure_PTR simulationStructure(new LMMTenorStructure(Tenor::_6M , 50) );
+	VanillaSwap swap = VanillaSwap(strike, indexStart, indexEnd, floatingLegTenorType, fixedLegTenorType, simulationStructure);
+	
+	std::vector<LMM::Index> vect_fixedLegPaymentIndexSchedule ;
+	vect_fixedLegPaymentIndexSchedule = swap.get_fixedLegPaymentIndexSchedule();
+	for (int i= 0 ; i < vect_fixedLegPaymentIndexSchedule.size() - 1 ; ++i)
+	{
+		std::cout << vect_fixedLegPaymentIndexSchedule[i] << std::endl ;
+	}
+
+
 	/************  tests LMM   *************************/
 	//test_Noise();  
 	//test_HGVolatility();  

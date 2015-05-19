@@ -84,6 +84,12 @@ void createSwap()
 
 }
 
+void testSwap()
+{
+
+}
+
+
 void test_y_barre(double t)
 {
 	//integrale main
@@ -174,6 +180,12 @@ void test_Derivative_ZC()
 	std::cout << "derivee_1_main   T = 15Y  "  << -exp(- 0.02*15) * (1 - exp(-15)) << std::endl ;
 	std::cout << "derivee_1_classe T = 1Y   " << abc.ZC_1stDerivative_on_xt(1) << std::endl ;
 	std::cout << "derivee_1_main   T = 1Y   "  << -exp(- 0.85/100) * (1 - exp(-1)) << std::endl ;
+	std::cout << "   " << std::endl ;
+	std::cout << "derivee_2_classe T = 1Y   " << abc.ZC_2ndDerivative_on_xt(1) << std::endl ;
+	std::cout << "derivee_2_main   T = 1Y   "  << exp(- 0.85/100) * pow(1 - exp(-1),2) << std::endl ;
+	std::cout << "   " << std::endl ;
+	std::cout << "swap rate numerator   " << abc.swapRateNumerator() << std::endl ;
+	std::cout << "swap rate numerator   " << 1 - exp(- 20 * 2.5/100) << std::endl ;    //indexEnd : 40, et tenor : 0.5, donc T_N = 20Y
 }
 
 

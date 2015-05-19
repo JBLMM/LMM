@@ -29,28 +29,30 @@ double CheyetteDD_Model::r_t(double f_0_t, double x_t)
 	return f_0_t + x_t ; 
 }
 
-//double CheyetteDD_Model::annuity(const VanillaSwap& vanillaSwap)
-//{
-//	//TODO assert // check tenor[0] = 0; c'est à dire le 1er pilier de la tenor structure englobe t = 0 (date de valo) 
-//
-//	double price = 0.0;
-//	const std::vector<size_t>& fixedLegPaymentIndexSchedule  = vanillaSwap.get_fixedLegPaymentIndexSchedule();
-//	double delta_T, ZC ;
-//	size_t  fixedLegPaymentIndex ;
-//	//double T_N = fixedLegPaymentIndexSchedule[fixedLegPaymentIndexSchedule.size() - 1] ;
-//	
-//	for(size_t itr = 0; itr < fixedLegPaymentIndexSchedule.size(); ++itr)     // !!!!!!!!   check iteration !!!!!!!!!!!!
-//	{
-//		fixedLegPaymentIndex = fixedLegPaymentIndexSchedule[itr]; 
-//		delta_T              = vanillaSwap.get_DeltaTFixedLeg(itr);
-//		ZC = courbeInput_PTR_->get_ZC0(fixedLegPaymentIndex) ; //P(0, fixedLegPaymentIndex, 0, 0) ;
-//
-//		price += delta_T * ZC ;		
-//	}
-//	return price;
-//}
-//
-//
+double CheyetteDD_Model::annuity(const VanillaSwap& vanillaSwap)
+{
+	//TODO assert // check tenor[0] = 0; c'est à dire le 1er pilier de la tenor structure englobe t = 0 (date de valo) 
+
+	double price = 0.0;
+	const std::vector<size_t>& fixedLegPaymentIndexSchedule  = vanillaSwap.get_fixedLegPaymentIndexSchedule();
+	double delta_T, ZC ;
+	size_t  fixedLegPaymentIndex ;
+	//double T_N = fixedLegPaymentIndexSchedule[fixedLegPaymentIndexSchedule.size() - 1] ;
+	
+	for(size_t itr = 0; itr < fixedLegPaymentIndexSchedule.size(); ++itr)     // !!!!!!!!   check iteration !!!!!!!!!!!!
+	{
+		fixedLegPaymentIndex = fixedLegPaymentIndexSchedule[itr]; 
+		delta_T              = vanillaSwap.get_DeltaTFixedLeg(itr);
+
+		//à modifier : !!!!!! :
+		ZC = exp( - courbeInput_PTR_->get_tauxZC0(fixedLegPaymentIndex) ); //P(0, fixedLegPaymentIndex, 0, 0) ;
+
+		price += delta_T * ZC ;		
+	}
+	return price;
+}
+
+
 //double CheyetteDD_Model::txSwapFwd(const VanillaSwap& vanillaSwap)
 //{
 //	const std::vector<size_t>& fixedLegPaymentIndexSchedule  = vanillaSwap.get_fixedLegPaymentIndexSchedule();

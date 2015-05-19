@@ -68,7 +68,7 @@ public:
 	double r_t(double f_0_t, double x_t);
 
 	//annuite A_0N(0)
-	//double annuity(const VanillaSwap& vanillaSwap) ;
+	double annuity(const VanillaSwap& vanillaSwap) ;
 
 	//?????? 
 	//double txSwapFwd(const VanillaSwap&	vanillaSwap) ;
