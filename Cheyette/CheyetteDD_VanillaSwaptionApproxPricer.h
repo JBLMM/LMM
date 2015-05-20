@@ -11,6 +11,8 @@
 #include <cassert>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
 /**********************************************************
 
@@ -27,7 +29,8 @@ private:
 	CheyetteDD_Model_PTR	cheyetteDD_Model_;  
 	VanillaSwaption_PTR		swaption_ ;
 
-	double s0_; //  en input // double s_bar_ ;       
+	double s0_;			//  en input // double s_bar_ ;     
+	//double y_bar_t_ ;	//double calculé en t avec la fonction calculate_y_bar(t)
 
 	//appel fréquent aux éléments suivants -> buffer
 	mutable VanillaSwap				buffer_UnderlyingSwap_ ;
@@ -47,44 +50,60 @@ public :
 	//getters
 	CheyetteDD_Model_CONSTPTR get_CheyetteDD_Model() const {return cheyetteDD_Model_ ;}
 	VanillaSwaption_PTR get_VanillaSwaption() const {return swaption_ ;}
-	
+	double get_buffer_T0_(){return buffer_T0_ ;}
+	double get_buffer_TN_(){return buffer_TN_ ;}
+
 	//calcul de y_barre(t)
 	double calculate_y_bar(double t) const;								//sa valeur depend du paramètre k !
 	// ! pendant la calibration, remettre à jour la valeur de y_barre ?
 
-	//pas de y_t : figé à y_bar pour la calibration
-	//dérivée du ZC de maturité T évaluée en t = 0
-		double ZC_1stDerivative_on_xt(double T) const ;
-		double ZC_2ndDerivative_on_xt(double T) const;
+
+/**********************  fonctions et dérivées pour ZC, swap rate ************************
+** normalement P(t, T, x_t, y_t), A_{0,N}(t, x_t, y_t, swap)
+** y_t -> \bar{y}_t : constante
+**
+** 2 cas f(t, T, x_t) :
+**      - si t = 0, x_t = 0 : utilisation de la courbe spot
+**      - si t > 0, x_t paramètre pour la fonction inverse 
+******************************************************************************************/
+
+	//dérivée du ZC de maturité T évaluée en t
+		double ZC_1stDerivative_on_xt(double t, double T, double x_t) const ;
+		double ZC_2ndDerivative_on_xt(double t, double T, double x_t) const;
 
 		
 	//Numerateur
-		double swapRateNumerator() const; 
+		double swapRateNumerator(double t, double x_t) const; 
 		//derivee 1ère par rapport à x_t
-		double swapRateNumerator_1stDerivative() const;
+		double swapRateNumerator_1stDerivative(double t, double x_t) const;
 		//derivee seconde par rapport à x_t
-		double swapRateNumerator_2ndDerivative() const;
+		double swapRateNumerator_2ndDerivative(double t, double x_t) const;
 
 
 	//Denominateur
-		double swapRateDenominator(double t) const;
+		double swapRateDenominator(double t, double x_t) const;					//annuite
 		//derivee 1ère par rapport à x_t
-		double swapRateDenominator_1stDerivative(double t) const;
+		double swapRateDenominator_1stDerivative(double t, double x_t) const;
 		//derivee seconde par rapport à x_t
-		double swapRateDenominator_2ndDerivative(double t) const;
+		double swapRateDenominator_2ndDerivative(double t, double x_t) const;
 
 
-//	//swapRate = swapNumerator / swapDenominator
-//		double swapRate(double t) const;
-//		double swapRate_1stDerivative(double t) const;
-//		double swapRate_2ndDerivative(double t) const;
-//
-//	//SwapRateVolatility \Phi(t, S_t)
-//	//dS(t) = \Phi(t, S_t) dW_t^{Q Annuite}
-//
-//		// d\Phi /ds (t, \bar{s})
-//		double swapRateVolatility_1stDerivative(double t) const;
-//
+	//swapRate = swapNumerator / swapDenominator
+		double swapRate(double t, double x_t) const;
+		double swapRate_1stDerivative(double t, double x_t) const;
+		double swapRate_2ndDerivative(double t, double x_t) const;
+
+	//inverse / Newton Raphson
+	//S(t, x_t) = swapRate(t, x_t) = s 
+	//retourne le x_t correspondant
+		double inverse(double t, double s) ;
+
+	//SwapRateVolatility \Phi(t, S_t)
+	//dS(t) = \Phi(t, S_t) dW_t^{Q Annuite}
+
+		// d\Phi /ds (t, \bar{s})
+		//double swapRateVolatility_1stDerivative(double t) const;
+
 		//evaluee en t=0 et pour un taux de swap s_bar = s0_
 	//double calculate_phi_0_s_bar() const; 
 

@@ -104,9 +104,9 @@ double Black_impliedVolatility(const double&  bs_call_price,
 	boost::function<double(double)> f_derivative = boost::bind(Black_Vega,fwd,strike,_1,T);
 	
 	BS_function_helper bs_function_helper(f,f_derivative,bs_call_price);
-	double initial_guess = 0.02;
+	double initial_guess = 1 ;
 	double min    = 10e-5;
-	double max    = 1.0;
+	double max    = 10 ;
     size_t nDigits   = 15;
 	boost::uintmax_t nMaxIter  = 100;
 	double result_newton_raphson = boost::math::tools::newton_raphson_iterate(bs_function_helper, initial_guess, min, max, nDigits);

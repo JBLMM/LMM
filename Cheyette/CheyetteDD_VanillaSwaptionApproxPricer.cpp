@@ -7,6 +7,8 @@
 #include <boost/pointer_cast.hpp>
 
 
+
+
 CheyetteDD_VanillaSwaptionApproxPricer::CheyetteDD_VanillaSwaptionApproxPricer
 						(const CheyetteDD_Model_PTR&	cheyetteDD_Model, 
 						const VanillaSwaption_PTR&		swaption)
@@ -17,7 +19,7 @@ CheyetteDD_VanillaSwaptionApproxPricer::CheyetteDD_VanillaSwaptionApproxPricer
 	swaption_			= swaption ;
 
 	//pour S0 : 
-	//remplir en faisant appel au fichier input de calibration avec données de marché
+	//remplir en faisant appel au fichier input de calibration avec données de marché 
 
 	buffer_UnderlyingSwap_				= swaption->getUnderlyingSwap() ;
 	buffer_T0_							= swaption->getUnderlyingSwap().get_StartDate() ;		//1ere date de fixing
@@ -48,112 +50,233 @@ double CheyetteDD_VanillaSwaptionApproxPricer::calculate_y_bar(double t) const
 }
 
 
-double CheyetteDD_VanillaSwaptionApproxPricer::ZC_1stDerivative_on_xt(double T) const
+double CheyetteDD_VanillaSwaptionApproxPricer::ZC_1stDerivative_on_xt(double t, double T, double x_t) const
 {
-	//assert(0 <= T && T <= buffer_TN_) ;
-	//double ZC = cheyetteDD_Model_->P(t, T, x_t, y_t) ;
-	double tauxZC = buffer_courbeInput_->get_tauxZC0(T) ;
-	double P_0_T = exp(- tauxZC * T) ;
-	return (- cheyetteDD_Model_->G(0,T) * P_0_T ) ;	//- G(0, T) P(0, T) 
+	assert(0 <= T && T <= buffer_TN_) ;
+	double res ;
+	double y_bar_t = calculate_y_bar(t) ;
+	
+	if (t == 0){
+		double tauxZC = buffer_courbeInput_->get_tauxZC0(T) ;
+		double P_0_T  = exp(- tauxZC * T) ;
+		double g = cheyetteDD_Model_->G(0,T) ;
+		res = - g * P_0_T ;				//- G(0, T) P(0, T) 
+	}
+	else{			
+		double ZC = cheyetteDD_Model_->P(t, T, x_t, y_bar_t) ;
+		double g = cheyetteDD_Model_->G(t,T) ;
+		res = - g * ZC ;
+	}
+	return res ;	
 }
 
-double CheyetteDD_VanillaSwaptionApproxPricer::ZC_2ndDerivative_on_xt(double T) const
+double CheyetteDD_VanillaSwaptionApproxPricer::ZC_2ndDerivative_on_xt(double t, double T, double x_t) const
 {
-	//assert(0 <= T && T <= buffer_TN_) ;
-	//double ZC = Cheyette_->P(t, T, x_t, y_t) ;
-	double tauxZC = buffer_courbeInput_->get_tauxZC0(T) ;
-	double P_0_T  = exp(- tauxZC * T) ;
-	double g = cheyetteDD_Model_->G(0,T) ;
-	return (g * g * P_0_T ) ;					//- G(0, T)^2 P(0, T) 
+	assert(0 <= T && T <= buffer_TN_) ;
+	double res ;
+	double y_bar_t = calculate_y_bar(t) ;
+	
+	if (t == 0){
+		double tauxZC = buffer_courbeInput_->get_tauxZC0(T) ;
+		double P_0_T  = exp(- tauxZC * T) ;
+		double g = cheyetteDD_Model_->G(0,T) ;
+		res = g * g * P_0_T ;				//- G(0, T)^2 P(0, T) 
+	}
+	else{			
+		double ZC = cheyetteDD_Model_->P(t, T, x_t, y_bar_t) ;
+		double g = cheyetteDD_Model_->G(t,T) ;
+		res = g * g * ZC ;
+	}
+	return res ;					
 }
 
-// Numerator = P(t, T0) - P(t, TN) en t=0
-double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator() const 
+// Numerator = P(t, T0) - P(t, TN)
+//si t = 0 : appel à la courbe spot
+//si t > 0 : passage du paramètre x_t pour la fonction inverse
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator(double t, double x_t) const 
 {
-	//double ZC_T0 = cheyetteDD_Model_->P(t_, buffer_T0_, x_t, y_t) ;
-	//double ZC_TN = cheyetteDD_Model_->P(t_, buffer_TN_, x_t, y_t) ;
-	double ZC_T0 = exp( - buffer_courbeInput_->get_tauxZC0(buffer_T0_) * buffer_T0_) ;
-	double ZC_TN = exp( - buffer_courbeInput_->get_tauxZC0(buffer_TN_) * buffer_TN_) ;
-	return (ZC_T0 - ZC_TN) ; 
+	assert( t >= 0 ) ;
+	double y_bar_t = calculate_y_bar(t) ;
+	double ZC_T0, ZC_TN ;
+	if (t == 0){
+		ZC_T0 = exp( - buffer_courbeInput_->get_tauxZC0(buffer_T0_) * buffer_T0_) ;
+		ZC_TN = exp( - buffer_courbeInput_->get_tauxZC0(buffer_TN_) * buffer_TN_) ; 
+	}
+	else
+	{
+		ZC_T0 = cheyetteDD_Model_->P(t, buffer_T0_, x_t, y_bar_t) ;
+		ZC_TN = cheyetteDD_Model_->P(t, buffer_TN_, x_t, y_bar_t) ;	
+	}
+	return  ZC_T0 - ZC_TN ; 
 }
 
-double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator_1stDerivative() const
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator_1stDerivative(double t, double x_t) const
 {
-	return ( ZC_1stDerivative_on_xt(buffer_T0_) - ZC_1stDerivative_on_xt(buffer_TN_) ) ;
+	return ZC_1stDerivative_on_xt(t, buffer_T0_, x_t) - ZC_1stDerivative_on_xt(t, buffer_TN_, x_t) ;
 }
 
-double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator_2ndDerivative() const
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateNumerator_2ndDerivative(double t, double x_t) const
 {
-	return ( ZC_2ndDerivative_on_xt(buffer_T0_) - ZC_2ndDerivative_on_xt(buffer_TN_) ) ;
+	return ZC_2ndDerivative_on_xt(t, buffer_T0_, x_t) - ZC_2ndDerivative_on_xt(t, buffer_TN_, x_t) ;
 }
 
 // Denominator = \sum delta_k P(t,T_k) en t = 0
-double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator(double t) const 
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator(double t, double x_t) const 
 {
-	return cheyetteDD_Model_->annuity(buffer_UnderlyingSwap_) ;
+	double price = 0.0;
+	double y_bar_t = calculate_y_bar(t) ;
+	double dateEchangeFluxFixe, delta_T, ZC ;
+
+	double fixed_tenor = buffer_UnderlyingSwap_.get_fixedLegTenorType().YearFraction() ;
+	double float_tenor = buffer_UnderlyingSwap_.get_floatingLegTenorType().YearFraction() ;
+	double tenor_ref = std::min(fixed_tenor, float_tenor) ;  //le plus petit 
+
+	if (t == 0)
+	{
+		//somme sur tous les flux fixes
+		for(size_t itr = 0; itr < buffer_fixedLegPaymentIndexSchedule_.size(); ++itr) 
+		{
+			//convertit l'indice/le numero du flux en la date de tombée du flux (ex : flux numero 2 survient à date 1Y)
+			dateEchangeFluxFixe = buffer_fixedLegPaymentIndexSchedule_[itr] * tenor_ref ;
+
+			delta_T = buffer_UnderlyingSwap_.get_DeltaTFixedLeg(itr);	
+			ZC		= exp( - buffer_courbeInput_->get_tauxZC0(dateEchangeFluxFixe) * dateEchangeFluxFixe);
+			price += delta_T * ZC ;		
+		}
+	}else
+	{
+		for(size_t itr = 0; itr < buffer_fixedLegPaymentIndexSchedule_.size(); ++itr) 
+		{
+			dateEchangeFluxFixe = buffer_fixedLegPaymentIndexSchedule_[itr] * tenor_ref ;
+			delta_T = buffer_UnderlyingSwap_.get_DeltaTFixedLeg(itr) ;	
+			ZC		= cheyetteDD_Model_->P(t, dateEchangeFluxFixe, x_t, y_bar_t) ;
+			price += delta_T * ZC ;
+		}
+	}
+	return price;
 }
 
-double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_1stDerivative(double t) const
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_1stDerivative(double t, double x_t) const
 {
 	double result = 0;
+	double dateEchangeFluxFixe ;
 
-	for(size_t i=0; i<buffer_fixedLegPaymentIndexSchedule_.size(); ++i)
+	double fixed_tenor = buffer_UnderlyingSwap_.get_fixedLegTenorType().YearFraction() ;
+	double float_tenor = buffer_UnderlyingSwap_.get_floatingLegTenorType().YearFraction() ;
+	double tenor_ref = std::min(fixed_tenor, float_tenor) ;  
+
+	for(size_t itr = 0; itr < buffer_fixedLegPaymentIndexSchedule_.size(); ++itr) 
 	{
-		size_t	fixedLegPaymentIndex = buffer_fixedLegPaymentIndexSchedule_[i];
-		result += buffer_deltaTFixedLeg_[i] * ZC_1stDerivative_on_xt(fixedLegPaymentIndex) ;	
+		dateEchangeFluxFixe = buffer_fixedLegPaymentIndexSchedule_[itr] * tenor_ref ;
+		result += buffer_deltaTFixedLeg_[itr] * ZC_1stDerivative_on_xt(t, dateEchangeFluxFixe, x_t) ;	
 	}
 	return result;
 }
 
-double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_2ndDerivative(double t) const
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_2ndDerivative(double t, double x_t) const
 {
 	double result = 0;
+	double dateEchangeFluxFixe ;
 
-	for(size_t i=0; i<buffer_fixedLegPaymentIndexSchedule_.size(); ++i)
+	double fixed_tenor = buffer_UnderlyingSwap_.get_fixedLegTenorType().YearFraction() ;
+	double float_tenor = buffer_UnderlyingSwap_.get_floatingLegTenorType().YearFraction() ;
+	double tenor_ref = std::min(fixed_tenor, float_tenor) ;  
+
+	for(size_t itr = 0; itr < buffer_fixedLegPaymentIndexSchedule_.size(); ++itr) 
 	{
-		size_t	fixedLegPaymentIndex = buffer_fixedLegPaymentIndexSchedule_[i];
-		result += buffer_deltaTFixedLeg_[i] * ZC_2ndDerivative_on_xt(fixedLegPaymentIndex) ;		
+		dateEchangeFluxFixe = buffer_fixedLegPaymentIndexSchedule_[itr] * tenor_ref ;
+		result += buffer_deltaTFixedLeg_[itr] * ZC_2ndDerivative_on_xt(t, dateEchangeFluxFixe, x_t) ;	
 	}
 	return result;
 }
 
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRate(double t) const
-//{
-//	double n      = swapRateNumerator(x_t, y_t);
-//	double d      = swapRateDenominator(x_t, y_t);
-//	return n/d;
-//}
-//
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRate_1stDerivative(double t) const
-//{
-//	double n   = swapRateNumerator(x_t, y_t);
-//	double n_1 = swapRateNumerator_1stDerivative(x_t, y_t); 
-//
-//	double d   = swapRateDenominator(x_t, y_t);
-//	double d_1 = swapRateDenominator_1stDerivative(x_t, y_t);
-//
-//	return (n_1*d - n*d_1)/(d*d);
-//}
-//
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRate_2ndDerivative(double t) const
-//{
-//	double n	= swapRateNumerator(x_t, y_t);
-//	double n_1	= swapRateNumerator_1stDerivative(x_t, y_t); 
-//	double n_2	= swapRateNumerator_2ndDerivative(x_t, y_t); 
-//
-//	double d	= swapRateDenominator(x_t, y_t);
-//	double d_1	= swapRateDenominator_1stDerivative(x_t, y_t);
-//	double d_2	= swapRateDenominator_2ndDerivative(x_t, y_t);
-//
-//	double result = (n_2 * d - n * d_2) * d*d - (n_1 * d - n * d_1) * 2 * d * d_1 ;
-//	result /= (d*d*d*d);
-//
-//	return result;
-//}
-//
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRate(double t, double x_t) const
+{
+	double n      = swapRateNumerator(t, x_t);
+	double d      = swapRateDenominator(t, x_t);
+	return n/d;
+}
+
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRate_1stDerivative(double t, double x_t) const
+{
+	double n   = swapRateNumerator(t, x_t);
+	double n_1 = swapRateNumerator_1stDerivative(t, x_t); 
+
+	double d   = swapRateDenominator(t, x_t);
+	double d_1 = swapRateDenominator_1stDerivative(t, x_t);
+
+	return (n_1*d - n*d_1)/(d*d);
+}
+
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRate_2ndDerivative(double t, double x_t) const
+{
+	double n	= swapRateNumerator(t, x_t);
+	double n_1	= swapRateNumerator_1stDerivative(t, x_t); 
+	double n_2	= swapRateNumerator_2ndDerivative(t, x_t); 
+
+	double d	= swapRateDenominator(t, x_t);
+	double d_1	= swapRateDenominator_1stDerivative(t, x_t);
+	double d_2	= swapRateDenominator_2ndDerivative(t, x_t);
+
+	double result = (n_2 * d - n * d_2) * d*d - (n_1 * d - n * d_1) * 2 * d * d_1 ;
+	result /= (d*d*d*d);
+
+	return result;
+}
+
+/************************  fonction pour inverser     *************************
+*************************     Newton - Raphson        ************************/
+struct Newton_Raphson_struct
+{
+private:
+	boost::function<double(double)> f_ ;
+	boost::function<double(double)> f_derivative_ ;
+	double target_ ;
+	
+public:
+	//! constructor
+	Newton_Raphson_struct(	boost::function<double(double)>& f,
+							boost::function<double(double)>& f_derivative, 
+							double target) 
+				: f_(f), f_derivative_(f_derivative), target_(target){}
+
+	//! evaluation
+	//callable function object that accepts one parameter and returns a tuple:
+	//the tuple should have two elements containing the evaluation of the function and it's first derivative.
+	boost::math::tuple<double, double> operator()(double x)
+	{
+		return boost::math::make_tuple(
+			f_(x) - target_,
+			f_derivative_(x));
+	}
+};
+
+//S(t, x_t) = swapRate(t, x_t) = s 
+//retourne le x_t correspondant
+double CheyetteDD_VanillaSwaptionApproxPricer::inverse(double t, double s)
+{                                                                  //swapRate(double t, double x_t)
+	boost::function<double(double)> f				= 
+				boost::bind(&CheyetteDD_VanillaSwaptionApproxPricer::swapRate, this, t, _1);
+	boost::function<double(double)> f_derivative	= 
+				boost::bind(&CheyetteDD_VanillaSwaptionApproxPricer::swapRate_1stDerivative, this, t, _1);
+	
+	Newton_Raphson_struct NR_struct(f, f_derivative, s);   //struct qui contient f, f', target = s
+	double initial_guess	= 0.1 ;
+	double min				= 10e-5;
+	double max				= 10.0;
+    size_t nDigits			= 15;
+	boost::uintmax_t nMaxIter  = 100;
+	double result_newton_raphson = boost::math::tools::newton_raphson_iterate(NR_struct, initial_guess, min, max, nDigits);
+	return result_newton_raphson;
+
+}
+
+/********************************************************************************/
+
+
 //double CheyetteDD_VanillaSwaptionApproxPricer::swapRateVolatility_1stDerivative(double t) const
 //{
-//	// calcul de l'inverse \Chi_t(S_t)
+//	 calcul de l'inverse \Chi_t(S_t)
 //	/*
 //	std::vector<double> tableauX ;
 //	for (int i = 0; i < 1000 ; ++i)
@@ -161,21 +284,21 @@ double CheyetteDD_VanillaSwaptionApproxPricer::swapRateDenominator_2ndDerivative
 //		tableauX.push_back(i/10) ;
 //	}
 //	*/
-//	//InverseFunction i = InverseFunction(tableauX) ;
+//	InverseFunction i = InverseFunction(tableauX) ;
 //
-//// A FINIR  et à decommenter 
-//	//Newton-Raphson
-//	//double xt_inverse_from_sBar = i.fMoinsUn(s) ;  // xt = inverse(\bar{s})
+// A FINIR  et à decommenter 
+//	Newton-Raphson
+//	double xt_inverse_from_sBar = i.fMoinsUn(s) ;  // xt = inverse(\bar{s})
 //
-//	//CheyetteDD_Model::CheyetteDD_Parameter parameter = cheyetteDD_Model_->get_CheyetteDD_Parameter() ;
-//	//piecewiseconst_DD_R2R_Function sigma = parameter.sigma_ ;
-//	//
-//	//return (sigma.evaluate(t_ , xt_inverse_from_sBar) * swapRate_2ndDerivative(xt_inverse_from_sBar, y_bar_) / swapRate_1stDerivative(xt_inverse_from_sBar, y_bar_) 
-//	//				+ sigma.d_sigma_r_dx(t_) );
+//	CheyetteDD_Model::CheyetteDD_Parameter parameter = cheyetteDD_Model_->get_CheyetteDD_Parameter() ;
+//	piecewiseconst_DD_R2R_Function sigma = parameter.sigma_ ;
+//	
+//	return (sigma.evaluate(t_ , xt_inverse_from_sBar) * swapRate_2ndDerivative(xt_inverse_from_sBar, y_bar_) / swapRate_1stDerivative(xt_inverse_from_sBar, y_bar_) 
+//					+ sigma.d_sigma_r_dx(t_) );
 //
 //	return 0 ;
 //}
-//
+
 ///*//evaluee en t=0 et pour un taux de swap s_bar = s0_
 //double CheyetteDD_VanillaSwaptionApproxPricer::calculate_phi_0_s_bar() const
 //{

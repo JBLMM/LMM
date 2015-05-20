@@ -86,6 +86,27 @@ void createSwap()
 
 void testSwap()
 {
+	double strike          = 0.04;
+	LMM::Index  indexStart = 2; 
+	LMM::Index  indexEnd   = 8; 
+	Tenor	floatingLegTenorType = Tenor::_6M;
+	Tenor	fixedLegTenorType    = Tenor::_1YR;
+	LMMTenorStructure_PTR simulationStructure(new LMMTenorStructure(Tenor::_6M , 10) );
+	VanillaSwap swap = VanillaSwap(strike, indexStart, indexEnd, floatingLegTenorType, fixedLegTenorType, simulationStructure);
+	
+	std::vector<LMM::Index> vect_fixedLegPaymentIndexSchedule, vect_floatLegPaymentIndexSchedule ;
+	vect_fixedLegPaymentIndexSchedule = swap.get_fixedLegPaymentIndexSchedule();
+	vect_floatLegPaymentIndexSchedule = swap.get_floatingLegPaymentIndexSchedule() ;
+	std::cout << "indices des flux fixes" << std::endl ;
+	for (int i= 0 ; i < vect_fixedLegPaymentIndexSchedule.size() ; ++i)
+	{
+		std::cout << vect_fixedLegPaymentIndexSchedule[i] << std::endl ;
+	}		//retourne 2 4 6 8
+	std::cout << "indices des flux flottants" << std::endl ;
+	for (int i= 0 ; i < vect_floatLegPaymentIndexSchedule.size() ; ++i)
+	{
+		std::cout << vect_floatLegPaymentIndexSchedule[i] << std::endl ;
+	}		//retourne 1 2 3 4 5 6 7 8
 
 }
 
@@ -99,12 +120,16 @@ void test_y_barre(double t)
 	double k(1) ;
 
 	std::vector<double> listeMatu, tauxZC ;
-	listeMatu.push_back(0) ; listeMatu.push_back(1) ; listeMatu.push_back(2) ; listeMatu.push_back(3) ; 
-	listeMatu.push_back(4) ; listeMatu.push_back(5) ; listeMatu.push_back(10) ; listeMatu.push_back(15) ; 
-	listeMatu.push_back(20) ; listeMatu.push_back(25) ;
-	tauxZC.push_back(0.8/100) ; tauxZC.push_back(0.85/100) ; tauxZC.push_back(0.9/100) ; tauxZC.push_back(0.92/100) ; 
-	tauxZC.push_back(0.95/100) ; tauxZC.push_back(1.00/100) ; tauxZC.push_back(1.5/100) ; tauxZC.push_back(2/100) ; 
-	tauxZC.push_back(2.5/100) ; tauxZC.push_back(2.3/100) ;
+	listeMatu.push_back(0) ;	tauxZC.push_back(0.8/100) ; 
+	listeMatu.push_back(1) ;	tauxZC.push_back(0.85/100) ; 
+	listeMatu.push_back(2) ;	tauxZC.push_back(0.9/100) ; 
+	listeMatu.push_back(3) ;	tauxZC.push_back(0.92/100) ;  
+	listeMatu.push_back(4) ;	tauxZC.push_back(0.95/100) ; 
+	listeMatu.push_back(5) ;	tauxZC.push_back(1.00/100) ; 
+	listeMatu.push_back(10) ;	tauxZC.push_back(1.5/100) ; 
+	listeMatu.push_back(15) ;	tauxZC.push_back(2.0/100) ;  
+	listeMatu.push_back(20) ;	tauxZC.push_back(2.5/100) ;
+	listeMatu.push_back(25) ;	tauxZC.push_back(2.3/100) ;
 	courbeInput_PTR courbe_PTR_test(new CourbeInput(listeMatu, tauxZC));
 
 	double res_integrale ;
@@ -119,8 +144,8 @@ void test_y_barre(double t)
 	CheyetteDD_Model_PTR modele_test_PTR(new CheyetteDD_Model(courbe_PTR_test, monStruct)) ;
 
 	double strike          = 0.04;
-	LMM::Index  indexStart = 16; 
-	LMM::Index  indexEnd   = 28; 
+	LMM::Index  indexStart = 0; 
+	LMM::Index  indexEnd   = 8; 
 	Tenor	floatingLegTenorType = Tenor::_6M;
 	Tenor	fixedLegTenorType    = Tenor::_1YR;
 	LMMTenorStructure_PTR simulationStructure(new LMMTenorStructure(Tenor::_6M , 15) );
@@ -133,6 +158,16 @@ void test_y_barre(double t)
 
 	std::cout << "integrale_main" << res_integrale << std::endl ;
 	std::cout << "integrale_classe" << integrale << std::endl ;
+	
+	std::cout << "annuite" << std::endl ;
+	//std::cout <<  modele_test_PTR->annuity(w) << std::endl ;
+	//std::cout <<  exp(- 0.85/100) + exp(- 2 * 0.9/100) + exp(-3 * 0.92/100) + exp(-4 * 0.95/100) << std::endl ;
+
+	std::cout << abc.swapRateDenominator_1stDerivative(0, 0) << std::endl ;
+	std::cout <<    - (1 - exp(- 1)) * exp(- 0.85/100) 
+					- (1 - exp(- 2)) * exp(- 2 * 0.9/100) 
+					- (1 - exp(- 3)) * exp(- 3 * 0.92/100) 
+					- (1 - exp(- 4)) * exp(- 4 * 0.95/100) << std::endl ;
 }
 
 void test_Derivative_ZC()
@@ -163,8 +198,8 @@ void test_Derivative_ZC()
 	CheyetteDD_Model_PTR modele_test_PTR(new CheyetteDD_Model(courbe_PTR_test, monStruct)) ;
 
 	double strike          = 0.04;
-	LMM::Index  indexStart = 0; 
-	LMM::Index  indexEnd   = 40; 
+	LMM::Index  indexStart = 2 ; //indice 1er flux
+	LMM::Index  indexEnd   = 8 ; //indice fernier flux
 	Tenor	floatingLegTenorType = Tenor::_6M;
 	Tenor	fixedLegTenorType    = Tenor::_1YR;
 	LMMTenorStructure_PTR simulationStructure(new LMMTenorStructure(Tenor::_6M , 50) );
@@ -172,20 +207,88 @@ void test_Derivative_ZC()
 	
 	VanillaSwaption_PTR swaption_ptr(new VanillaSwaption(swap, OptionType::OptionType::CALL)) ;
 
-	CheyetteDD_VanillaSwaptionApproxPricer abc = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, swaption_ptr); 
+	CheyetteDD_VanillaSwaptionApproxPricer approx = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, swaption_ptr); 
 
-	std::cout << "derivee_1_classe T = 5Y   " << abc.ZC_1stDerivative_on_xt(5) << std::endl ;
-	std::cout << "derivee_1_main   T = 5Y   "  << -exp(- 0.01*5) * (1 - exp(-5)) << std::endl ;
-	std::cout << "derivee_1_classe T = 15Y  " << abc.ZC_1stDerivative_on_xt(15.0) << std::endl ;
-	std::cout << "derivee_1_main   T = 15Y  "  << -exp(- 0.02*15) * (1 - exp(-15)) << std::endl ;
-	std::cout << "derivee_1_classe T = 1Y   " << abc.ZC_1stDerivative_on_xt(1) << std::endl ;
-	std::cout << "derivee_1_main   T = 1Y   "  << -exp(- 0.85/100) * (1 - exp(-1)) << std::endl ;
-	std::cout << "   " << std::endl ;
-	std::cout << "derivee_2_classe T = 1Y   " << abc.ZC_2ndDerivative_on_xt(1) << std::endl ;
-	std::cout << "derivee_2_main   T = 1Y   "  << exp(- 0.85/100) * pow(1 - exp(-1),2) << std::endl ;
-	std::cout << "   " << std::endl ;
-	std::cout << "swap rate numerator   " << abc.swapRateNumerator() << std::endl ;
-	std::cout << "swap rate numerator   " << 1 - exp(- 20 * 2.5/100) << std::endl ;    //indexEnd : 40, et tenor : 0.5, donc T_N = 20Y
+	//std::cout << "derivee_1_classe T = 5Y   " << approx.ZC_1stDerivative_on_xt(0, 5, 0) << std::endl ;
+	//std::cout << "derivee_1_main   T = 5Y   "  << -exp(- 0.01*5) * (1 - exp(-5)) << std::endl ;
+	//std::cout << "derivee_1_classe T = 15Y  " << approx.ZC_1stDerivative_on_xt(0, 15.0, 0) << std::endl ;
+	//std::cout << "derivee_1_main   T = 15Y  "  << -exp(- 0.02*15) * (1 - exp(-15)) << std::endl ;
+	//std::cout << "derivee_1_classe T = 1Y   " << approx.ZC_1stDerivative_on_xt(0, 1, 0) << std::endl ;
+	//std::cout << "derivee_1_main   T = 1Y   "  << -exp(- 0.85/100) * (1 - exp(-1)) << std::endl ;
+	//std::cout << "   " << std::endl ;
+	//std::cout << "derivee_2_classe T = 1Y   " << approx.ZC_2ndDerivative_on_xt(0, 1, 0) << std::endl ;
+	//std::cout << "derivee_2_main   T = 1Y   "  << exp(- 0.85/100) * pow(1 - exp(-1),2) << std::endl ;
+	//std::cout << "   " << std::endl ;
+	//std::cout << "swap rate numerator   " << approx.swapRateNumerator(0, 0) << std::endl ;
+	//std::cout << "swap rate numerator   " << 1 - exp(- 20 * 2.5/100) << std::endl ;    //indexEnd : 40, et tenor : 0.5, donc T_N = 20Y
+
+	std::cout << " " << std::endl ;
+	std::cout << "------------  ZC  ------------------------------------------" << std::endl ;
+	std::cout << " " << std::endl ;
+
+	std::cout << "P(0.5, 1, 0.1, 0.1)  " << modele_test_PTR->P(0.5, 1, 0.1, 0.1)  << std::endl ;
+	double g = 1 - exp(-0.5) ;
+	std::cout << exp(- 0.85/100) / exp(- 0.825/100 * 1/2) * exp(- 0.1 * g - 1/2 * 0.1 * g * g) ;
+	std::cout << " " << std::endl ;
+
+	std::cout << "P(0.5, 1, 1, 1)      " << modele_test_PTR->P(0.5, 1, 1, 1)  << std::endl ;
+	std::cout << exp(- 0.85/100) / exp(- 0.825/100 * 1/2) * exp(- g - 1/2 * g * g) ;
+	std::cout << " " << std::endl ;
+
+	std::cout << "P(0.5, 1, 10, 10)    " << modele_test_PTR->P(0.5, 1, 10, 10)  << std::endl ;
+	std::cout << exp(- 0.85/100) / exp(- 0.825/100 * 1/2) * exp(- 10 * g - 1/2 * 10 * g * g) ;
+	std::cout << " " << std::endl ;
+
+	std::cout << "P(2, 10, 1, 1)    " << modele_test_PTR->P(2, 10, 1, 1)  << std::endl ;
+	g = 1 - exp(- 8) ;
+	std::cout << exp(- 1.5/100 * 10) / exp(- 0.9/100 * 2) * exp(- 1 * g - 1/2 * 1 * g * g) ;
+
+
+	std::cout << " " << std::endl ;
+	std::cout << "------------  test swap rate  ------------------------------" << std::endl ;
+	std::cout << " " << std::endl ;
+
+	std::cout << "buffer T0 " << approx.get_buffer_T0_() << std::endl ;  //1er flux
+	std::cout << "buffer TN " << approx.get_buffer_TN_() << std::endl ;  //dernier flux
+
+	// t = 0.5
+	double y_barre_t = approx.calculate_y_bar(0.5) ;
+	double ge1 = 1 - exp(- 0.5) ;
+
+	double PtT0 = exp( - 1 * 0.85/100) / exp( - 0.5 * 0.825/100) * exp(- 0.2 * ge1 - 1/2 * y_barre_t * ge1 * ge1) ;
+	double ge2 = 1 - exp(- 3.5) ;
+	double PtTN = exp( - 4 * 0.95/100) / exp( - 0.5 * 0.825/100) * exp(- 0.2 * ge2 - 1/2 * y_barre_t * ge2 * ge2) ;
+
+	//flux fixe 2Y
+	double ge3 = 1 - exp(- (2 - 0.5)) ;
+	double PtT2Y = exp( - 2 * 0.9/100) / exp( - 0.5 * 0.825/100) * exp(- 0.2 * ge3 - 1/2 * y_barre_t * ge3 * ge3) ;
+	//flux fixe 3Y
+	double ge4 = 1 - exp(- (3 - 0.5)) ;
+	double PtT3Y = exp( - 3 * 0.92/100) / exp( - 0.5 * 0.825/100) * exp(- 0.2 * ge4 - 1/2 * y_barre_t * ge4 * ge4) ;
+
+	std::cout << "swapRate(0.5, 0.2) : " << approx.swapRate(0.5, 0.2) << std::endl ;
+	std::cout << (PtT0 - PtTN) / (PtT2Y + PtT3Y + PtTN) << std::endl ;
+
+
+
+	std::cout << " " << std::endl ;
+	std::cout << "------------  test swap rate 1st derivative  --------------" << std::endl ;
+	std::cout << " " << std::endl ;
+
+
+
+
+	std::cout << " " << std::endl ;
+	std::cout << "-----------  test fonction inverse  -----------------------" << std::endl ;
+	std::cout << " " << std::endl ;
+	std::cout << "swapRate(0.5, 2) : " << approx.swapRate(0.5, 2) << std::endl ;
+	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(0.5, 2)) << " vs 2" << std::endl ;
+	std::cout << "swapRate(0.5, 0.2) : " << approx.swapRate(0.5, 0.2) << std::endl ;
+	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(0.5, 0.2)) << " vs 0.2" << std::endl ;
+	std::cout << "swapRate(1, 0.5) : " << approx.swapRate(1, 0.5) << std::endl ;
+	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(1, 0.5)) << " vs 0.5" << std::endl ;
+	std::cout << "swapRate(1, 5) : " << approx.swapRate(1, 5) << std::endl ;
+	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(1, 5)) << " vs 5" << std::endl ;
 }
 
 

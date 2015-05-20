@@ -18,13 +18,13 @@
 	void createDDModel() ;
 
 //test de CheyetteDD_VanillaSwaptionApproxPricer.h
-	void test_y_barre(double t) ;
+	void test_y_barre(double t) ;  //et test annuite, test swap rate denominator derivee
 	void createSwap();
 
-	void testSwap() ;
+	void testSwap() ; //test swap (dates flux fixes et flottants) 
 
 	VanillaSwaption createSwaption() ;
-	//void TestApprox() ;
+	//void TestApprox() ;  
 
 	void test_Derivative_ZC() ;
 

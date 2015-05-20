@@ -63,15 +63,18 @@ public:
 	//fonctions G(t, T), ZC B(t, T)...
 	double G(double t, double T);  
 	
-	//double P(double t, double T, double x_t, double y_t);  //ZC B(0,t) : donné en input sinon stochastique
+	double P(double t, double T, double x_t, double y_t) ;  //ZC B(0,t) : donné en input sinon stochastique
 
 	double r_t(double f_0_t, double x_t);
 
 	//annuite A_0N(0)
-	double annuity(const VanillaSwap& vanillaSwap) ;
+	//double annuity(double t, double x_t, double y_t, const VanillaSwap& vanillaSwap) ;
 
-	//?????? 
-	//double txSwapFwd(const VanillaSwap&	vanillaSwap) ;
+	//?????? taux de swap en 0 (pas de modèle, utilise la courbe des taux spot)
+	//double txSwap(const VanillaSwap&	vanillaSwap) ;
+	
+	//S(t, x_t, y_t) = S(t, x_t, y_bar_t) = S(t, x_t)  :  utile pour pouvoir inverser cette fonction par NR
+	//double S(double t, double x_t, double y_t, const VanillaSwap& vanillaSwap) ;
 
 };
 
