@@ -102,7 +102,7 @@ public :
 	//dS(t) = \Phi(t, S_t) dW_t^{Q Annuite}
 
 		// d\Phi /ds (t, \bar{s})
-		//double swapRateVolatility_1stDerivative(double t) const;
+		double swapRateVolatility_1stDerivative(double t, double x_t) const;
 
 		//evaluee en t=0 et pour un taux de swap s_bar = s0_
 	//double calculate_phi_0_s_bar() const; 

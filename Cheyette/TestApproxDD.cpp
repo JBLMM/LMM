@@ -274,19 +274,37 @@ void test_Derivative_ZC()
 	std::cout << " " << std::endl ;
 	std::cout << "------------  test swap rate 1st derivative  --------------" << std::endl ;
 	std::cout << " " << std::endl ;
+ 
+	std::cout << "swapRate(0.5, 0.2) numerateur 1st deriv :  " << approx.swapRateNumerator_1stDerivative(0.5, 0.2) << std::endl ;
+	std::cout << "swapRate(0.5, 0.2) numerateur deriv mano : " << -(1-exp(- 0.5)) * PtT0 + (1 - exp(-3.5)) * PtTN << std::endl ;
 
+	std::cout << "swapRate(0.5, 0.2) denom 1st deriv :  " << approx.swapRateDenominator_1stDerivative(0.5, 0.2) << std::endl ;
+	std::cout << "swapRate(0.5, 0.2) denom deriv mano : " <<	- (1-exp(- 1.5)) * PtT2Y 
+																- (1-exp(- 2.5)) * PtT3Y 
+																- (1-exp(- 3.5)) * PtTN << std::endl ;
 
+	double n, np ;
+	n = PtT0 - PtTN;
+	np = -(1-exp(- 0.5)) * PtT0 + (1 - exp(-3.5)) * PtTN;
+	double d, dp ;
+	d = PtT2Y + PtT3Y + PtTN ;
+	dp = - (1-exp(- 1.5)) * PtT2Y - (1-exp(- 2.5)) * PtT3Y - (1-exp(- 3.5)) * PtTN ;
 
+	std::cout << "swapRate(0.5, 0.2) 1st deriv :  " << approx.swapRate_1stDerivative(0.5, 0.2) << std::endl ;
+	std::cout << "swapRate(0.5, 0.2) 1st deriv :  " << (np * d - n * dp) / (d * d) << std::endl ;
 
 	std::cout << " " << std::endl ;
 	std::cout << "-----------  test fonction inverse  -----------------------" << std::endl ;
 	std::cout << " " << std::endl ;
 	std::cout << "swapRate(0.5, 2) : " << approx.swapRate(0.5, 2) << std::endl ;
-	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(0.5, 2)) << " vs 2" << std::endl ;
+	std::cout << "inverse : " << approx.inverse(0.5, approx.swapRate(0.5, 2)) << " vs 2" << std::endl ;
+	std::cout << " " << std::endl ;
 	std::cout << "swapRate(0.5, 0.2) : " << approx.swapRate(0.5, 0.2) << std::endl ;
-	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(0.5, 0.2)) << " vs 0.2" << std::endl ;
+	std::cout << "inverse : " << approx.inverse(0.5, approx.swapRate(0.5, 0.2)) << " vs 0.2" << std::endl ;
+	std::cout << " " << std::endl ;	
 	std::cout << "swapRate(1, 0.5) : " << approx.swapRate(1, 0.5) << std::endl ;
 	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(1, 0.5)) << " vs 0.5" << std::endl ;
+	std::cout << " " << std::endl ;
 	std::cout << "swapRate(1, 5) : " << approx.swapRate(1, 5) << std::endl ;
 	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(1, 5)) << " vs 5" << std::endl ;
 }

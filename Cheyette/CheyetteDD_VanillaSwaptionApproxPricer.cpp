@@ -194,6 +194,7 @@ double CheyetteDD_VanillaSwaptionApproxPricer::swapRate(double t, double x_t) co
 {
 	double n      = swapRateNumerator(t, x_t);
 	double d      = swapRateDenominator(t, x_t);
+	assert (abs(d) >= 0.001) ;
 	return n/d;
 }
 
@@ -265,7 +266,7 @@ double CheyetteDD_VanillaSwaptionApproxPricer::inverse(double t, double s)
 	double min				= 10e-5;
 	double max				= 10.0;
     size_t nDigits			= 15;
-	boost::uintmax_t nMaxIter  = 100;
+	boost::uintmax_t nMaxIter  = 20 ;
 	double result_newton_raphson = boost::math::tools::newton_raphson_iterate(NR_struct, initial_guess, min, max, nDigits);
 	return result_newton_raphson;
 
@@ -273,31 +274,26 @@ double CheyetteDD_VanillaSwaptionApproxPricer::inverse(double t, double s)
 
 /********************************************************************************/
 
+//derivee par rapport à x_t
+//prend le paramètre x_t
+//en paramètre donner f-1(S) = x_t
+double CheyetteDD_VanillaSwaptionApproxPricer::swapRateVolatility_1stDerivative(double t, double x_t) const
+{
+	//calcul de l'inverse de S(t, x_t) = s 
+	//retourne x_t
+	//double xt_inverse_from_s = inverse(t, s) ; 
+	double y_bar_t = calculate_y_bar(t) ;
 
-//double CheyetteDD_VanillaSwaptionApproxPricer::swapRateVolatility_1stDerivative(double t) const
-//{
-//	 calcul de l'inverse \Chi_t(S_t)
-//	/*
-//	std::vector<double> tableauX ;
-//	for (int i = 0; i < 1000 ; ++i)
-//	{
-//		tableauX.push_back(i/10) ;
-//	}
-//	*/
-//	InverseFunction i = InverseFunction(tableauX) ;
-//
-// A FINIR  et à decommenter 
-//	Newton-Raphson
-//	double xt_inverse_from_sBar = i.fMoinsUn(s) ;  // xt = inverse(\bar{s})
-//
-//	CheyetteDD_Model::CheyetteDD_Parameter parameter = cheyetteDD_Model_->get_CheyetteDD_Parameter() ;
-//	piecewiseconst_DD_R2R_Function sigma = parameter.sigma_ ;
-//	
-//	return (sigma.evaluate(t_ , xt_inverse_from_sBar) * swapRate_2ndDerivative(xt_inverse_from_sBar, y_bar_) / swapRate_1stDerivative(xt_inverse_from_sBar, y_bar_) 
-//					+ sigma.d_sigma_r_dx(t_) );
-//
-//	return 0 ;
-//}
+	//CheyetteDD_Model::CheyetteDD_Parameter parameter = cheyetteDD_Model_->get_CheyetteDD_Parameter() ;
+	//piecewiseconst_DD_R2R_Function sigma = parameter.sigma_ ;
+	//
+	//return sigma.evaluate(t, x_t) * 
+	//			swapRate_2ndDerivative(x_t, y_bar_t) / swapRate_1stDerivative(x_t, y_bar_t) 
+	//				+ sigma.d_sigma_r_dx(t) ;
+
+	return 0 ;
+
+}
 
 ///*//evaluee en t=0 et pour un taux de swap s_bar = s0_
 //double CheyetteDD_VanillaSwaptionApproxPricer::calculate_phi_0_s_bar() const
