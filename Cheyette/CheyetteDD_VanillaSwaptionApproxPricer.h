@@ -29,6 +29,7 @@ private:
 	CheyetteDD_Model_PTR	cheyetteDD_Model_;  
 	VanillaSwaption_PTR		swaption_ ;
 
+	double annuity0_ ;
 	double s0_;			//  en input // double s_bar_ ;     
 	//double y_bar_t_ ;	//double calculé en t avec la fonction calculate_y_bar(t)
 
@@ -43,7 +44,8 @@ private:
 public :
 	//constructor  
 	CheyetteDD_VanillaSwaptionApproxPricer(	const CheyetteDD_Model_PTR& cheyetteDD_Model, 
-											const VanillaSwaption_PTR&	swaption); 
+											const VanillaSwaption_PTR&	swaption, 
+											double s0); 
 	//destructor
 	virtual ~CheyetteDD_VanillaSwaptionApproxPricer(){};
 
@@ -81,7 +83,7 @@ public :
 
 
 	//Denominateur
-		double swapRateDenominator(double t, double x_t) const;					//annuite
+		double swapRateDenominator(double t, double x_t) const;					
 		//derivee 1ère par rapport à x_t
 		double swapRateDenominator_1stDerivative(double t, double x_t) const;
 		//derivee seconde par rapport à x_t
@@ -96,56 +98,48 @@ public :
 	//inverse / Newton Raphson
 	//S(t, x_t) = swapRate(t, x_t) = s 
 	//retourne le x_t correspondant
-		double inverse(double t, double s) ;
+		double inverse(double t, double s) const ;
 
 	//SwapRateVolatility \Phi(t, S_t)
 	//dS(t) = \Phi(t, S_t) dW_t^{Q Annuite}
 
-		// d\Phi /ds (t, \bar{s})
+		// d\Phi /ds (t, \bar{s}) : vol de S(t, x_t)
 		double swapRateVolatility_1stDerivative(double t, double x_t) const;
 
-		//evaluee en t=0 et pour un taux de swap s_bar = s0_
-	//double calculate_phi_0_s_bar() const; 
+		//evaluee en t et pour un taux de swap s_bar = s0_
+		double calculate_phi_t_s_bar(double t) const; 
 
-//		// approximation lineaire de \Phi(t, \bar{s})
-//		double swapRateVolatility_approx_lineaire(double t) const;
-//
-///****************  parameter averaging  *********************
-//*
-//*	dX(t) = \lambda(t) ( (1-b(t)) X0 + b(t) X(t) ) dW(t)
-//*	dY(t) = \lambda(t) ( (1- b )  X0  +  b   X(t) ) dW(t)
-//*
-//*	dS(t) = (A(t) + B(t) S(t)) dW^Q_A
-//*	S(0) = S0_ connu
-//************************************************************/
-//		double A(double t) const;
-//		double B(double t) const;
-//
-//		double b(double t) const;
-//		double lambda(double t) const;
-//		//double lambda2(double t) const;
-//		double v2(double t) const;
-//
-//		//fonctions amies, passage d'une formulation de Displaced Diffusion à l'autre
-//
-//		//friend double b(double t, CheyetteVanillaSwaptionApproxPricer_Piterbarg_PTR ch_PTR) ;
-//		//friend double lambda(double t, CheyetteVanillaSwaptionApproxPricer_Piterbarg_PTR ch_PTR) ;
-//		//friend double lambda2(double t, CheyetteVanillaSwaptionApproxPricer_Piterbarg_PTR ch_PTR) ;
-//		//friend double v2(double t, CheyetteVanillaSwaptionApproxPricer_Piterbarg_PTR ch_PTR) ;
-//		//friend double numerateur(double t) ;
-//		//friend double denom(double t) ;
-//		
-//		// \bar{b} = timeAveraging_b_numerateur/timeAveraging_b_denom
-//		double timeAveraging_b_numerateur(double t) ;
-//		double timeAveraging_b_denom(double t) ;
-//		
-//		//retourne b barre du displaced diffusion
-//		double timeAverage(double t) ;	
-//
-//		//prix swaption approximé 
-//		double prixSwaptionApproxPiterbarg() ;
-//
-//
+		//approximation de Phi(t=0, s) en s
+		//DL autour de s_bar
+		double swapRateVolatility_approx_lineaire(double t, double s) const;
+
+/****************  parameter averaging  *********************
+*
+*	dX(t) = \lambda(t) ( (1-b(t)) X0 + b(t) X(t) ) dW(t)
+*	dY(t) = \lambda(t) ( (1- b )  X0  +  b   X(t) ) dW(t)
+*
+*	dS(t) = (A(t) + B(t) S(t)) dW^Q_A
+*	S(0) = S0_ connu
+************************************************************/
+		double A(double t) const;
+		double B(double t) const;
+
+		double b(double t) const;
+		double lambda(double t) const;
+		double lambda2(double t) const;
+		double v2(double t) const;  //integrale de 0 à t de lambda^2(u) du
+
+		// \bar{b} = timeAveraging_b_numerateur/timeAveraging_b_denom
+		double timeAveraging_b_numerateur(double t) const ;
+		double timeAveraging_b_denom(double t) const ;
+		
+		//retourne b barre du displaced diffusion
+		double timeAverage(double t) const ;	
+
+		//prix swaption approximé 
+		double prixSwaptionApproxPiterbarg() const ;
+
+
 //	////! precalculation: YY TODO: can be further optimized for calibration problem. 
 //	//void preCalculateLiborAtExpensionInit(const std::vector<double> & liborsInitValue, const VanillaSwaption& vanillaswaption) const;
 //	//void preCalculate_dSdLi_AtExpensionInit(const std::vector<double> & liborsInitValue, const VanillaSwaption& vanillaswaption) const;

@@ -71,13 +71,13 @@ void createSwap()
 	std::cout << "get_tenorType " << simulationStructure->get_tenorType() << std::endl ;
 
 	std::vector<double> vect_tenor_Dates = simulationStructure->get_tenorDate() ;
-	for (int i = 0 ; i < vect_tenor_Dates.size() ; ++i)
+	for (size_t i = 0 ; i < vect_tenor_Dates.size() ; ++i)
 	{
 		std::cout << "vect tenor dates i = " << i << "  " << vect_tenor_Dates[i] << std::endl ;
 	} 
 
 	std::vector<double> vect_delta_tau = simulationStructure->get_deltaT() ;
-	for (int i = 0 ; i < vect_delta_tau.size() ; ++i)
+	for (size_t i = 0 ; i < vect_delta_tau.size() ; ++i)
 	{
 		std::cout << "vect delta tau i = " << i << "  " << vect_delta_tau[i] << std::endl ;
 	} 
@@ -98,12 +98,12 @@ void testSwap()
 	vect_fixedLegPaymentIndexSchedule = swap.get_fixedLegPaymentIndexSchedule();
 	vect_floatLegPaymentIndexSchedule = swap.get_floatingLegPaymentIndexSchedule() ;
 	std::cout << "indices des flux fixes" << std::endl ;
-	for (int i= 0 ; i < vect_fixedLegPaymentIndexSchedule.size() ; ++i)
+	for (size_t i= 0 ; i < vect_fixedLegPaymentIndexSchedule.size() ; ++i)
 	{
 		std::cout << vect_fixedLegPaymentIndexSchedule[i] << std::endl ;
 	}		//retourne 2 4 6 8
 	std::cout << "indices des flux flottants" << std::endl ;
-	for (int i= 0 ; i < vect_floatLegPaymentIndexSchedule.size() ; ++i)
+	for (size_t i= 0 ; i < vect_floatLegPaymentIndexSchedule.size() ; ++i)
 	{
 		std::cout << vect_floatLegPaymentIndexSchedule[i] << std::endl ;
 	}		//retourne 1 2 3 4 5 6 7 8
@@ -153,7 +153,8 @@ void test_y_barre(double t)
 	
 	VanillaSwaption_PTR vs(new VanillaSwaption(w, OptionType::OptionType::CALL)) ;
 
-	CheyetteDD_VanillaSwaptionApproxPricer abc = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, vs); 
+	double s0 = 3 ;
+	CheyetteDD_VanillaSwaptionApproxPricer abc = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, vs, s0); 
 	double integrale = abc.calculate_y_bar(t) ;
 
 	std::cout << "integrale_main" << res_integrale << std::endl ;
@@ -207,7 +208,8 @@ void test_Derivative_ZC()
 	
 	VanillaSwaption_PTR swaption_ptr(new VanillaSwaption(swap, OptionType::OptionType::CALL)) ;
 
-	CheyetteDD_VanillaSwaptionApproxPricer approx = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, swaption_ptr); 
+	double S0 = 3 ; //annuite spot
+	CheyetteDD_VanillaSwaptionApproxPricer approx = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, swaption_ptr, S0); 
 
 	//std::cout << "derivee_1_classe T = 5Y   " << approx.ZC_1stDerivative_on_xt(0, 5, 0) << std::endl ;
 	//std::cout << "derivee_1_main   T = 5Y   "  << -exp(- 0.01*5) * (1 - exp(-5)) << std::endl ;
@@ -307,8 +309,60 @@ void test_Derivative_ZC()
 	std::cout << " " << std::endl ;
 	std::cout << "swapRate(1, 5) : " << approx.swapRate(1, 5) << std::endl ;
 	std::cout << "inverse : " << approx.inverse(1, approx.swapRate(1, 5)) << " vs 5" << std::endl ;
+
+	std::cout << " " << std::endl ;
+	std::cout << "integrale v2 : " << approx.v2(1) << std::endl ;
+
 }
 
+void test_time_average()
+{
+	std::vector<double> listeMatu, tauxZC ;
+	listeMatu.push_back(0) ;	tauxZC.push_back(0.8/100) ; 
+	listeMatu.push_back(1) ;	tauxZC.push_back(0.85/100) ; 
+	listeMatu.push_back(2) ;	tauxZC.push_back(0.9/100) ; 
+	listeMatu.push_back(3) ;	tauxZC.push_back(0.92/100) ;  
+	listeMatu.push_back(4) ;	tauxZC.push_back(0.95/100) ; 
+	listeMatu.push_back(5) ;	tauxZC.push_back(1.00/100) ; 
+	listeMatu.push_back(10) ;	tauxZC.push_back(1.5/100) ; 
+	listeMatu.push_back(15) ;	tauxZC.push_back(2.0/100) ;  
+	listeMatu.push_back(20) ;	tauxZC.push_back(2.5/100) ;
+	listeMatu.push_back(25) ;	tauxZC.push_back(2.3/100) ;
+	 
+	courbeInput_PTR courbe_PTR_test(new CourbeInput(listeMatu, tauxZC));
+
+	std::vector<double> x, y ;
+	x.push_back(0) ; x.push_back(0.5) ; x.push_back(1) ; 
+	y.push_back(0.25) ; y.push_back(0.5) ;
+	piecewiseconst_RR_Function sigma = piecewiseconst_RR_Function(x, y) ; 
+	piecewiseconst_RR_Function m = piecewiseconst_RR_Function(x, y) ; 
+
+	double k(1) ;
+
+	CheyetteDD_Model::CheyetteDD_Parameter monStruct = CheyetteDD_Model::CheyetteDD_Parameter(k, sigma, m) ;
+	CheyetteDD_Model_PTR modele_test_PTR(new CheyetteDD_Model(courbe_PTR_test, monStruct)) ;
+
+	double strike          = 0.04;
+	LMM::Index  indexStart = 2 ; //indice 1er flux
+	LMM::Index  indexEnd   = 8 ; //indice fernier flux
+	Tenor	floatingLegTenorType = Tenor::_6M;
+	Tenor	fixedLegTenorType    = Tenor::_1YR;
+	LMMTenorStructure_PTR simulationStructure(new LMMTenorStructure(Tenor::_6M , 50) );
+	VanillaSwap swap = VanillaSwap(strike, indexStart, indexEnd, floatingLegTenorType, fixedLegTenorType, simulationStructure);
+	
+	VanillaSwaption_PTR swaption_ptr(new VanillaSwaption(swap, OptionType::OptionType::CALL)) ;
+
+	double S0 = 3 ; //annuite spot
+	CheyetteDD_VanillaSwaptionApproxPricer approx = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, swaption_ptr, S0); 
+
+	double inv = approx.inverse(0, S0) ;
+	std::cout << approx.swapRateVolatility_1stDerivative(0, inv) << std::endl ;
+
+	std::cout << "prixSwaption" << std::endl ;
+	std::cout << approx.prixSwaptionApproxPiterbarg() << std::endl ;
+	std::cout << "OK ! " << std::endl ;
+
+}
 
 VanillaSwaption createSwaption()
 {

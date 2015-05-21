@@ -31,8 +31,8 @@ public:
 	struct CheyetteDD_Parameter  // tout ce qu-il faudra calibrer
 	{
 		double						k_;			// add comment please // c'est une constante à vérifier 
-	    piecewiseconst_RR_Function	sigma_ ;	
-		piecewiseconst_RR_Function	m_;   
+	    piecewiseconst_RR_Function	sigma_ ;	//sigma(t)    //ou piecewiseconst_DD_RR_Function
+		piecewiseconst_RR_Function	m_;			//m(t)			//ou piecewiseconst_DD_RR_Function
 		
 		//structure constructors 
 		CheyetteDD_Parameter(){}

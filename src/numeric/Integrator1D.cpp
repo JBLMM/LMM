@@ -1,5 +1,6 @@
 #include <LMM/numeric/Integrator1D.h>
 #include <vector>
+#include <iostream>
 
 namespace numeric 
 {

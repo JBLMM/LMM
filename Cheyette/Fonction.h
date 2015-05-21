@@ -137,7 +137,7 @@ public :
 };
 
 
-class piecewiseconst_DD_R2R_Function : public piecewiseconst_R2R_Function
+class piecewiseconst_DD_RR_Function : public piecewiseconst_RR_Function
 {
 private :
 	piecewiseconst_RR_Function m_;		//m(t) (skew)
@@ -145,21 +145,23 @@ private :
 	double L_ ;							//constante
 
 public :  //à t fixé, c'est une fonction de x
-	piecewiseconst_DD_R2R_Function(){}
-	piecewiseconst_DD_R2R_Function(piecewiseconst_RR_Function m, piecewiseconst_RR_Function sigma, double L) 
+	piecewiseconst_DD_RR_Function(){}
+	piecewiseconst_DD_RR_Function(piecewiseconst_RR_Function m, piecewiseconst_RR_Function sigma, double L) 
 		: m_(m), sigma_(sigma), L_(L)
 	{
+
 		// check pillar m & sigma is the same! :
 		assert(m.getx_() == m.gety_()) ;
 	} 
 
-	double piecewiseconst_DD_R2R_Function::sigma_r(double t, double x)
+	double piecewiseconst_DD_RR_Function::sigma_r(double t, double x)
 	{
+		std::cout << "warning : fonction sigma r ne prend pas en compte le terme f(0,t)" << std::endl ;
 		return (m_.evaluate(t) * x + (1-m_.evaluate(t))*L_) * sigma_.evaluate(t);
 		//à améliorer avec l'opérateur ()
 	}
 
-	double piecewiseconst_DD_R2R_Function::d_sigma_r_dx(double t) //, double x)
+	double piecewiseconst_DD_RR_Function::d_sigma_r_dx(double t) //, double x)
 	{
 		return (m_.evaluate(t) *sigma_.evaluate(t));
 	}

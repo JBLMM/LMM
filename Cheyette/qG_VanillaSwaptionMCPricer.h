@@ -1,4 +1,7 @@
 #pragma once
+
+//pricing sous Q de la swaption par MC
+
 class qG_VanillaSwaptionMCPricer
 {
 public:

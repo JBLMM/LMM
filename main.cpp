@@ -22,7 +22,9 @@ int main()
 	//test_y_barre(0) ;
 	//test_y_barre(0.5) ;
 	//test_y_barre(1.0) ;
-	test_Derivative_ZC() ;
+	//test_Derivative_ZC() ;
+	
+	test_time_average() ;
 
 	//test_Integrator1D();
 

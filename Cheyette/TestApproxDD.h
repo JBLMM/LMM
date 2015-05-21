@@ -28,5 +28,6 @@
 
 	void test_Derivative_ZC() ;
 
+	void test_time_average() ;
 
 #endif //_TestApproxDD_

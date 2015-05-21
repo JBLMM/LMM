@@ -68,6 +68,21 @@ double Black_Price(const double& fwd, const double& strike, const double& vol, c
 	return fwd*N1-strike*N2;
 }
 
+//avec vol non constante
+//vol = sqrt( \int_0^T \sigma^2(u) du )
+double Black_Price_vol2(const double& fwd, const double& strike, const double& vol, const double& T) //(check)
+{
+    assert(vol > 0 && T > 0 && fwd >0 && strike >0);
+
+	double d1 = (log(fwd/strike) + 0.5 * vol * vol) / vol ;
+	double d2 = d1 - vol;
+
+	boost::math::normal_distribution<> nd(0,1); 
+	double N1 = cdf(nd,d1);
+	double N2 = cdf(nd,d2); 
+
+	return fwd*N1-strike*N2;
+}
 
 double Black_Vega(const double& fwd, const double& strike, const double& vol, const double& T)
 {
