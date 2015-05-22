@@ -414,6 +414,7 @@
     <ClInclude Include="VanillaSwapRate.h">
       <Filter>LMM_instrument\GeneticSwap</Filter>
     </ClInclude>
+    <ClInclude Include="Cheyette\TestMC.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pricer\LmmTarnPricer.cpp">
@@ -786,6 +787,7 @@
     <ClCompile Include="CallableSwap.cpp">
       <Filter>LMM_instrument\GeneticSwap</Filter>
     </ClCompile>
+    <ClCompile Include="Cheyette\TestMC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TODO" />

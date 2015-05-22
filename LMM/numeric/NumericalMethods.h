@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
+
 
 #include <boost/math/distributions.hpp>
 #include <boost/function.hpp>

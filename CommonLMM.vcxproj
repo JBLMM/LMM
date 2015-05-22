@@ -96,6 +96,7 @@
     <ClInclude Include="Cheyette\qG_VanillaSwaptionMCPricer.h" />
     <ClInclude Include="Cheyette\TestApproxDD.h" />
     <ClInclude Include="Cheyette\TestFonction.h" />
+    <ClInclude Include="Cheyette\TestMC.h" />
     <ClInclude Include="Coupon.h" />
     <ClInclude Include="CouponLeg.h" />
     <ClInclude Include="GeneticSwap.h" />
@@ -212,6 +213,7 @@
     <ClCompile Include="Cheyette\qG_VanillaSwaptionMCPricer.cpp" />
     <ClCompile Include="Cheyette\TestApproxDD.cpp" />
     <ClCompile Include="Cheyette\TestFonction.cpp" />
+    <ClCompile Include="Cheyette\TestMC.cpp" />
     <ClCompile Include="Coupon.cpp" />
     <ClCompile Include="CouponLeg.cpp" />
     <ClCompile Include="GeneticSwap.cpp" />

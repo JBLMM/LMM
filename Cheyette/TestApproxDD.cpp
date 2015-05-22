@@ -364,6 +364,89 @@ void test_time_average()
 
 }
 
+void test_y_bar_cas_limite()
+{
+	std::vector<double> listeMatu, tauxZC ;
+	listeMatu.push_back(0) ;	tauxZC.push_back(0.8/100) ; 
+	listeMatu.push_back(1) ;	tauxZC.push_back(0.85/100) ; 
+	listeMatu.push_back(2) ;	tauxZC.push_back(0.9/100) ; 
+	listeMatu.push_back(3) ;	tauxZC.push_back(0.92/100) ;  
+	listeMatu.push_back(4) ;	tauxZC.push_back(0.95/100) ; 
+	listeMatu.push_back(5) ;	tauxZC.push_back(1.00/100) ; 
+	listeMatu.push_back(10) ;	tauxZC.push_back(1.5/100) ; 
+	listeMatu.push_back(15) ;	tauxZC.push_back(2.0/100) ;  
+	listeMatu.push_back(20) ;	tauxZC.push_back(2.5/100) ;
+	listeMatu.push_back(25) ;	tauxZC.push_back(2.3/100) ;
+	 
+	courbeInput_PTR courbe_PTR_test(new CourbeInput(listeMatu, tauxZC));
+
+	std::vector<double> x, y, y_m ;
+	x.push_back(0) ; ; x.push_back(1) ; 
+	y.push_back(0.25) ;	//sigma = cste
+	y_m.push_back(0) ;	//m = 0
+	piecewiseconst_RR_Function sigma = piecewiseconst_RR_Function(x, y) ; 
+	piecewiseconst_RR_Function m = piecewiseconst_RR_Function(x, y_m) ; 
+
+	double k(1) ;
+
+	CheyetteDD_Model::CheyetteDD_Parameter monStruct = CheyetteDD_Model::CheyetteDD_Parameter(k, sigma, m) ;
+	CheyetteDD_Model_PTR modele_test_PTR(new CheyetteDD_Model(courbe_PTR_test, monStruct)) ;
+
+	double strike          = 0.04;
+	LMM::Index  indexStart = 2 ; //indice 1er flux
+	LMM::Index  indexEnd   = 8 ; //indice fernier flux
+	Tenor	floatingLegTenorType = Tenor::_6M;
+	Tenor	fixedLegTenorType    = Tenor::_1YR;
+	LMMTenorStructure_PTR simulationStructure(new LMMTenorStructure(Tenor::_6M , 50) );
+	VanillaSwap swap = VanillaSwap(strike, indexStart, indexEnd, floatingLegTenorType, fixedLegTenorType, simulationStructure);
+	
+	VanillaSwaption_PTR swaption_ptr(new VanillaSwaption(swap, OptionType::OptionType::CALL)) ;
+
+	double S0 = 3 ; //annuite spot
+	CheyetteDD_VanillaSwaptionApproxPricer approx = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, swaption_ptr, S0); 
+
+	std::cout << "y_bar_0   : " << approx.calculate_y_bar(0) << " vs 0"<< std::endl ;
+	std::cout << "y_bar_0.5 : " << approx.calculate_y_bar(0.5) << " vs " << 0.25*0.25*0.03*0.03*(1-exp(-2 * 0.5))/2.<< std::endl ;
+	std::cout << "y_bar_1   : " << approx.calculate_y_bar(1) << " vs " << 0.25*0.25*0.03*0.03*(1-exp(-2 * 1))/2. << std::endl ;
+
+	double inverse_s0 ; 
+
+//verification de phi_t_s_bar
+	std::cout << "  " << std::endl ;
+	inverse_s0 = approx.inverse(0, S0) ;
+	std::cout << "approx.calculate_phi_t_s_bar(0)   : " << approx.calculate_phi_t_s_bar(0) 
+		<< " vs " << 0.25*0.03 * approx.swapRate_1stDerivative(0,	inverse_s0) << std::endl ;
+	
+	inverse_s0 = approx.inverse(0.5, S0) ;
+	std::cout << "approx.calculate_phi_t_s_bar(0.5) : " << approx.calculate_phi_t_s_bar(0.5) 
+				<< " vs " << 0.25*0.03 * approx.swapRate_1stDerivative(0.5,	inverse_s0) << std::endl ;
+
+	inverse_s0 = approx.inverse(1, S0) ;
+	std::cout << "approx.calculate_phi_t_s_bar(1)   : " << approx.calculate_phi_t_s_bar(1) 
+				<< " vs " << 0.25*0.03 * approx.swapRate_1stDerivative(1,	inverse_s0) << std::endl ;
+
+//verification de d \phi / ds (t, s_bar)
+	std::cout << "  " << std::endl ;
+	inverse_s0 = approx.inverse(0, S0) ;
+	std::cout << "approx. d phi / ds   : " << approx.swapRateVolatility_1stDerivative(0, inverse_s0)  
+		<< " vs " << 0.25*0.03 * approx.swapRate_2ndDerivative(0, inverse_s0) 
+													/ approx.swapRate_1stDerivative(0,	inverse_s0) << std::endl ;
+	
+	inverse_s0 = approx.inverse(0.5, S0) ;
+	std::cout << "approx. d phi / ds   : " << approx.swapRateVolatility_1stDerivative(0.5, inverse_s0)
+				<< " vs " << 0.25*0.03 * approx.swapRate_2ndDerivative(0.5, inverse_s0) 
+													/ approx.swapRate_1stDerivative(0.5,	inverse_s0) << std::endl ;
+
+	inverse_s0 = approx.inverse(1, S0) ;
+	std::cout << "approx. d phi / ds   : " << approx.swapRateVolatility_1stDerivative(1, inverse_s0)
+				<< " vs " << 0.25*0.03 * approx.swapRate_2ndDerivative(1, inverse_s0) 
+													/ approx.swapRate_1stDerivative(1,	inverse_s0) << std::endl ;
+	//std::cout << "  " << std::endl ;
+	//std::cout << "prixSwaption" << std::endl ;
+	//std::cout << approx.prixSwaptionApproxPiterbarg() << std::endl ;
+	//std::cout << "OK ! " << std::endl ;
+}
+
 VanillaSwaption createSwaption()
 {
 	double strike          = 0.04;
@@ -378,30 +461,3 @@ VanillaSwaption createSwaption()
 	return x ;
 }
 
-//void TestApprox()
-//{
-//	piecewiseconst_RR_Function chi0 ; 
-//	piecewiseconst_DD_R2R_Function sigma0 ;
-//	double x0(0), y0(0), S0(1) ;
-//
-//	courbeInput_PTR courbe_PTR( new CourbeInput() ) ;
-//	Cheyette_PTR Cheyette_Model_Test_PTR( new CheyetteDD_Model(courbe_PTR, CheyetteParam, x0, y0, S0) );
-//	
-//	double t = 0 ;// date valo 
-//	double y_bar = 0.2 ; /// .................................  
-//	double ExpansionPoint_s = 2 ; // ............................
-//	double s_bar = 1 ;
-//	double Phi_t_s_bar = 1 ;
-//
-//	VanillaSwaption s = createSwaption() ;
-//	boost::shared_ptr<VanillaSwaption> swaption_PTR( new VanillaSwaption() );
-//
-//	CheyetteVanillaSwaptionApproxPricer_Piterbarg DD_approx = 
-//									CheyetteVanillaSwaptionApproxPricer_Piterbarg(Cheyette_Model_Test_PTR, 
-//																					swaption_PTR,
-//																					t, 
-//																					y_bar, 
-//																					ExpansionPoint_s, 
-//																					s_bar, 
-//																					Phi_t_s_bar);
-//}

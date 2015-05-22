@@ -30,4 +30,6 @@
 
 	void test_time_average() ;
 
+	void test_y_bar_cas_limite() ;
+	
 #endif //_TestApproxDD_
