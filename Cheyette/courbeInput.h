@@ -15,12 +15,12 @@ private:
 	std::vector<double> tauxZC_ ;
 
 public:
-	CourbeInput(void);
 	CourbeInput(std::vector<double> listeMatu, std::vector<double> tauxZC);
-	~CourbeInput(void);
+	virtual ~CourbeInput(void){}
 
-	double get_tauxZC0(double T) ;
-	void showCourbeInput() ;
+	double get_tauxZC0(double T) const ;
+	double get_f_0_t(double t) const ;
+	void showCourbeInput() const ;
 };
 
 typedef boost::shared_ptr<CourbeInput> courbeInput_PTR;

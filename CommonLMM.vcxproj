@@ -93,7 +93,7 @@
     <ClInclude Include="Cheyette\courbeInput.h" />
     <ClInclude Include="Cheyette\Fonction.h" />
     <ClInclude Include="Cheyette\InverseFunction.h" />
-    <ClInclude Include="Cheyette\qG_VanillaSwaptionMCPricer.h" />
+    <ClInclude Include="Cheyette\CheyetteDD_VanillaSwaptionMCPricer.h" />
     <ClInclude Include="Cheyette\TestApproxDD.h" />
     <ClInclude Include="Cheyette\TestFonction.h" />
     <ClInclude Include="Cheyette\TestMC.h" />
@@ -210,7 +210,7 @@
     <ClCompile Include="Cheyette\CheyetteModel.cpp" />
     <ClCompile Include="Cheyette\courbeInput.cpp" />
     <ClCompile Include="Cheyette\InverseFunction.cpp" />
-    <ClCompile Include="Cheyette\qG_VanillaSwaptionMCPricer.cpp" />
+    <ClCompile Include="Cheyette\CheyetteDD_VanillaSwaptionMCPricer.cpp" />
     <ClCompile Include="Cheyette\TestApproxDD.cpp" />
     <ClCompile Include="Cheyette\TestFonction.cpp" />
     <ClCompile Include="Cheyette\TestMC.cpp" />

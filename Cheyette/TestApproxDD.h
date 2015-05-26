@@ -7,6 +7,7 @@
 #include <Cheyette/CheyetteDD_VanillaSwaptionApproxPricer.h>
 #include <Cheyette/CheyetteDD_Model.h>
 #include <Cheyette/courbeInput.h>
+#include <LMM/numeric/Integrator1D.h>
 
 #include <iostream>
 #include <vector>
@@ -31,5 +32,8 @@
 	void test_time_average() ;
 
 	void test_y_bar_cas_limite() ;
+
+	void test_incremental_integrale() ;
+	void test_incremental_b_barre() ;
 	
 #endif //_TestApproxDD_

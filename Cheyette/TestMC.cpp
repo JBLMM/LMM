@@ -35,7 +35,7 @@ void UneTrajectoireEuler()
 	
 	VanillaSwaption_PTR vs(new VanillaSwaption(w, OptionType::OptionType::CALL)) ;
 
-	//RNGenerator_PTR rnGen(new RNGenerator(1234)); 
+//	RNGenerator_PTR rnGen(new MCGenerator(1234)); 
 
 	//qG_VanillaSwaptionMCPricer MCPricer = qG_VanillaSwaptionMCPricer(modele_test_PTR, vs, rnGen);
 

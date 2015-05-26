@@ -134,10 +134,11 @@ public :
 		double timeAveraging_b_denom(double t) const ;
 		
 		//retourne b barre du displaced diffusion
-		double timeAverage(double t) const ;	
+		double timeAverage(double t, size_t gridSize) const ;	
+		double timeAverage2(double t, size_t gridSize) const;
 
 		//prix swaption approximé 
-		double prixSwaptionApproxPiterbarg() const ;
+		double prixSwaptionApproxPiterbarg(size_t gridSize) const ;
 
 
 //	////! precalculation: YY TODO: can be further optimized for calibration problem. 

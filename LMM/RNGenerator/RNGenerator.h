@@ -5,7 +5,7 @@
 class RNGenerator 
 {
 protected:
-	unsigned long seed_;
+	unsigned long seed_;  
 public:
 	RNGenerator(unsigned long seed):seed_(seed){};
 	

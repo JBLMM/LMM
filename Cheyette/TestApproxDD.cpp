@@ -352,15 +352,29 @@ void test_time_average()
 	
 	VanillaSwaption_PTR swaption_ptr(new VanillaSwaption(swap, OptionType::OptionType::CALL)) ;
 
-	double S0 = 3 ; //annuite spot
+	double S0 = 2.3/100. ; 
 	CheyetteDD_VanillaSwaptionApproxPricer approx = CheyetteDD_VanillaSwaptionApproxPricer(modele_test_PTR, swaption_ptr, S0); 
 
-	double inv = approx.inverse(0, S0) ;
-	std::cout << approx.swapRateVolatility_1stDerivative(0, inv) << std::endl ;
+	//double inv = approx.inverse(0, S0) ;
+	//std::cout << approx.swapRateVolatility_1stDerivative(0, inv) << std::endl ;
 
+	std::cout << "gridSize = 10" << std::endl ;
+	size_t gridSize = 10 ;
 	std::cout << "prixSwaption" << std::endl ;
-	std::cout << approx.prixSwaptionApproxPiterbarg() << std::endl ;
-	std::cout << "OK ! " << std::endl ;
+	std::cout << approx.prixSwaptionApproxPiterbarg(gridSize) << std::endl ;
+	std::cout << "  " << std::endl ;
+
+	std::cout << "gridSize = 50" << std::endl ;
+	gridSize = 50 ;
+	std::cout << "prixSwaption" << std::endl ;
+	std::cout << approx.prixSwaptionApproxPiterbarg(gridSize) << std::endl ;
+	std::cout << "  " << std::endl ;
+
+	std::cout << "gridSize = 100" << std::endl ;
+	gridSize = 100 ;
+	std::cout << "prixSwaption" << std::endl ;
+	std::cout << approx.prixSwaptionApproxPiterbarg(gridSize) << std::endl ;
+	std::cout << "  " << std::endl ;
 
 }
 
@@ -441,11 +455,60 @@ void test_y_bar_cas_limite()
 	std::cout << "approx. d phi / ds   : " << approx.swapRateVolatility_1stDerivative(1, inverse_s0)
 				<< " vs " << 0.25*0.03 * approx.swapRate_2ndDerivative(1, inverse_s0) 
 													/ approx.swapRate_1stDerivative(1,	inverse_s0) << std::endl ;
-	//std::cout << "  " << std::endl ;
+	std::cout << "  " << std::endl ;
+	std::cout << "lambda_t : "  << std::endl ;
+	
+
 	//std::cout << "prixSwaption" << std::endl ;
 	//std::cout << approx.prixSwaptionApproxPiterbarg() << std::endl ;
 	//std::cout << "OK ! " << std::endl ;
 }
+	double f(double x)
+	{
+        return x;
+	}
+
+// \int_0^1 u \int_0^u s ds du = 1/8
+void test_incremental_integrale()
+{
+	double start = 0 ;
+	double end = 1 ;
+	size_t nbPoints = 100 + 1 ; //delta t = 1/100
+	std::vector<double> f_grids ;
+	for (size_t i = 0 ; i < nbPoints ; ++i)
+	{
+		f_grids.push_back(i/100.) ;		//modifier ici aussi le nb de points
+	}
+	numeric::IncrementalIntegrator1D_Riemann incr(start, end, nbPoints, f_grids); 
+	//for (size_t i = 0 ; i < nbPoints ; ++i)			//debogage
+	//{
+	//	std::cout << incr.get_value(i) << std::endl ;
+	//}
+	boost::function<double(double)> func1 = f;
+	std::cout << incr.integrate(func1) << std::endl ;
+	std::cout << 1/8. << std::endl ;
+}
+
+void test_incremental_b_barre()
+{
+	double start = 0 ;
+	double end = 1 ;
+	size_t nbPoints = 100 + 1 ; //delta t = 1/100
+	std::vector<double> f_grids ;
+	for (size_t i = 0 ; i < nbPoints ; ++i)
+	{
+		f_grids.push_back(i/100.) ;		//modifier ici aussi le nb de points
+	}
+	numeric::IncrementalIntegrator1D_Riemann incr(start, end, nbPoints, f_grids); 
+	//for (size_t i = 0 ; i < nbPoints ; ++i)			//debogage
+	//{
+	//	std::cout << incr.get_value(i) << std::endl ;
+	//}
+	boost::function<double(double)> func1 = f;
+	std::cout << incr.integrate(func1) << std::endl ;
+	std::cout << 1/8. << std::endl ;
+}
+
 
 VanillaSwaption createSwaption()
 {

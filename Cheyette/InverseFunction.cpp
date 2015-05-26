@@ -7,7 +7,7 @@ InverseFunction::InverseFunction(std::vector<double> tableauX)
 	tableauX_ = tableauX ;
 	double x, f_x ;
 	tableauY_.clear() ;
-	for (int i = 0 ; i < tableauX.size() ; ++i)
+	for (size_t i = 0 ; i < tableauX.size() ; ++i)
 	{
 		x = tableauX_[i] ;
 		f_x = 3 * x * x + 8 * x ; 

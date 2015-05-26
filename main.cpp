@@ -3,8 +3,8 @@
 
 #include <Cheyette/TestApproxDD.h>
 #include <Cheyette/CheyetteDD_Model.h>
-#include <Cheyette/qG_VanillaSwaptionMCPricer.h>
-
+#include <Cheyette/CheyetteDD_VanillaSwaptionMCPricer.h>
+#include <LMM/numeric/Integrator1D.h>
 
 int main()
 {
@@ -22,13 +22,13 @@ int main()
 	//test_y_barre(1.0) ;
 	//test_Derivative_ZC() ;
 	
-	//test_time_average() ; 
-	test_y_bar_cas_limite() ;
+	test_time_average() ; 
+	//test_y_bar_cas_limite() ;
 	//test_Integrator1D();
 
 	//testSwap() ; 
 
-
+	//test_incremental_integrale() ;
 
 	/************  tests LMM   *************************/
 	//test_Noise();  

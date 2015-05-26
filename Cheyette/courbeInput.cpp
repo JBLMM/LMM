@@ -1,7 +1,5 @@
 #include <Cheyette/courbeInput.h>
 
-CourbeInput::CourbeInput(void){}
-
 
 CourbeInput::CourbeInput(std::vector<double> listeMatu, std::vector<double> tauxZC)
 	: listeMatu_(listeMatu), tauxZC_(tauxZC)
@@ -9,12 +7,7 @@ CourbeInput::CourbeInput(std::vector<double> listeMatu, std::vector<double> taux
 	assert(listeMatu_.size() == tauxZC_.size()) ;
 }
 
-
-CourbeInput::~CourbeInput(void)
-{
-}
-
-double CourbeInput::get_tauxZC0(double T)
+double CourbeInput::get_tauxZC0(double T) const
 {
 	int N = listeMatu_.size() ;
 	assert (N > 0) ;
@@ -25,7 +18,13 @@ double CourbeInput::get_tauxZC0(double T)
 	return ( tauxZC_[i] + (tauxZC_[i+1] - tauxZC_[i])/(listeMatu_[i+1] - listeMatu_[i])*(T - listeMatu_[i]) ) ;
 }
 
-void CourbeInput::showCourbeInput()
+double CourbeInput::get_f_0_t(double t) const
+{
+	double r0 = 0.01 ;
+	return r0 ;
+}
+
+void CourbeInput::showCourbeInput() const
 {
 	int N = listeMatu_.size() ;
 	std::cout << "listeMatu   |   tauxZC" << std::endl ;

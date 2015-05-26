@@ -8,14 +8,14 @@ CheyetteDD_Model::CheyetteDD_Parameter CheyetteDD_Model::get_CheyetteDD_Paramete
 
 //fonctions G(t, T), ZC B(t, T)...
 //Displaced Diffusion : k constant, calcul explicite de G(t, T)
-double CheyetteDD_Model::G(double t, double T)
+double CheyetteDD_Model::G(double t, double T) const
 {
 	assert(t >= 0);  
 	double k = CheyetteDD_Parameter_.k_ ;
 	return (1/k * (1 - exp(- k * (T-t))) ) ;
 }
 
-double CheyetteDD_Model::P(double t, double T, double x_t, double y_t)
+double CheyetteDD_Model::P(double t, double T, double x_t, double y_t) const 
 {
 	double g = G(t,T) ;
 	double P_0_t = exp( - courbeInput_PTR_->get_tauxZC0(t) * t ) ;
@@ -24,8 +24,9 @@ double CheyetteDD_Model::P(double t, double T, double x_t, double y_t)
 }
 
 //f_0_t à coder dans la classe courbeInput
-double CheyetteDD_Model::r_t(double f_0_t, double x_t) 
+double CheyetteDD_Model::r_t(double t, double x_t) const 
 {
+	double f_0_t = courbeInput_PTR_->get_f_0_t(t) ;
 	return f_0_t + x_t ; 
 }
 

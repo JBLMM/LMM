@@ -30,12 +30,12 @@ class CheyetteDD_Model
 public:
 	struct CheyetteDD_Parameter  // tout ce qu-il faudra calibrer
 	{
-		double						k_;			// add comment please // c'est une constante à vérifier 
-	    piecewiseconst_RR_Function	sigma_ ;	//sigma(t)    //ou piecewiseconst_DD_RR_Function
-		piecewiseconst_RR_Function	m_;			//m(t)			//ou piecewiseconst_DD_RR_Function
+		double						k_;			// add comment please	// c'est une constante à vérifier 
+	    piecewiseconst_RR_Function	sigma_ ;	//sigma(t)				//ou piecewiseconst_DD_RR_Function
+		piecewiseconst_RR_Function	m_;			//m(t)					//ou piecewiseconst_DD_RR_Function
 		
 		//structure constructors 
-		CheyetteDD_Parameter(){}
+		//CheyetteDD_Parameter(){}
 		CheyetteDD_Parameter(double k, piecewiseconst_RR_Function sigma, piecewiseconst_RR_Function m)
 				: k_(k), sigma_(sigma), m_(m)
 		{
@@ -52,20 +52,24 @@ private:
 	CheyetteDD_Parameter	CheyetteDD_Parameter_;
 
 public:
+	//constructor
 	CheyetteDD_Model(courbeInput_PTR courbeInput_PTR, const CheyetteDD_Parameter& CheyetteParam)
 		: courbeInput_PTR_(courbeInput_PTR), CheyetteDD_Parameter_(CheyetteParam)
 	{}
+
+	//destructor
+	virtual ~CheyetteDD_Model(){};
 
 	//getters
 	courbeInput_PTR			get_courbeInput_PTR() const{return courbeInput_PTR_ ;}
 	CheyetteDD_Parameter	get_CheyetteDD_Parameter() const ;
 
 	//fonctions G(t, T), ZC B(t, T)...
-	double G(double t, double T);  
+	double G(double t, double T) const ;  
 	
-	double P(double t, double T, double x_t, double y_t) ;  //ZC B(0,t) : donné en input sinon stochastique
+	double P(double t, double T, double x_t, double y_t) const ;  //ZC B(0,t) : donné en input sinon stochastique
 
-	double r_t(double f_0_t, double x_t);
+	double r_t(double t, double x_t) const ;
 
 	//annuite A_0N(0)
 	//double annuity(double t, double x_t, double y_t, const VanillaSwap& vanillaSwap) ;

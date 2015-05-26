@@ -7,6 +7,7 @@
 #include <boost/pointer_cast.hpp>
 
 
+const size_t gridSize  = 10;
 
 
 CheyetteDD_VanillaSwaptionApproxPricer::CheyetteDD_VanillaSwaptionApproxPricer
@@ -46,23 +47,27 @@ double CheyetteDD_VanillaSwaptionApproxPricer::calculate_y_bar(double t) const
 	std::vector<double> m_x = this->get_CheyetteDD_Model()->get_CheyetteDD_Parameter().m_.getx_() ;
 	std::vector<double> m_y = this->get_CheyetteDD_Model()->get_CheyetteDD_Parameter().m_.gety_() ;
 
+	courbeInput_PTR courbe = get_CheyetteDD_Model()->get_courbeInput_PTR() ;
+
 	if (m_x != sigma_x){std::cout << "Displaced Diffusion: piliers de m(t) et de sigma(t) ne coincident pas" << std::endl; }
 	assert(m_x == sigma_x);
-	if (t > sigma_x[sigma_x.size() - 1]){std::cout << "extrapolation de sigma pour l'integration" << std::endl; }
+
+	if (t > sigma_x[sigma_x.size() - 1])
+	{
+		std::cout << "t : " << t << " , sigma_x[sigma_x.size() - 1] : " << sigma_x[sigma_x.size() - 1] << std::endl ;
+		std::cout << "extrapolation de sigma pour l'integration" << std::endl; 
+	}
 
 	assert(t - 0.1 <= sigma_x[sigma_x.size() - 1]);
 
 	std::vector<double> x = sigma_x ; //= m_x ;
 	double integrale(0), y ;
-
-// !! 
-	double r0(0.03) ;
-	double f_0_t(0.01) ;
-// !!
-
+ 
+	double r0 = courbe->get_f_0_t(0) ;
+	
 	for (size_t i = 0 ; i < x.size() - 1 ; ++i) //on peut optimiser avec un while
 	{
-		y = sigma_y[i] * (m_y[i] * f_0_t + (1 - m_y[i]) * r0) ;
+		y = sigma_y[i] * (m_y[i] * courbe->get_f_0_t(t) + (1 - m_y[i]) * r0) ;
 		integrale += y * y * (exp(2 * k * std::min(x[i+1], t)) - exp(2 * k * std::min(x[i], t))) / (2 * k);
 	}
 	return exp(- 2 * k * t) * integrale ; 
@@ -302,10 +307,9 @@ double CheyetteDD_VanillaSwaptionApproxPricer::swapRateVolatility_1stDerivative(
 	piecewiseconst_RR_Function sigma = parameter.sigma_ ;
 	piecewiseconst_RR_Function m = parameter.m_ ;
 
-// !!
-	double r0 = 0.03 ;
-// !!
-
+	courbeInput_PTR courbe = get_CheyetteDD_Model()->get_courbeInput_PTR() ;
+	double r0 = courbe->get_f_0_t(0) ;
+	
 	return (m.evaluate(t) * x_t + (1-m.evaluate(t))* r0) * sigma.evaluate(t) * 
 				swapRate_2ndDerivative(t, x_t) / swapRate_1stDerivative(t, x_t) 
 					+ m.evaluate(t) *sigma.evaluate(t) ; //+ sigma.d_sigma_r_dx(t) ;
@@ -326,9 +330,8 @@ double CheyetteDD_VanillaSwaptionApproxPricer::calculate_phi_t_s_bar(double t) c
 	//en t = 0 
 	//return swapRate_1stDerivative(0, s_bar) * sigma.evaluate(0)  ;
 
-// !!
-	double r0 = 0.03 ;
-// !!
+	courbeInput_PTR courbe = get_CheyetteDD_Model()->get_courbeInput_PTR() ;
+	double r0 = courbe->get_f_0_t(0) ;
 
 	return swapRate_1stDerivative(t, s_bar) * (m.evaluate(t) * s_bar + (1-m.evaluate(t))* r0) * sigma.evaluate(t)  ;
 }
@@ -381,80 +384,89 @@ double CheyetteDD_VanillaSwaptionApproxPricer::lambda2(double t) const
 //b(t) 
 double CheyetteDD_VanillaSwaptionApproxPricer::b(double t) const
 {
+	//std::cout << "appel de b(" << t << ") : " << A(t) / lambda(t) << std::endl ;
 	return  A(t) / lambda(t) ;
 }	
 
 //integrale de 0 à t de lambda^2(u) du
 double CheyetteDD_VanillaSwaptionApproxPricer::v2(double t) const
 {
-	numeric::Integrator1D_Riemann integral_Riemann ; 
-
 	double gridStart = 0.0;
 	double gridEnd = t ;
-	size_t gridSize  = 100 ;
+	numeric::Integrator1D_Riemann integral_Riemann(gridStart, gridEnd, gridSize);
 
 	boost::function<double(double)> func = boost::bind(&CheyetteDD_VanillaSwaptionApproxPricer::lambda2, this, _1);
-	double result = integral_Riemann.integrate(gridStart, gridEnd, gridSize, func);
+	
+	double result = integral_Riemann.integrate (func);
 	return result ;
 }
 
 double CheyetteDD_VanillaSwaptionApproxPricer::timeAveraging_b_numerateur(double t) const
 {
-	return lambda2(t) * v2(t) * b(t) ;
+	return lambda2(t)  * b(t) ;  //* v2(t) cf incremental integral
 }
 double CheyetteDD_VanillaSwaptionApproxPricer::timeAveraging_b_denom(double t) const
 {
-	return lambda2(t) * v2(t) ;
+	return lambda2(t)  ;		//* v2(t) cf incremental integral
 }
 
 //retourne b_barre
 //average over [0, t]
-//double CheyetteDD_VanillaSwaptionApproxPricer::timeAverage(double t) const	//pas optimal
-//{
-////integrale numerateur
-//	numeric::Integrator1D_Riemann integral_num_Riemann ; 
-//
-//	double gridStart = 0.0;
-//	double gridEnd = t ;
-//	size_t gridSize  = 100;
-//
-//	boost::function<double(double)> func1 = boost::bind(&CheyetteDD_VanillaSwaptionApproxPricer::timeAveraging_b_numerateur, this, _1);
-//	double integrale_numerateur = integral_num_Riemann.integrate(gridStart, gridEnd, gridSize, func1);
-//
-////integrale denominateur
-//	numeric::Integrator1D_Riemann integral_denom_Riemann ; 
-//
-//	boost::function<double(double)> func2 = boost::bind(&CheyetteDD_VanillaSwaptionApproxPricer::timeAveraging_b_denom, this, _1);
-//	double integrale_denom = integral_denom_Riemann.integrate(gridStart, gridEnd, gridSize, func2);
-//
-//	return integrale_numerateur/integrale_denom ;
-//}
+//gridSize : nb de points pour integrale Riemann
+//gridSize + 1 : pour 100 mettre 101, delta_t = 1/100
+double CheyetteDD_VanillaSwaptionApproxPricer::timeAverage(double t, size_t gridSize) const	
+{
+	double gridStart = 0.0;
+	double gridEnd = t ; 
 
-double CheyetteDD_VanillaSwaptionApproxPricer::timeAverage(double t) const
+	std::vector<double> f_grids(gridSize) ;
+	for (size_t i = 0 ; i < gridSize ; ++i)
+	{
+		f_grids[i] = lambda2(i * (gridEnd-gridStart)/(gridSize-1)) ;  //valeur de lambda2
+	}
+
+//integrale numerateur
+	numeric::IncrementalIntegrator1D_Riemann integral(gridStart, gridEnd, gridSize, f_grids);
+	boost::function<double(double)> func1 = boost::bind(&CheyetteDD_VanillaSwaptionApproxPricer::timeAveraging_b_numerateur, *this, _1);
+
+	//double integrale_numerateur = integral_num_Riemann.integrate(func1);
+	double integrale_numerateur = integral.integrate(func1);
+
+//integrale denominateur
+	boost::function<double(double)> func2 = boost::bind(&CheyetteDD_VanillaSwaptionApproxPricer::timeAveraging_b_denom, *this, _1);
+	//double integrale_denom = integral_denom_Riemann.integrate(gridStart, gridEnd, gridSize, func2);
+	double integrale_denom = integral.integrate(func2);
+
+	return integrale_numerateur/integrale_denom ;
+
+}
+
+//gridSize : nb de points pour integrale Riemann
+//gridSize + 1 : pour 100 mettre 101, delta_t = 1/100
+double CheyetteDD_VanillaSwaptionApproxPricer::timeAverage2(double t, size_t gridSize) const
 {
 	double gridStart = 0.0;
 	double gridEnd = t ;
-	const size_t nbPoints  = 10;
-	double delta = (gridEnd-gridStart)/(nbPoints - 1);  //nb de points ou est évaluée la fonction
-	std::vector<double> grid(nbPoints);
+	double delta = (gridEnd-gridStart)/(gridSize - 1);  //nb de points ou est évaluée la fonction
+	std::vector<double> grid(gridSize);
 
 	grid[0] = gridStart ;
-	for(size_t i=1; i<nbPoints; ++i)
+	for(size_t i=1; i<gridSize; ++i)
 	{
 		grid[i] = grid[i-1] + delta;
 	}
 //vecteur lambda2(.) : valeurs de lambda2(u) sur les points de la grille de Riemann
-	double vect_lambda2[nbPoints] ;
-	for (size_t i = 0 ; i < nbPoints ; ++i)
+	std::vector<double> vect_lambda2(gridSize) ;
+	for (size_t i = 0 ; i < gridSize ; ++i)
 	{
 		vect_lambda2[i] = lambda2(grid[i]) ; 
 		//std::cout << "vect_lambda2[" << i << "] : " << vect_lambda2[i] << std::endl ; 
 	}
 //vecteur integrale de 0 à u lambda2(.) : valeurs de l'integrale de 0 à t_i
 //approx par trapèzes
-	double vect_int_lambda2[nbPoints] ;
+	std::vector<double> vect_int_lambda2(gridSize) ;
 	vect_int_lambda2[0] = 0 ;
-	for (size_t i = 1 ; i < nbPoints ; ++i)
+	for (size_t i = 1 ; i < gridSize ; ++i)
 	{
 		vect_int_lambda2[i] = vect_int_lambda2[i - 1] + (vect_lambda2[i-1] + vect_lambda2[i])/2 * delta ; 
 		//std::cout << "vect_int_lambda2[" << i << "] : " << vect_int_lambda2[i] << std::endl ; 
@@ -479,31 +491,33 @@ double CheyetteDD_VanillaSwaptionApproxPricer::timeAverage(double t) const
 	return result_num/result_denom ;
 }
 
-double CheyetteDD_VanillaSwaptionApproxPricer::prixSwaptionApproxPiterbarg() const
+double CheyetteDD_VanillaSwaptionApproxPricer::prixSwaptionApproxPiterbarg(size_t gridSize) const
 {
 	double annuity0 = swapRateDenominator(0, 0) ;	//en t = 0 c'est l'annuité(0)
 
-	std::cout << "debut du calcul de l'integrale (b_barre)" << std::endl ;
-	double b_barre  = timeAverage(buffer_T0_) ;		//average jusqu'à T0, date d'entrée dans le swap
+	std::cout << "debut du calcul de b_barre" << std::endl ;
+	std::cout << "avec time average Incremental Riemann class " << std::endl ;
+	double b_barre  = timeAverage(buffer_T0_, gridSize) ;		//average jusqu'à T0, date d'entrée dans le swap
+	//std::cout << "avec time average approx " << std::endl ;
+	//double b_barre  = timeAverage2(buffer_T0_, gridSize) ;		//average jusqu'à T0, date d'entrée dans le swap
 	std::cout << "fin du calcul de b_barre" << std::endl ;
 
 	std::cout << "  " << std::endl ;
 	std::cout << "strike K : " << buffer_UnderlyingSwap_.get_strike() << ", b_barre : " << b_barre << ", s0 : " << s0_ << std::endl ;
 	double K_tilde	= b_barre * buffer_UnderlyingSwap_.get_strike() + (1 - b_barre) * s0_ ;
 	
-	std::cout << "debut du calcul de l'integrale lambda_t" << std::endl ;
+	std::cout << "debut du calcul de la variance (integrale de lambda_t)" << std::endl ;
 	double gridStart = 0.0;
 	double gridEnd = buffer_T0_ ;
-	size_t gridSize  = 100;
-	numeric::Integrator1D_Riemann integral_Riemann ;
+
+	numeric::Integrator1D_Riemann integral_Riemann(gridStart, gridEnd, gridSize) ;
 
 	boost::function<double(double)> func1 = boost::bind(&CheyetteDD_VanillaSwaptionApproxPricer::lambda2, this, _1);
-	double integrale = integral_Riemann.integrate(gridStart, gridEnd, gridSize, func1);
-	std::cout << "fin du calcul de l'integrale lambda_t" << std::endl ;
+	double integrale = integral_Riemann.integrate(func1);
+	std::cout << "fin du calcul de la variance (integrale de lambda_t)" << std::endl ;
 
 	double vol = sqrt(integrale) ;
 
-	std::cout << "warning : f(0,t) et r0 pas pris en compte" << std::endl ;
 	return annuity0 / b_barre * NumericalMethods::Black_Price_vol2(1, K_tilde, vol, buffer_T0_) ;
 }
 

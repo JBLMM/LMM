@@ -6,6 +6,8 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <LMM\numeric\NumericalMethods.h>
+
 /***********************************************************
 ******* fonctions de R dans R 
 ***********************************************************/
@@ -19,6 +21,24 @@ public:
 	virtual double evaluate(double x) = 0;
 };
 
+
+
+class Interpolation_RR_Function : public  RR_Function 
+{
+private:
+	std::vector<double>& grid_ ;
+	std::vector<double>& value_ ;
+     //Interpolator interpolator_;  //pas de classe Interpolator
+public:
+
+
+	Interpolation_RR_Function(std::vector<double>& grid, std::vector<double>& value)
+		:grid_(grid), value_(value){} //:interpolator_(){}
+
+	virtual ~Interpolation_RR_Function(){}
+
+	double evaluate(double x){return  NumericalMethods::linearInterpolation(x, grid_, value_);}
+};
 
 
 //fonction constante (pas très utile)
