@@ -8,8 +8,8 @@ int main()
 {
 
 	//test_beginner();							//test_JB
-	vanillaSwapComparaisonExemple();			//test_JB		
-	//Test_McGeneticSwapLMMPricer();			//test_JB
+	//vanillaSwapComparaisonExemple();			//test_JB		
+	Test_McGeneticSwapLMMPricer();			//test_JB
 
 
 	//test_Integrator1D();

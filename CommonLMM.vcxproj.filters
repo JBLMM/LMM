@@ -85,6 +85,9 @@
     <Filter Include="Test\Test_JL">
       <UniqueIdentifier>{9c531380-6777-4f78-9f96-9049c00da571}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LMM_helper\Element">
+      <UniqueIdentifier>{8144a805-16f4-40df-ac6c-1e5bd087e105}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LMM\RNGenerator\McGenerator.h">
@@ -357,53 +360,53 @@
     <ClInclude Include="LMM\LmmModel\LmmCascade_gCalibrator.h">
       <Filter>LMM_Model\Calibration</Filter>
     </ClInclude>
-    <ClInclude Include="Rate.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="LiborRate.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
     <ClInclude Include="LMM\RNGenerator\RNGenerator.h">
       <Filter>RNGenerator</Filter>
-    </ClInclude>
-    <ClInclude Include="Coupon.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="CouponLeg.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="RatchetCoupon.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="TargetCoupon.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="CappedFlooredCoupon.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneticSwap.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneticSwaption.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="CallableSwap.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="InstrumentFactory.h">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneticVanillaSwapPricer.h">
-      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
-    </ClInclude>
-    <ClInclude Include="McGeneticSwapLMMPricer.h">
-      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
     </ClInclude>
     <ClInclude Include="LMM\numeric\Integrator1D.h">
       <Filter>LMM_numeric</Filter>
     </ClInclude>
-    <ClInclude Include="VanillaSwapRate.h">
+    <ClInclude Include="JBLMM\Pricer\GeneticVanillaSwapPricer.h">
+      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Pricer\McGeneticSwapLMMPricer.h">
+      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Instrument\CallableSwap.h">
       <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Instrument\GeneticSwap.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Instrument\GeneticSwaption.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Instrument\InstrumentFactory.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Instrument\VanillaSwapRate.h">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Element\CappedFlooredCoupon.h">
+      <Filter>LMM_helper\Element</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Element\Coupon.h">
+      <Filter>LMM_helper\Element</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Element\CouponLeg.h">
+      <Filter>LMM_helper\Element</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Element\LiborRate.h">
+      <Filter>LMM_helper\Element</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Element\RatchetCoupon.h">
+      <Filter>LMM_helper\Element</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Element\Rate.h">
+      <Filter>LMM_helper\Element</Filter>
+    </ClInclude>
+    <ClInclude Include="JBLMM\Element\TargetCoupon.h">
+      <Filter>LMM_helper\Element</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -709,49 +712,7 @@
     <ClCompile Include="src\helper\BuildVariable.cpp">
       <Filter>LMM_helper</Filter>
     </ClCompile>
-    <ClCompile Include="CappedFlooredCoupon.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="CouponLeg.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="LiborRate.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="Coupon.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="Rate.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="RatchetCoupon.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="TargetCoupon.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneticSwaption.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneticSwap.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="InstrumentFactory.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
     <ClCompile Include="LMM\Test\test_beginner.cpp">
-      <Filter>Test\Test_JL</Filter>
-    </ClCompile>
-    <ClCompile Include="Test_Comparaison_VanillaSwap.cpp">
-      <Filter>Test\Test_JL</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneticVanillaSwapPricer.cpp">
-      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
-    </ClCompile>
-    <ClCompile Include="McGeneticSwapLMMPricer.cpp">
-      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
-    </ClCompile>
-    <ClCompile Include="Test_McGeneticSwapLMMPricer.cpp">
       <Filter>Test\Test_JL</Filter>
     </ClCompile>
     <ClCompile Include="src\numeric\Integrator1D.cpp">
@@ -760,14 +721,53 @@
     <ClCompile Include="test\unit_test\test_Integrator1D.cpp">
       <Filter>Test</Filter>
     </ClCompile>
-    <ClCompile Include="LMM\Test\Test_LmmCalibrationConfig.cpp">
+    <ClCompile Include="JBLMM\Pricer\GeneticVanillaSwapPricer.cpp">
+      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Pricer\McGeneticSwapLMMPricer.cpp">
+      <Filter>LMM_pricer\GeneticSwapPricer</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Instrument\CallableSwap.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Instrument\GeneticSwap.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Instrument\GeneticSwaption.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Instrument\InstrumentFactory.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Instrument\VanillaSwapRate.cpp">
+      <Filter>LMM_instrument\GeneticSwap</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Element\CappedFlooredCoupon.cpp">
+      <Filter>LMM_helper\Element</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Element\Coupon.cpp">
+      <Filter>LMM_helper\Element</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Element\CouponLeg.cpp">
+      <Filter>LMM_helper\Element</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Element\LiborRate.cpp">
+      <Filter>LMM_helper\Element</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Element\RatchetCoupon.cpp">
+      <Filter>LMM_helper\Element</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Element\Rate.cpp">
+      <Filter>LMM_helper\Element</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Element\TargetCoupon.cpp">
+      <Filter>LMM_helper\Element</Filter>
+    </ClCompile>
+    <ClCompile Include="JBLMM\Test\Test_Comparaison_VanillaSwap.cpp">
       <Filter>Test\Test_JL</Filter>
     </ClCompile>
-    <ClCompile Include="VanillaSwapRate.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
-    </ClCompile>
-    <ClCompile Include="CallableSwap.cpp">
-      <Filter>LMM_instrument\GeneticSwap</Filter>
+    <ClCompile Include="JBLMM\Test\Test_McGeneticSwapLMMPricer.cpp">
+      <Filter>Test\Test_JL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
