@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include "CheyetteDD_Model.h"						
+#include <Cheyette\CheyetteModel\CheyetteDD_Model.h>						
 #include <LMM/instrument/VanillaSwaption.h>
 #include <LMM/numeric/Integrator1D.h>
 
-#include "InverseFunction.h"
+#include <Cheyette\InverseFunction.h>
 
 #include <LMM/numeric/NumericalMethods.h>  //pour le prix Black
 
@@ -13,6 +13,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <Cheyette/Fonction.h>
 
 /**********************************************************
 
@@ -29,35 +30,49 @@ private:
 	CheyetteDD_Model_PTR	cheyetteDD_Model_;  
 	VanillaSwaption_PTR		swaption_ ;
 
-	double annuity0_ ;
-	double s0_;			//  en input // double s_bar_ ;     
-	//double y_bar_t_ ;	//double calculé en t avec la fonction calculate_y_bar(t)
-
 	//appel fréquent aux éléments suivants -> buffer
+	mutable courbeInput_PTR			buffer_courbeInput_ ;
 	mutable VanillaSwap				buffer_UnderlyingSwap_ ;
 	mutable double					buffer_T0_ ;
 	mutable double					buffer_TN_ ;
 	mutable std::vector<LMM::Index> buffer_fixedLegPaymentIndexSchedule_ ;
+	mutable std::vector<LMM::Index> buffer_floatingLegPaymentIndexSchedule_ ;
 	mutable std::vector<double>		buffer_deltaTFixedLeg_ ;
-	mutable courbeInput_PTR			buffer_courbeInput_ ;
+	mutable double					buffer_s0_;		
+
+	mutable Interpolation_RR_Function	buffer_y_bar_;
 
 public :
 	//constructor  
 	CheyetteDD_VanillaSwaptionApproxPricer(	const CheyetteDD_Model_PTR& cheyetteDD_Model, 
-											const VanillaSwaption_PTR&	swaption, 
-											double s0); 
+											const VanillaSwaption_PTR&	swaption); 
+
+
+
 	//destructor
 	virtual ~CheyetteDD_VanillaSwaptionApproxPricer(){};
 
 	//getters
-	CheyetteDD_Model_CONSTPTR get_CheyetteDD_Model() const {return cheyetteDD_Model_ ;}
-	VanillaSwaption_PTR get_VanillaSwaption() const {return swaption_ ;}
-	double get_buffer_T0_(){return buffer_T0_ ;}
-	double get_buffer_TN_(){return buffer_TN_ ;}
+	CheyetteDD_Model_CONSTPTR	get_CheyetteDD_Model() const {return cheyetteDD_Model_ ;}
+	VanillaSwaption_PTR			get_VanillaSwaption() const {return swaption_ ;}
+
+	courbeInput_PTR				get_buffer_courbeInput_() const {return buffer_courbeInput_ ;}
+	VanillaSwap					get_buffer_UnderlyingSwap_() const {return buffer_UnderlyingSwap_ ;}
+	double						get_buffer_T0_() const {return buffer_T0_ ;}
+	double						get_buffer_TN_() const {return buffer_TN_ ;}
+	std::vector<LMM::Index>		get_buffer_fixedLegPaymentIndexSchedule_() const {return buffer_fixedLegPaymentIndexSchedule_ ;}
+	std::vector<LMM::Index>		get_buffer_floatingLegPaymentIndexSchedule_() const {return buffer_floatingLegPaymentIndexSchedule_ ;}
+	std::vector<double>			get_buffer_deltaTFixedLeg_() const {return buffer_deltaTFixedLeg_ ;}
+	double						get_buffer_s0_() const {return buffer_s0_ ;}
+
+	Interpolation_RR_Function&		get_buffer_y_bar_() const {return buffer_y_bar_ ;}
+
 
 	//calcul de y_barre(t)
-	double calculate_y_bar(double t) const;								//sa valeur depend du paramètre k !
-	// ! pendant la calibration, remettre à jour la valeur de y_barre ?
+	double to_integrate_y_bar(double t) const ;
+	void initialize_y_bar(double t, size_t gridSize) const;		// ! pendant la calibration, remettre à jour la valeur de y_barre ?
+	//double calculate_y_bar(double t) const;					//sa valeur depend du paramètre k !
+
 
 
 /**********************  fonctions et dérivées pour ZC, swap rate ************************
@@ -91,6 +106,7 @@ public :
 
 
 	//swapRate = swapNumerator / swapDenominator
+		double swapRate0() const;
 		double swapRate(double t, double x_t) const;
 		double swapRate_1stDerivative(double t, double x_t) const;
 		double swapRate_2ndDerivative(double t, double x_t) const;
@@ -127,18 +143,17 @@ public :
 		double b(double t) const;
 		double lambda(double t) const;
 		double lambda2(double t) const;
-		double v2(double t) const;  //integrale de 0 à t de lambda^2(u) du
+		//double v2(double t) const;  //integrale de 0 à t de lambda^2(u) du
 
-		// \bar{b} = timeAveraging_b_numerateur/timeAveraging_b_denom
-		double timeAveraging_b_numerateur(double t) const ;
-		double timeAveraging_b_denom(double t) const ;
+		double f_outer_num(double t) const ;		//lambda^2(u) * b(u)
+		double f_outer_denom(double t) const ;		//lambda^2(u)
 		
 		//retourne b barre du displaced diffusion
-		double timeAverage(double t, size_t gridSize) const ;	
-		double timeAverage2(double t, size_t gridSize) const;
+		double timeAverage(double t) const ;				//, size_t gridSize	
+		//double timeAverage2(double t, size_t gridSize) const;
 
 		//prix swaption approximé 
-		double prixSwaptionApproxPiterbarg(size_t gridSize) const ;
+		double prixSwaptionApproxPiterbarg() const ;		//size_t gridSize
 
 
 //	////! precalculation: YY TODO: can be further optimized for calibration problem. 

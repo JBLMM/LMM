@@ -48,17 +48,26 @@ void test_incremental_integrale2()
 	double start = 0 ;
 	double end = 1 ;
 	size_t nbPoints = 100 + 1 ; //delta t = 1/10
+
+	/*
 	std::vector<double> f_grids ;
 	for (size_t i = 0 ; i < nbPoints ; ++i)
 	{
 		f_grids.push_back(i/100.) ;		//modifier ici aussi le nb de points
 	}
-	numeric::IncrementalIntegrator1D_Riemann incr(start, end, nbPoints, f_grids); 
+	*/
+
+	//numeric::IncrementalIntegrator1D_Riemann incr(start, end, nbPoints); 
+
+
 	//for (size_t i = 0 ; i < nbPoints ; ++i)			//debogage
 	//{
 	//	std::cout << incr.get_value(i) << std::endl ;
 	//}
-	boost::function<double(double)> func1 = f_test;
-	std::cout << incr.integrate(func1) << std::endl ;
+	//boost::function<double(double)> func1 = f_test;
+
+	numeric::IncrementalIntegrator2D_Riemann integrator(start, end, nbPoints); 
+	std::cout << integrator.integrate(f_test,f_test) << std::endl;
+
 	std::cout << 1/8. << std::endl ;
 }

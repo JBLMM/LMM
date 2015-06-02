@@ -32,6 +32,8 @@ public:
 
 	double payoff(const double& pvVloatingLeg, const double& pvFixedLeg) const;	
 	Tenor  get_lmmTenorStructureTenorType() const {return getUnderlyingSwap().get_lmmTenorStructureTenorType();} // to compare with the pricer's lmm's strucutreTenor.
+
+	void show() ;
 };
 
 typedef boost::shared_ptr<VanillaSwaption> VanillaSwaption_PTR;

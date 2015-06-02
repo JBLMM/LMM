@@ -138,26 +138,65 @@ double linearInterpolation(const double& t,
 {
 	
 	size_t index_maturiy_before_t = 0;
-	//-- Search the maturities bounding date t
-	for (size_t i = 0; i < maturities.size(); ++i)
-	{
-		if (t > maturities[i])
-			index_maturiy_before_t++;
+
+	try{
+		if (maturities.size() != set_of_points.size())
+		{
+			throw std::string("Exception linearInterpolation : vecteurs grid et value doivent avoir meme longueur");
+		}
+		else
+		{
+			//-- Search the maturities bounding date t
+			for (size_t i = 0; i < maturities.size(); ++i)
+			{
+				if (t > maturities[i])
+					index_maturiy_before_t++;
+			}
+
+			double date_prev = maturities[index_maturiy_before_t-1];
+			double date_next = maturities[index_maturiy_before_t];
+
+			double point_prev = set_of_points[index_maturiy_before_t-1];
+			double point_next = set_of_points[index_maturiy_before_t];
+
+			double coeff_1 = (date_next - t)/(date_next - date_prev);
+			double coeff_2 = (t - date_prev)/(date_next - date_prev);
+
+			double interpolatedValue = coeff_1*point_prev + coeff_2*point_next;
+			return interpolatedValue;
+		}
 	}
+	catch(std::string const& chaine) {std::cerr << chaine << std::endl;}
 
-	double date_prev = maturities[index_maturiy_before_t-1];
-	double date_next = maturities[index_maturiy_before_t];
-
-	double point_prev = set_of_points[index_maturiy_before_t-1];
-	double point_next = set_of_points[index_maturiy_before_t];
-
-	double coeff_1 = (date_next - t)/(date_next - date_prev);
-	double coeff_2 = (t - date_prev)/(date_next - date_prev);
-
-	double interpolatedValue = coeff_1*point_prev + coeff_2*point_next;
-	return interpolatedValue;
 }
 
+double linearInterpolation2(const double& t, 
+						   const std::vector<double>& maturities,
+						   const std::vector<double>& set_of_points)
+{
+	
+	try{
+		size_t N = maturities.size() ;
+		if (N != set_of_points.size())
+		{
+			throw std::string("Exception linearInterpolation : vecteurs grid et value doivent avoir meme longueur");
+		}
+		if (N == 0)
+		{
+			throw std::string("Exception linearInterpolation : vecteurs doivent etre non vides");
+		}
+		if (t < maturities[0] || t > maturities[N - 1])
+		{
+			throw std::string("Exception linearInterpolation : extrapolation !!");
+		}
+		int i=0 ;
+		while (t > maturities[i+1] && i < N-2){++i ;}
+	
+		return ( set_of_points[i] + (set_of_points[i+1] - set_of_points[i])/(maturities[i+1] - maturities[i])*(t - maturities[i]) ) ;
+	}
+	catch(std::string const& chaine) {std::cerr << chaine << std::endl;}
+
+}
 
 double vectorProduct(std::vector<double>& v1, std::vector<double>& v2)
 {

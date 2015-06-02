@@ -38,6 +38,12 @@ namespace NumericalMethods
 		                       const std::vector<double>& set_of_points
 							   );
 
+	double linearInterpolation2(
+							const double& t, 
+		                    const std::vector<double>& maturities,
+		                    const std::vector<double>& set_of_points
+							);
+
 	double vectorProduct(std::vector<double>& v1, std::vector<double>& v2) ;
 	
 } // end NumericalMethods
