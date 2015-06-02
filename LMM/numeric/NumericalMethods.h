@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
+
 
 #include <boost/math/distributions.hpp>
 #include <boost/function.hpp>
@@ -21,6 +23,9 @@ namespace NumericalMethods
 	// Compute a derivative's price using Black's formula
 	double Black_Price(const double& fwd, const double& strike, const double& vol, const double& T);
 
+	//avec vol non constante
+	double Black_Price_vol2(const double& fwd, const double& strike, const double& vol, const double& T);
+
 	double Black_Vega(const double& fwd, const double& strike, const double& vol, const double& T);
 
 	double Black_Volga(const double& fwd, const double& strike, const double& vol, const double& T);
@@ -32,6 +37,12 @@ namespace NumericalMethods
 		                       const std::vector<double>& maturities,
 		                       const std::vector<double>& set_of_points
 							   );
+
+	double linearInterpolation2(
+							const double& t, 
+		                    const std::vector<double>& maturities,
+		                    const std::vector<double>& set_of_points
+							);
 
 	double vectorProduct(std::vector<double>& v1, std::vector<double>& v2) ;
 	

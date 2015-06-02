@@ -18,3 +18,11 @@ double VanillaSwaption::payoff(const double& pvVloatingLeg, const double& pvFixe
 	else
 		return std::max(pvFixedLeg - pvVloatingLeg, 0.0);
 }
+
+void VanillaSwaption::show()
+{
+	std::cout << "---------------------------------------------" << std::endl ;
+	std::cout << "--- creation d'un objet VanillaSwaption ----" << std::endl ;
+	vanillaSwap_.show() ;
+	std::cout << "---------------------------------------------" << std::endl ;
+}

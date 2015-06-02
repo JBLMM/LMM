@@ -145,6 +145,45 @@ void VanillaSwap::print(const std::string& filename) const
 	outputstream.close();
 }
 
+void VanillaSwap::show()
+{
+	std::cout << "---------------------------------------------" << std::endl ;
+	std::cout << "--- creation d'un objet VanillaSwap --------" << std::endl ;
+	std::cout << "floatingLegTenorType_ " << floatingLegTenorType_ << std::endl ;
+	std::cout << "fixedLegTenorType_    " << fixedLegTenorType_ << std::endl ;
+	std::cout << "indexStart_           " << indexStart_ << std::endl ;
+	std::cout << "indexEnd_             " << indexEnd_ << std::endl ;
+	//std::cout << "get_EndDate " << simulationStructure->get_EndDate() << std::endl ;
+	//std::cout << "get_horizon " << simulationStructure->get_horizon() << std::endl ;
+	//std::cout << "get_nbLIBOR " << simulationStructure->get_nbLIBOR() << std::endl ;
+	//std::cout << "get_tenorType " << simulationStructure->get_tenorType() << std::endl ;
+	
+	std::cout << "indices des flux fixes" << std::endl ;
+	for (size_t i= 0 ; i < fixedLegPaymentIndexSchedule_.size() ; ++i)
+	{
+		std::cout << fixedLegPaymentIndexSchedule_[i] << "  " ;
+	}
+	std::cout << " " << std::endl ;
+	std::cout << "indices des flux flottants" << std::endl ;
+	for (size_t i= 0 ; i < floatingLegPaymentIndexSchedule_.size() ; ++i)
+	{
+		std::cout << floatingLegPaymentIndexSchedule_[i] << "  " ;
+	}
+	std::cout << " " << std::endl ;
+	std::cout << "deltaTFloatingLeg_ i" << std::endl ;
+	for (size_t i = 0 ; i < deltaTFloatingLeg_.size() ; ++i)
+	{
+		std::cout << deltaTFloatingLeg_[i] << "  " ;
+	} 
+	std::cout << " " << std::endl ;
+	std::cout << "deltaTFixedLeg_ i" << std::endl ;
+	for (size_t i = 0 ; i < deltaTFixedLeg_.size() ; ++i)
+	{
+		std::cout << deltaTFixedLeg_[i] << "  " ;
+	} 
+	std::cout << " " << std::endl ;
+	std::cout << "---------------------------------------------" << std::endl ;
+}
 
 
 

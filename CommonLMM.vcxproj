@@ -39,6 +39,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+<<<<<<< HEAD
+=======
+    <IncludePath>C:\stageCheyette\LunaLibrary; C:\boost&amp;quantlib\QuantLib-1.2.1\ql;C:\boost&amp;quantlib\boost_1_58_0;C:\boost&amp;quantlib\QuantLib-1.2.1;$(IncludePath)</IncludePath>
+>>>>>>> 3301cd05cd3a056863e974e66d7c11107f41477b
     <IncludePath>E:\Visual_Studio_Project\Visual_Studio_2012_Project\LunaLibrary;E:\DevLib\boost;E:\DevLib\QuantLib;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)VCBuild\$(Configuration)\</OutDir>
     <IntDir>VCBuild\$(Configuration)\</IntDir>
@@ -54,6 +58,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
+<<<<<<< HEAD
+=======
+      <AdditionalIncludeDirectories>C:\boost&amp;quantlib\QuantLib-1.2.1;C:\stageCheyette\LunaLibrary;C:\boost&amp;quantlib\boost_1_58_0</AdditionalIncludeDirectories>
+>>>>>>> 3301cd05cd3a056863e974e66d7c11107f41477b
       <AdditionalIncludeDirectories>E:\DevLib\boost;E:\Visual_Studio_Project\Visual_Studio_2012_Project\LunaLibrary</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -62,7 +70,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>E:\DevLib\QuantLib\lib\QuantLib-vc110-mt-gd.lib</AdditionalDependencies>
+      <AdditionalDependencies>C:\boost&amp;quantlib\QuantLib-1.2.1\lib\QuantLib-vc110-mt-gd.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\DevLib\boost\libs;E:\DevLib\QuantLib\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -83,6 +91,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+<<<<<<< HEAD
     <ClInclude Include="JBLMM\Element\CappedFlooredCoupon.h" />
     <ClInclude Include="JBLMM\Element\Coupon.h" />
     <ClInclude Include="JBLMM\Element\CouponLeg.h" />
@@ -97,6 +106,27 @@
     <ClInclude Include="JBLMM\Instrument\VanillaSwapRate.h" />
     <ClInclude Include="JBLMM\Pricer\GeneticVanillaSwapPricer.h" />
     <ClInclude Include="JBLMM\Pricer\McGeneticSwapLMMPricer.h" />
+=======
+    <ClInclude Include="CallableSwap.h" />
+    <ClInclude Include="CappedFlooredCoupon.h" />
+    <ClInclude Include="Cheyette\CheyetteModel\CheyetteDD_Model.h" />
+    <ClInclude Include="Cheyette\Pricer\CheyetteDD_VanillaSwaptionApproxPricer.h" />
+    <ClInclude Include="Cheyette\CheyetteModel\CheyetteModel.h" />
+    <ClInclude Include="Cheyette\CheyetteModel\courbeInput.h" />
+    <ClInclude Include="Cheyette\Fonction.h" />
+    <ClInclude Include="Cheyette\InverseFunction.h" />
+    <ClInclude Include="Cheyette\Pricer\CheyetteDD_VanillaSwaptionMCPricer.h" />
+    <ClInclude Include="Cheyette\unit_test\TestApproxDD.h" />
+    <ClInclude Include="Cheyette\unit_test\TestFonction.h" />
+    <ClInclude Include="Cheyette\unit_test\TestMC.h" />
+    <ClInclude Include="Coupon.h" />
+    <ClInclude Include="CouponLeg.h" />
+    <ClInclude Include="GeneticSwap.h" />
+    <ClInclude Include="GeneticSwaption.h" />
+    <ClInclude Include="GeneticVanillaSwapPricer.h" />
+    <ClInclude Include="InstrumentFactory.h" />
+    <ClInclude Include="LiborRate.h" />
+>>>>>>> 3301cd05cd3a056863e974e66d7c11107f41477b
     <ClInclude Include="LMM\calibration\LmmCalibrationConfig.h" />
     <ClInclude Include="LMM\greek\LmmVega.h" />
     <ClInclude Include="LMM\helper\BuildVariable.h" />
@@ -189,6 +219,7 @@
     <ClInclude Include="LMM\Test\Tests.h" />
     <ClInclude Include="LMM\Test\Test_CalibrationConfig.h" />
     <ClInclude Include="LMM\Test\Test_createLmmModel.h" />
+<<<<<<< HEAD
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JBLMM\Element\CappedFlooredCoupon.cpp" />
@@ -207,6 +238,37 @@
     <ClCompile Include="JBLMM\Pricer\McGeneticSwapLMMPricer.cpp" />
     <ClCompile Include="JBLMM\Test\Test_Comparaison_VanillaSwap.cpp" />
     <ClCompile Include="JBLMM\Test\Test_McGeneticSwapLMMPricer.cpp" />
+=======
+    <ClInclude Include="McGeneticSwapLMMPricer.h" />
+    <ClInclude Include="Cheyette\Pricer\MC_CheyetteDD_VanillaSwapPricer.h" />
+    <ClInclude Include="Cheyette\Pricer\MC_Cheyette.h" />
+    <ClInclude Include="RatchetCoupon.h" />
+    <ClInclude Include="Rate.h" />
+    <ClInclude Include="TargetCoupon.h" />
+    <ClInclude Include="Cheyette\unit_test\Test_CheyetteDD_Model.h" />
+    <ClInclude Include="Cheyette\unit_test\TestIntegrator1D_2D.h" />
+    <ClInclude Include="VanillaSwapRate.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CallableSwap.cpp" />
+    <ClCompile Include="CappedFlooredCoupon.cpp" />
+    <ClCompile Include="Cheyette\CheyetteModel\CheyetteDD_Model.cpp" />
+    <ClCompile Include="Cheyette\Pricer\CheyetteDD_VanillaSwaptionApproxPricer.cpp" />
+    <ClCompile Include="Cheyette\CheyetteModel\CheyetteModel.cpp" />
+    <ClCompile Include="Cheyette\CheyetteModel\courbeInput.cpp" />
+    <ClCompile Include="Cheyette\InverseFunction.cpp" />
+    <ClCompile Include="Cheyette\Pricer\CheyetteDD_VanillaSwaptionMCPricer.cpp" />
+    <ClCompile Include="Cheyette\unit_test\TestApproxDD.cpp" />
+    <ClCompile Include="Cheyette\unit_test\TestFonction.cpp" />
+    <ClCompile Include="Cheyette\unit_test\TestMC.cpp" />
+    <ClCompile Include="Coupon.cpp" />
+    <ClCompile Include="CouponLeg.cpp" />
+    <ClCompile Include="GeneticSwap.cpp" />
+    <ClCompile Include="GeneticSwaption.cpp" />
+    <ClCompile Include="GeneticVanillaSwapPricer.cpp" />
+    <ClCompile Include="InstrumentFactory.cpp" />
+    <ClCompile Include="LiborRate.cpp" />
+>>>>>>> 3301cd05cd3a056863e974e66d7c11107f41477b
     <ClCompile Include="LMM\Test\Test.cpp" />
     <ClCompile Include="LMM\Test\test_beginner.cpp" />
     <ClCompile Include="LMM\Test\Test_BlackGreek.cpp" />
@@ -232,6 +294,14 @@
     <ClCompile Include="LMM\Test\Test_VanillaSwaptionPricer.cpp" />
     <ClCompile Include="LMM\Test\Test_VanillaSwaptionPricer_MCvsApprox.cpp" />
     <ClCompile Include="main.cpp" />
+<<<<<<< HEAD
+=======
+    <ClCompile Include="McGeneticSwapLMMPricer.cpp" />
+    <ClCompile Include="Cheyette\Pricer\MC_CheyetteDD_VanillaSwapPricer.cpp" />
+    <ClCompile Include="Cheyette\Pricer\MC_Cheyette.cpp" />
+    <ClCompile Include="RatchetCoupon.cpp" />
+    <ClCompile Include="Rate.cpp" />
+>>>>>>> 3301cd05cd3a056863e974e66d7c11107f41477b
     <ClCompile Include="src\calibration\LmmCalibrationConfig.cpp" />
     <ClCompile Include="src\helper\BuildVariable.cpp" />
     <ClCompile Include="src\helper\CalibrationType.cpp" />
@@ -310,7 +380,17 @@
     <ClCompile Include="src\pricer\LmmVanillaSwapPricer.cpp" />
     <ClCompile Include="src\RNGenerator\McGenerator.cpp" />
     <ClCompile Include="src\RNGenerator\QMcGenerator.cpp" />
+<<<<<<< HEAD
     <ClCompile Include="test\unit_test\test_Integrator1D.cpp" />
+=======
+    <ClCompile Include="TargetCoupon.cpp" />
+    <ClCompile Include="Cheyette\unit_test\TestIntegrator1D_2D.cpp" />
+    <ClCompile Include="test\unit_test\test_Integrator1D.cpp" />
+    <ClCompile Include="Cheyette\unit_test\Test_CheyetteDD_Model.cpp" />
+    <ClCompile Include="Test_Comparaison_VanillaSwap.cpp" />
+    <ClCompile Include="Test_McGeneticSwapLMMPricer.cpp" />
+    <ClCompile Include="VanillaSwapRate.cpp" />
+>>>>>>> 3301cd05cd3a056863e974e66d7c11107f41477b
   </ItemGroup>
   <ItemGroup>
     <None Include="TODO" />

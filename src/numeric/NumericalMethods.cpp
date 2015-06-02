@@ -68,6 +68,22 @@ double Black_Price(const double& fwd, const double& strike, const double& vol, c
 	return fwd*N1-strike*N2;
 }
 
+//avec vol non constante
+//vol = sqrt( \int_0^T \sigma^2(u) du )
+double Black_Price_vol2(const double& fwd, const double& strike, const double& vol, const double& T) //(check)
+{
+	std::cout << "SJ : " << fwd << ", strike : " << strike << ", vol : " << vol << ", T : " << T << std::endl ;
+    assert(vol > 0 && T > 0 && fwd >0 && strike >0);
+
+	double d1 = (log(fwd/strike) + 0.5 * vol * vol) / vol ;
+	double d2 = d1 - vol;
+
+	boost::math::normal_distribution<> nd(0,1); 
+	double N1 = cdf(nd,d1);
+	double N2 = cdf(nd,d2); 
+
+	return fwd*N1-strike*N2;
+}
 
 double Black_Vega(const double& fwd, const double& strike, const double& vol, const double& T)
 {
@@ -104,9 +120,9 @@ double Black_impliedVolatility(const double&  bs_call_price,
 	boost::function<double(double)> f_derivative = boost::bind(Black_Vega,fwd,strike,_1,T);
 	
 	BS_function_helper bs_function_helper(f,f_derivative,bs_call_price);
-	double initial_guess = 0.02;
+	double initial_guess = 1 ;
 	double min    = 10e-5;
-	double max    = 1.0;
+	double max    = 10 ;
     size_t nDigits   = 15;
 	boost::uintmax_t nMaxIter  = 100;
 	double result_newton_raphson = boost::math::tools::newton_raphson_iterate(bs_function_helper, initial_guess, min, max, nDigits);
@@ -122,26 +138,65 @@ double linearInterpolation(const double& t,
 {
 	
 	size_t index_maturiy_before_t = 0;
-	//-- Search the maturities bounding date t
-	for (size_t i = 0; i < maturities.size(); ++i)
-	{
-		if (t > maturities[i])
-			index_maturiy_before_t++;
+
+	try{
+		if (maturities.size() != set_of_points.size())
+		{
+			throw std::string("Exception linearInterpolation : vecteurs grid et value doivent avoir meme longueur");
+		}
+		else
+		{
+			//-- Search the maturities bounding date t
+			for (size_t i = 0; i < maturities.size(); ++i)
+			{
+				if (t > maturities[i])
+					index_maturiy_before_t++;
+			}
+
+			double date_prev = maturities[index_maturiy_before_t-1];
+			double date_next = maturities[index_maturiy_before_t];
+
+			double point_prev = set_of_points[index_maturiy_before_t-1];
+			double point_next = set_of_points[index_maturiy_before_t];
+
+			double coeff_1 = (date_next - t)/(date_next - date_prev);
+			double coeff_2 = (t - date_prev)/(date_next - date_prev);
+
+			double interpolatedValue = coeff_1*point_prev + coeff_2*point_next;
+			return interpolatedValue;
+		}
 	}
+	catch(std::string const& chaine) {std::cerr << chaine << std::endl;}
 
-	double date_prev = maturities[index_maturiy_before_t-1];
-	double date_next = maturities[index_maturiy_before_t];
-
-	double point_prev = set_of_points[index_maturiy_before_t-1];
-	double point_next = set_of_points[index_maturiy_before_t];
-
-	double coeff_1 = (date_next - t)/(date_next - date_prev);
-	double coeff_2 = (t - date_prev)/(date_next - date_prev);
-
-	double interpolatedValue = coeff_1*point_prev + coeff_2*point_next;
-	return interpolatedValue;
 }
 
+double linearInterpolation2(const double& t, 
+						   const std::vector<double>& maturities,
+						   const std::vector<double>& set_of_points)
+{
+	
+	try{
+		size_t N = maturities.size() ;
+		if (N != set_of_points.size())
+		{
+			throw std::string("Exception linearInterpolation : vecteurs grid et value doivent avoir meme longueur");
+		}
+		if (N == 0)
+		{
+			throw std::string("Exception linearInterpolation : vecteurs doivent etre non vides");
+		}
+		if (t < maturities[0] || t > maturities[N - 1])
+		{
+			throw std::string("Exception linearInterpolation : extrapolation !!");
+		}
+		int i=0 ;
+		while (t > maturities[i+1] && i < N-2){++i ;}
+	
+		return ( set_of_points[i] + (set_of_points[i+1] - set_of_points[i])/(maturities[i+1] - maturities[i])*(t - maturities[i]) ) ;
+	}
+	catch(std::string const& chaine) {std::cerr << chaine << std::endl;}
+
+}
 
 double vectorProduct(std::vector<double>& v1, std::vector<double>& v2)
 {

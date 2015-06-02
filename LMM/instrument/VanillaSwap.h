@@ -70,6 +70,8 @@ public:
 	// print swap informations to csv file
 	void print(const std::string& filename) const ;
 
+	void show() ;
+
 private:
 
 	double strike_;

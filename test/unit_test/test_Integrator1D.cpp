@@ -19,6 +19,7 @@ public:
 
 void test_Integrator1D()
 {
+	/*
 	 numeric::Integrator1D_Riemann integral_Riemnan; 
 
 	 double gridStart = 0.0;
@@ -33,4 +34,40 @@ void test_Integrator1D()
 	 double result2 = integral_Riemnan.integrate(gridStart, gridEnd, gridSize, func2);
 
 	 std::cout << result1 << " vs " << result2 << std::endl;
+	 */
+}
+
+double f_test (double x)
+{
+	return x ;
+}
+
+// \int_0^1 u \int_0^u s ds du = 1/8
+void test_incremental_integrale2()
+{
+	double start = 0 ;
+	double end = 1 ;
+	size_t nbPoints = 100 + 1 ; //delta t = 1/10
+
+	/*
+	std::vector<double> f_grids ;
+	for (size_t i = 0 ; i < nbPoints ; ++i)
+	{
+		f_grids.push_back(i/100.) ;		//modifier ici aussi le nb de points
+	}
+	*/
+
+	//numeric::IncrementalIntegrator1D_Riemann incr(start, end, nbPoints); 
+
+
+	//for (size_t i = 0 ; i < nbPoints ; ++i)			//debogage
+	//{
+	//	std::cout << incr.get_value(i) << std::endl ;
+	//}
+	//boost::function<double(double)> func1 = f_test;
+
+	numeric::IncrementalIntegrator2D_Riemann integrator(start, end, nbPoints); 
+	std::cout << integrator.integrate(f_test,f_test) << std::endl;
+
+	std::cout << 1/8. << std::endl ;
 }

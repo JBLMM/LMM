@@ -4,6 +4,7 @@
 #include "assert.h"
 #include <boost/shared_ptr.hpp>
 #include <iostream>
+#include <LMM/numeric/NumericalMethods.h>
 
 //c'est la courbe spot des taux ZC
 
@@ -12,15 +13,15 @@ class CourbeInput
 {
 private:
 	std::vector<double> listeMatu_ ;
-	std::vector<double> tauxZC_ ;
+	std::vector<double> tauxZC_ ;  //yield
 
 public:
-	CourbeInput(void);
 	CourbeInput(std::vector<double> listeMatu, std::vector<double> tauxZC);
-	~CourbeInput(void);
+	virtual ~CourbeInput(void){}
 
-	double get_tauxZC0(double T) ;
-	void showCourbeInput() ;
+	double get_tauxZC0(double T) const ;
+	double get_f_0_t(double t) const ;
+	void showCourbeInput() const ;
 };
 
 typedef boost::shared_ptr<CourbeInput> courbeInput_PTR;
