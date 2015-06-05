@@ -291,15 +291,12 @@
     <ClInclude Include="LMM\pricer\Regression.h">
       <Filter>LMM_pricer\CallableOptionPricer</Filter>
     </ClInclude>
-<<<<<<< .mine
     <ClInclude Include="LMM\pricer\McLmmCallableOptionPricer.h">
       <Filter>LMM_pricer\CallableOptionPricer</Filter>
     </ClInclude>
-=======
     <ClInclude Include="LMM\LmmModel\LmmPenalty.h">
       <Filter>LMM_Model\Calibration</Filter>
     </ClInclude>
->>>>>>> .r818
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\calibration\ATMSwaptionMarketData.cpp">
@@ -543,16 +540,13 @@
     <ClCompile Include="src\pricer\Regression.cpp">
       <Filter>LMM_pricer\CallableOptionPricer</Filter>
     </ClCompile>
-<<<<<<< .mine
     <ClCompile Include="src\pricer\McLmmCallableOptionPricer.cpp">
       <Filter>LMM_pricer\CallableOptionPricer</Filter>
     </ClCompile>
-=======
     <ClCompile Include="src\pricer\McLmmCallableOptionPricer.cpp" />
     <ClCompile Include="src\LmmModel\LmmPenalty.cpp">
       <Filter>LMM_Model\Calibration</Filter>
     </ClCompile>
->>>>>>> .r818
   </ItemGroup>
   <ItemGroup>
     <None Include="TODO" />

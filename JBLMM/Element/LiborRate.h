@@ -5,6 +5,23 @@
 #include <JBLMM/Element/Rate.h>
 #include <LMM/helper/TenorType.h>
 
+class ConstRate : public Rate1
+{
+	const double constRateValue_;
+
+public:
+	//getter
+	double getConstRateValue()const{return constRateValue_;}
+	//constructor
+	ConstRate(const double constRateValue);
+	//clone
+	Rate_PTR clone()const;
+};
+typedef boost::shared_ptr<ConstRate> ConstRate_PTR;
+typedef boost::shared_ptr<const ConstRate> ConstRate_CONSTPTR;
+
+
+
 class LiborRate : public Rate1
 {
 	double fixingTime_; // T_{i-1}
@@ -20,5 +37,5 @@ public:
 	Rate_PTR clone()const;	//deep copy
 };
 typedef boost::shared_ptr<LiborRate> LiborRate_PTR;
-typedef boost::shared_ptr<LiborRate> LiborRate_CONSTPTR;
+typedef boost::shared_ptr<const LiborRate> LiborRate_CONSTPTR;
 

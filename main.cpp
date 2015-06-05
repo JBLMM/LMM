@@ -1,9 +1,8 @@
 #include <LMM/Test/Tests.h>
 #include <stdio.h>
-<<<<<<< HEAD
 
 
-=======
+
 #include <Cheyette/unit_test/TestFonction.h>
 #include <Cheyette/unit_test/TestIntegrator1D_2D.h>
 #include <Cheyette/unit_test/TestApproxDD.h>
@@ -11,7 +10,7 @@
 #include <Cheyette/Pricer/CheyetteDD_VanillaSwaptionMCPricer.h>
 #include <LMM/numeric/Integrator1D.h>
 #include <Cheyette/unit_test/TestMC.h>
->>>>>>> 3301cd05cd3a056863e974e66d7c11107f41477b
+
 
 
 int main()
@@ -19,14 +18,13 @@ int main()
 
 	//test_beginner();							//test_JB
 	//vanillaSwapComparaisonExemple();			//test_JB		
-<<<<<<< HEAD
+
 	Test_McGeneticSwapLMMPricer();			//test_JB
+	//Test_McGeneticTargetSwapLMMPricing();		//test_JB
 
 
 	//test_Integrator1D();
 
-=======
-	//Test_McGeneticSwapLMMPricer();			//test_JB
 	//createDDModel_xyz() ;
 	
 	/************    tests JL   ************************/
@@ -60,7 +58,7 @@ int main()
 
 	//test_incremental_integrale() ;
 
-	UneTrajectoireEuler() ;
+	//UneTrajectoireEuler() ;
 
 
 	/************  tests LMM   *************************/
@@ -75,7 +73,7 @@ int main()
 	//test_VanillaSwapPricer();  
 	//test_VanillaSwaptionPricer();    
 	//test_VanialSwaptionPricer_MCvsApprox(); 
->>>>>>> 3301cd05cd3a056863e974e66d7c11107f41477b
+
 
 	//test_Noise();  
 	//test_HGVolatility();  

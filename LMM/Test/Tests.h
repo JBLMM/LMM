@@ -50,6 +50,7 @@ void test_LmmRegularizedCalibrationMarketData();
 void test_beginner();
 void vanillaSwapComparaisonExemple();
 void Test_McGeneticSwapLMMPricer();
+void Test_McGeneticTargetSwapLMMPricing();
 
 LmmSwaptionMarketData_PTR get_LmmSwaptionMarketData(const LmmCalibrationConfig& config, const std::string& input_file);
 

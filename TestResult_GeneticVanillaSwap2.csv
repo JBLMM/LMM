@@ -1,0 +1,325 @@
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 1000
+PRICES: 
+MonteCarloPrice: 0.000839356
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: -5.84327e-005
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.000419022
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: 0.000157999
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 5000
+PRICES: 
+MonteCarloPrice: 0.000898385
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: 5.9635e-007
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.000418634
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: 0.000157611
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 10000
+PRICES: 
+MonteCarloPrice: 0.0011428
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: 0.000245007
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.000336746
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: 7.57224e-005
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 50000
+PRICES: 
+MonteCarloPrice: 0.000952319
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: 5.45301e-005
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.000208236
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: -5.27872e-005
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 100000
+PRICES: 
+MonteCarloPrice: 0.000911371
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: 1.35824e-005
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.00021759
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: -4.3433e-005
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 1
+PRICES: 
+MonteCarloPrice: -0.0142535
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: -0.0151513
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.0119312
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: 0.0116702
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 100
+PRICES: 
+MonteCarloPrice: -0.00189789
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: -0.00279568
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.000795175
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: 0.000534152
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 1000
+PRICES: 
+MonteCarloPrice: 0.00167619
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: 0.000778405
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.000383185
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: 0.000122161
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 20000
+PRICES: 
+MonteCarloPrice: 0.000763989
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: -0.000133799
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.000230059
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: -3.09639e-005
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 1000
+PRICES: 
+MonteCarloPrice: -0.000899443
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: -0.00179723
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: -0.000812735
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: -0.00107376
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 100
+PRICES: 
+MonteCarloPrice: -0.0031577
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: -0.00405549
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: -0.000729106
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: -0.00099013
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 10000
+PRICES: 
+MonteCarloPrice: 0.000384005
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: -0.000513784
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 5.14323e-005
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: -0.000209591
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017
+
+
+
+strike: 0.02
+indexStart: 0
+indexEnd: 20
+floatingTenorYearFraction: 0.5
+fixedTenorYearFraction: 1
+horizonYear: 10
+liborsInitValue: 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 
+nbSimulation: 1000
+PRICES: 
+MonteCarloPrice: -0.000455646
+OrdinaryGeneticVanillaSwapPrice: 0.000897789
+FirstVersionSwapPrice: 0.000897789
+Difference between MonteCarloPrice and OrdinaryGeneticVanillaSwapPrice: -0.00135343
+Difference between OrdinaryGeneticVanillaSwapPrice and FirstVersionSwapPrice: -2.22045e-016
+subPrice: 
+subIndexStart: 10
+subIndexEnd: 16
+subMonteCarloPrice: 0.000380678
+subOrdinaryGeneticVanillaSwapPrice: 0.000261023
+subFirstVersionSwapPrice: 0.000261023
+Difference between subMonteCarloPrice and subOrdinaryGeneticVanillaSwapPrice: 0.000119655
+Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: -9.71445e-017

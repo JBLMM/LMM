@@ -85,5 +85,6 @@ private:
 };
 
 typedef boost::shared_ptr<LMMTenorStructure> LMMTenorStructure_PTR;
+typedef boost::shared_ptr<const LMMTenorStructure> LMMTenorStructure_CONSTPTR;
 
 

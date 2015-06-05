@@ -21,8 +21,6 @@
 #include <JBLMM/Element/Coupon.h>
 
 
-
-
 class McGeneticSwapLMMPricer// want to use the pre-calculation of
 {
 
@@ -40,7 +38,7 @@ public:
 
 	//! Pricing at time T0=0
 	//double swapRate(const VanillaSwap& vanillaSwap, size_t nbSimulation) const;
-	double swapNPV (const GeneticSwap_CONSTPTR geneticSwap, size_t nbSimulation)  const;
+	virtual double swapNPV (const GeneticSwap_CONSTPTR geneticSwap, size_t nbSimulation)const;
 
 	//! 
 	void resetGeneratorToinitSeed(){mcLmm_->get_RNGenerator()->resetGeneratorToinitSeed();}
@@ -48,33 +46,13 @@ public:
 protected: 
 
 	//! one simulation
-	virtual double pvFloatingLeg(LMM::Index indexValuationDate,
-						 const CouponLeg_CONSTPTR couponLeg,
-						 const std::vector<double>& numeraire, 
-						 const matrix& liborMatrix,
-						 LMMTenorStructure_PTR lmmTenorStructure) const ;
+	virtual double evaluateCouponLeg(	 LMM::Index indexValuationDate,
+										 const CouponLeg_CONSTPTR couponLeg,
+										 const std::vector<double>& numeraire, 
+										 const matrix& liborMatrix,
+										 LMMTenorStructure_CONSTPTR lmmTenorStructure) const;
 
 	virtual double calculate(Coupon_CONSTPTR coupon, double liborValue)const;
-
-//public:
-//	double swapRate(LMM::Index indexValuationDate,
-//					const GeneticSwap_PTR geneticSwap,
-//					const std::vector<double>& numeraire, 
-//					const matrix& liborMatrix) const;
-
-	//double annuity(LMM::Index indexValuationDate,
-	//			   const lmmModel& lmmModel,
-	//			   const std::vector<double>& numeraire) const;
-
-	//double pvFixedLeg(LMM::Index indexValuationDate,
-	//				  const lmmModel& lmmModel,
-	//				  const std::vector<double>& numeraire) const;
-
-public:
-	//! To validate the result
-	//double swapNPV_Analytical(const lmmModel& lmmModel,
-	//	const std::vector<double>& initLibor) const;
-
 };
 
 

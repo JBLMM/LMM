@@ -22,14 +22,14 @@ void Test_McGeneticSwapLMMPricer()
 {
 	//! LMMTenorStructure
 	double	strike			=	0.02;
-	LMM::Index	indexStart	=	6;
-	LMM::Index	indexEnd	=	18;
+	LMM::Index	indexStart	=	0;
+	LMM::Index	indexEnd	=	20;
 	Tenor	floatingTenor	=	Tenor::_6M;
 	Tenor	fixedTenor		=	Tenor::_12M;
 	Tenor	tenorType		=	Tenor::_6M;
 	size_t	horizonYear		=	10;
 	LMMTenorStructure_PTR lmmTenorStructure( new LMMTenorStructure(tenorType, horizonYear));
-	size_t	nbSimulation	=	1000;
+	size_t	nbSimulation	=	100000;
 
 	LMM::Index	subIndexStart	=	10;
 	LMM::Index	subIndexEnd		=	16;
@@ -87,13 +87,14 @@ void Test_McGeneticSwapLMMPricer()
 	//! Dispersion
 	Dispersion dispersion(hgVolatilityFunction);
 
-	unsigned long seed = 93;
+	unsigned long seed = 5033;
 	RNGenerator_PTR  rnGenerator(new McGenerator(seed));
 
 	Lmm_PTR shiftedLmm (new Lmm(dispersion));
 
 	//build a McGeneticSwapLMMPricer
 	McGeneticSwapLMMPricer_PTR mcGeneticSwapLMMPricer(new McGeneticSwapLMMPricer(McLmm_PTR(new McTerminalLmm(shiftedLmm, liborsInitValue, rnGenerator, MCSchemeType::EULER))));
+
 	//build the vanillaSwap in the way of GeneticSwap
 	GeneticSwap_CONSTPTR vanillaSwap_Genetic=InstrumentFactory::createVanillaSwap(
 			strike,indexStart,indexEnd,floatingTenor,fixedTenor,lmmTenorStructure,1.0);
@@ -122,13 +123,15 @@ void Test_McGeneticSwapLMMPricer()
 	cout	<<	"Difference between subOrdinaryGeneticVanillaSwapPrice and subFirstVersionSwapPrice: "		<<	subOrdinaryGeneticVanillaSwapPrice-subFirstVersionSwapPrice	<<	endl;
 
 	ofstream o;
-	o.open("TestResult_GeneticVanillaSwap.csv",  ios::out | ios::app );
+	o.open("TestResult_GeneticVanillaSwap_05_06.csv",  ios::out | ios::app );
 	o	<<	endl;
 	o	<<	endl;
 	o	<<	endl;
 	o	<<	"strike: "	<<	strike	<<	endl;
 	o	<<	"indexStart: "		<<	indexStart	<<	endl;
 	o	<<	"indexEnd: "	<<	indexEnd	<<	endl;
+	o	<<	"floatingTenorVSLmmStructureTenorRatio: "		<<	floatingTenor.ratioTo(lmmTenorStructure->get_tenorType())	<<	endl;
+	o	<<	"fixedTenorVSLmmStructureTenorRatio: "	<<	fixedTenor.ratioTo(lmmTenorStructure->get_tenorType())	<<	endl;
 	o	<<	"floatingTenorYearFraction: "		<<	floatingTenor.YearFraction()	<<	endl;
 	o	<<	"fixedTenorYearFraction: "	<<	fixedTenor.YearFraction()	<<	endl;
 	o	<<	"horizonYear: "	<<	horizonYear	<<	endl;

@@ -9,8 +9,8 @@
 GeneticSwap_PTR InstrumentFactory::createVanillaSwap(	 double strike, 
 														 LMM::Index indexStart, 
 												 		 LMM::Index indexEnd, 
-														 Tenor floatingLegTenor, 
-														 Tenor fixedLegTenor,
+														 Tenor leg1Tenor,						//
+														 Tenor leg2Tenor,						
 														 LMMTenorStructure_PTR swapStructure,
 														 double nominal)
 {
@@ -18,83 +18,84 @@ GeneticSwap_PTR InstrumentFactory::createVanillaSwap(	 double strike,
 	//CouponLeg_CONSTPTR fixedLeg;    // (new CouponLeg());
 
 	//! check 
-	size_t floatingVsLiborTenorTypeRatio = floatingLegTenor.ratioTo(swapStructure->get_tenorType()) ;
-	size_t fixedVsLiborTenorTypeRatio    = fixedLegTenor.ratioTo(swapStructure->get_tenorType())   ;
+	size_t leg1VsLiborTenorTypeRatio	=	leg1Tenor.ratioTo(swapStructure->get_tenorType());		//lmmTenorStructure is a index base.
+	size_t leg2VsLiborTenorTypeRatio    =	leg2Tenor.ratioTo(swapStructure->get_tenorType());
 
-	assert(floatingLegTenor == swapStructure->get_tenorType() ) ;  // floatingTenor == lmmTenor!
+	//assert(leg1Tenor == swapStructure->get_tenorType() ) ;		//floatingTenor == lmmTenor!
 
-	assert( indexEnd > indexStart ); assert( indexStart >=0 );
-	assert( (indexEnd - indexStart)%floatingVsLiborTenorTypeRatio ==0  );
-	assert( (indexEnd - indexStart)%fixedVsLiborTenorTypeRatio    ==0  );
+	assert( indexEnd > indexStart ); assert( indexStart >=0 );		
+	assert( (indexEnd - indexStart)%leg1VsLiborTenorTypeRatio ==0  );	//TODO: to see if necessary or not
+	assert( (indexEnd - indexStart)%leg2VsLiborTenorTypeRatio ==0  );	
 
-	size_t nbFloatLeg =  (indexEnd - indexStart)/floatingVsLiborTenorTypeRatio;
-	size_t nbFixedLeg = (indexEnd - indexStart)/fixedVsLiborTenorTypeRatio;
+	size_t nbFloatLeg = (indexEnd - indexStart)/leg1VsLiborTenorTypeRatio;
+	size_t nbFixedLeg =	(indexEnd - indexStart)/leg2VsLiborTenorTypeRatio;
 
 
-	//! 
+	//to get all the payment index
 	std::vector<size_t> floatingLegPaymentIndexSchedule;
 	std::vector<size_t> fixedLegPaymentIndexSchedule;
 
 	for(size_t i=0; i<nbFloatLeg ; ++i)
 	{
-		floatingLegPaymentIndexSchedule.push_back(indexStart+(i+1)*floatingVsLiborTenorTypeRatio);
+		floatingLegPaymentIndexSchedule.push_back(indexStart+(i+1)*leg1VsLiborTenorTypeRatio);
 	}
 
 	for(size_t i=0; i< nbFixedLeg ; ++i)
 	{
-		fixedLegPaymentIndexSchedule.push_back(indexStart+(i+1)*fixedVsLiborTenorTypeRatio);
+		fixedLegPaymentIndexSchedule.push_back(indexStart+(i+1)*leg2VsLiborTenorTypeRatio);
 	}
 
-	//precalculate deltaT for fixed and float legs, moved from LmmVanillaSwapPricer (30.05.2014)
-	//assert( lmmTenorStructure->get_horizon()   >= this->get_indexEnd() );// if not cannot price this swap;
 
-	//! floatingLeg
-	//const std::vector<LMM::Index>& floatingLegPaymentIndexSchedule = this->get_floatingLegPaymentIndexSchedule();
-
+	//Construction of couponLegs.
 	std::vector<Coupon_CONSTPTR> floatingCouponVector;
 	std::vector<Coupon_CONSTPTR> fixedCouponVector;
-	bool   floatingLeg_ifFloored   = false;
-	double floatingLeg_floorStrike = -1.0e100;
-	bool   floatingLeg_ifCapped    = false;
-	double floatingLeg_capStrike   = 1.0e100;
-	double floatingLeg_multFactor = 1.0;
-	double floatingLeg_addFactor  = 0.0;
 
-	bool   fixedLeg_ifFloored   = false;
-	double fixedLeg_floorStrike = -1.0e100;
-	bool   fixedLeg_ifCapped    = false;
-	double fixedLeg_capStrike   = 1.0e100;
-	double fixedLeg_multFactor = 0.0;
-	double fixedLeg_addFactor  = strike;
+	bool   floatingLeg_ifFloored	= false;
+	double floatingLeg_floorStrike	= -1.0e100;
+	bool   floatingLeg_ifCapped		= false;
+	double floatingLeg_capStrike	= 1.0e100;
+	double floatingLeg_multFactor	= 1.0;
+	double floatingLeg_addFactor	= 0.0;
 
-	LMM::Index  valuationDateIndex = 0 ; 
-	for(size_t i=0;i<floatingLegPaymentIndexSchedule.size(); i++)
+	bool   fixedLeg_ifFloored		= false;
+	double fixedLeg_floorStrike		= -1.0e100;
+	bool   fixedLeg_ifCapped		= false;
+	double fixedLeg_capStrike		= 1.0e100;
+	double fixedLeg_multFactor		= 1.0;
+	double fixedLeg_addFactor		= 0.0;
+
+	LMM::Index  valuationDateIndex = 0; 
+	for(size_t i=0;i<floatingLegPaymentIndexSchedule.size(); i++)	//
 	{
+		LMM::Index liborFixingindex = floatingLegPaymentIndexSchedule[i]-leg1VsLiborTenorTypeRatio; // TODO: verifier !!! 
+		Rate_PTR liborRate(new LiborRate(liborFixingindex, leg1Tenor));
 		LMM::Index couponPaymentIndex=floatingLegPaymentIndexSchedule[i];
 		floatingCouponVector.push_back(Coupon_CONSTPTR(new CappedFlooredCoupon(	couponPaymentIndex, 
 																				nominal, 
-																				floatingLegTenor.YearFraction(), 
+																				leg1Tenor.YearFraction(), 
 																				floatingLeg_ifFloored,
 																				floatingLeg_floorStrike,
 																				floatingLeg_ifCapped,
 																				floatingLeg_capStrike,
-																				nullptr,
+																				liborRate,
 																				floatingLeg_multFactor,
 																				floatingLeg_addFactor,
 																				valuationDateIndex)));
-			}
+	}
+
 
 	for(size_t i=0;i<fixedLegPaymentIndexSchedule.size(); i++)
 	{
+		Rate_PTR constRate(new ConstRate(strike));
 		LMM::Index couponPaymentIndex=fixedLegPaymentIndexSchedule[i];
 		fixedCouponVector.push_back(Coupon_PTR(new CappedFlooredCoupon(	couponPaymentIndex, 
 																		nominal, 
-																		fixedLegTenor.YearFraction(), 
+																		leg2Tenor.YearFraction(), 
 																		fixedLeg_ifFloored,
 																		fixedLeg_floorStrike, 
 																		fixedLeg_ifCapped,
 																		fixedLeg_capStrike, 
-																		nullptr, 
+																		constRate, 
 																		fixedLeg_multFactor, 
 																		fixedLeg_addFactor, 
 																		valuationDateIndex)));
@@ -104,11 +105,12 @@ GeneticSwap_PTR InstrumentFactory::createVanillaSwap(	 double strike,
 	return vanillaSwap;
 }
 
+
 GeneticSwap_PTR InstrumentFactory::createStandardTARNSwap(	double strike, 
 															LMM::Index indexStart, 
 												 			LMM::Index indexEnd, 
-															Tenor floatingLegTenor, 
-															Tenor fixedLegTenor,
+															Tenor leg1Tenor,		//
+															Tenor leg2Tenor,		
 															LMMTenorStructure_PTR swapStructure,
 															double nominal,
 															double target)
@@ -117,99 +119,99 @@ GeneticSwap_PTR InstrumentFactory::createStandardTARNSwap(	double strike,
 	//CouponLeg_CONSTPTR fixedLeg;    // (new CouponLeg());
 
 	//! check 
-	size_t floatingVsLiborTenorTypeRatio = floatingLegTenor.ratioTo(swapStructure->get_tenorType()) ;
-	size_t fixedVsLiborTenorTypeRatio    = fixedLegTenor.ratioTo(swapStructure->get_tenorType())   ;
+	size_t leg1VsLiborTenorTypeRatio = leg1Tenor.ratioTo(swapStructure->get_tenorType()) ;
+	size_t leg2VsLiborTenorTypeRatio    = leg2Tenor.ratioTo(swapStructure->get_tenorType())   ;
 
-	assert(floatingLegTenor == swapStructure->get_tenorType() ) ;  // floatingTenor == lmmTenor!
+	//assert(floatingLegTenor == swapStructure->get_tenorType() ) ;  // floatingTenor == lmmTenor not necessary?
 
 	assert( indexEnd > indexStart ); assert( indexStart >=0 );
-	assert( (indexEnd - indexStart)%floatingVsLiborTenorTypeRatio ==0  );
-	assert( (indexEnd - indexStart)%fixedVsLiborTenorTypeRatio    ==0  );
-
-	size_t nbFloatLeg =  (indexEnd - indexStart)/floatingVsLiborTenorTypeRatio;
-	size_t nbFixedLeg = (indexEnd - indexStart)/fixedVsLiborTenorTypeRatio;
+	assert( (indexEnd - indexStart)%leg1VsLiborTenorTypeRatio ==0  );
+	assert( (indexEnd - indexStart)%leg2VsLiborTenorTypeRatio ==0  );
 
 
-	//! 
-	std::vector<size_t> floatingLegPaymentIndexSchedule;
-	std::vector<size_t> fixedLegPaymentIndexSchedule;
+	//!get all the paymentIndex
+	std::vector<size_t> leg1PaymentIndexSchedule;
+	std::vector<size_t> leg2PaymentIndexSchedule;
 
-	for(size_t i=0; i<nbFloatLeg ; ++i)
+	//indexCoupon = indexLibor
+	size_t nbLeg1 = (indexEnd - indexStart)/leg1VsLiborTenorTypeRatio;
+	size_t nbLeg2 =	(indexEnd - indexStart)/leg2VsLiborTenorTypeRatio;
+
+	for(size_t i=0; i<nbLeg1 ; ++i)
 	{
-		floatingLegPaymentIndexSchedule.push_back(indexStart+(i+1)*floatingVsLiborTenorTypeRatio);
+		leg1PaymentIndexSchedule.push_back(indexStart+(i+1)*leg1VsLiborTenorTypeRatio);
+	}
+	for(size_t i=0; i< nbLeg2; ++i)
+	{
+		leg2PaymentIndexSchedule.push_back(indexStart+(i+1)*leg2VsLiborTenorTypeRatio);
 	}
 
-	for(size_t i=0; i< nbFixedLeg ; ++i)
-	{
-		fixedLegPaymentIndexSchedule.push_back(indexStart+(i+1)*fixedVsLiborTenorTypeRatio);
-	}
+	//build couponLeg
+	std::vector<Coupon_CONSTPTR> leg1CouponVector;
+	std::vector<Coupon_CONSTPTR> leg2CouponVector;
+	bool   leg1_ifFloored	= false;
+	double leg1_floorStrike	= -1.0e100;
+	bool   leg1_ifCapped		= false;
+	double leg1_capStrike	= 1.0e100;
+	double leg1_multFactor	= 1.0;
+	double leg1_addFactor	= 0.0;
 
-	//precalculate deltaT for fixed and float legs, moved from LmmVanillaSwapPricer (30.05.2014)
-	//assert( lmmTenorStructure->get_horizon()   >= this->get_indexEnd() );// if not cannot price this swap;
-
-	//! floatingLeg
-	//const std::vector<LMM::Index>& floatingLegPaymentIndexSchedule = this->get_floatingLegPaymentIndexSchedule();
-
-	std::vector<Coupon_CONSTPTR> floatingCouponVector;
-	std::vector<Coupon_CONSTPTR> fixedCouponVector;
-	bool   floatingLeg_ifFloored   = false;
-	double floatingLeg_floorStrike = -1.0e100;
-	bool   floatingLeg_ifCapped    = false;
-	double floatingLeg_capStrike   = 1.0e100;
-	double floatingLeg_multFactor = 1.0;
-	double floatingLeg_addFactor  = 0.0;
-
-	bool   fixedLeg_ifFloored   = false;
-	double fixedLeg_floorStrike = -1.0e100;
-	bool   fixedLeg_ifCapped    = false;
-	double fixedLeg_capStrike   = 1.0e100;
-	double fixedLeg_multFactor = 0.0;
-	double fixedLeg_addFactor  = strike;
+	bool   leg2_ifFloored   = false;
+	double leg2_floorStrike = -1.0e100;
+	bool   leg2_ifCapped    = false;
+	double leg2_capStrike   = 1.0e100;
+	double leg2_multFactor	= 1.0;
+	double leg2_addFactor	= 0.0;
 
 	std::string leg1CouponDependency = "";
 	std::string leg2CouponDependency = "";
 
 	LMM::Index  valuationDateIndex = 0 ; 
 
-	for(size_t i=0;i<floatingLegPaymentIndexSchedule.size(); i++)
+	for(size_t i=0;i<leg1PaymentIndexSchedule.size(); i++)
 	{
-		LMM::Index couponPaymentIndex=floatingLegPaymentIndexSchedule[i];
-		floatingCouponVector.push_back(Coupon_CONSTPTR(new TargetCoupon(	couponPaymentIndex, 
-																			nominal, 
-																			floatingLegTenor.YearFraction(), 
-																			floatingLeg_ifFloored,
-																			floatingLeg_floorStrike,
-																			floatingLeg_ifCapped,
-																			floatingLeg_capStrike,
-																			nullptr,
-																			floatingLeg_multFactor,
-																			floatingLeg_addFactor,
-																			valuationDateIndex,
-																			target,
-																			leg1CouponDependency)));
+		
+		LMM::Index couponPaymentIndex	=	leg1PaymentIndexSchedule[i];
+		LMM::Index indexLibor			=	couponPaymentIndex-leg1VsLiborTenorTypeRatio;
+		Rate_PTR liborRate(new LiborRate(indexLibor,leg1Tenor));
+		leg1CouponVector.push_back(Coupon_CONSTPTR(new TargetCoupon(	couponPaymentIndex, 
+																		nominal, 
+																		leg1Tenor.YearFraction(), 
+																		leg1_ifFloored,
+																		leg1_floorStrike,
+																		leg1_ifCapped,
+																		leg1_capStrike,
+																		liborRate,
+																		leg1_multFactor,
+																		leg1_addFactor,
+																		valuationDateIndex,
+																		target,
+																		leg1CouponDependency)));
 		leg1CouponDependency += "l"; 
 	}
 
-	for(size_t i=0;i<fixedLegPaymentIndexSchedule.size(); i++)
+
+	for(size_t i=0;i<leg2PaymentIndexSchedule.size(); i++)
 	{
-		LMM::Index couponPaymentIndex=fixedLegPaymentIndexSchedule[i];
-		fixedCouponVector.push_back(Coupon_CONSTPTR(new TargetCoupon(	couponPaymentIndex, 
+		Rate_PTR constRate(new ConstRate(strike));
+		LMM::Index couponPaymentIndex=leg2PaymentIndexSchedule[i];
+		leg2CouponVector.push_back(Coupon_CONSTPTR(new TargetCoupon(	couponPaymentIndex, 
 																		nominal, 
-																		fixedLegTenor.YearFraction(), 
-																		fixedLeg_ifFloored,
-																		fixedLeg_floorStrike,
-																		fixedLeg_ifCapped,
-																		fixedLeg_capStrike,
-																		nullptr,
-																		fixedLeg_multFactor,
-																		fixedLeg_addFactor,
+																		leg2Tenor.YearFraction(), 
+																		leg2_ifFloored,
+																		leg2_floorStrike,
+																		leg2_ifCapped,
+																		leg2_capStrike,
+																		constRate,
+																		leg2_multFactor,
+																		leg2_addFactor,
 																		valuationDateIndex,
 																		target,
 																		leg2CouponDependency)));
 		leg2CouponDependency += "l"; 
 	}
-	GeneticSwap_PTR targetSwap(new GeneticSwap(	CouponLeg_CONSTPTR(new CouponLeg(floatingCouponVector)),
-												CouponLeg_CONSTPTR(new CouponLeg(fixedCouponVector))));
+	GeneticSwap_PTR targetSwap(new GeneticSwap(	CouponLeg_CONSTPTR(new CouponLeg(leg1CouponVector)),
+												CouponLeg_CONSTPTR(new CouponLeg(leg2CouponVector))));
 	return targetSwap;
 }
 //GeneticSwap_PTR InstrumentFactory::createTARNSwap(	std::vector<TargetCoupon_CONSTPTR> leg1,
